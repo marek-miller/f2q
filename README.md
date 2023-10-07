@@ -1,6 +1,5 @@
 # hamil64 🎇
 
-High-octane representation of Pauli Hamiltonians: real-weighted sums of pauli
-products with up to 64 qubits).
+High-octane representation of Pauli Hamiltonians with up to 64 qubits.
 
 WIP 🚧

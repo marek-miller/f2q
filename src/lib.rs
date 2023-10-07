@@ -217,7 +217,7 @@ impl PauliCode {
 
     /// # Panics
     ///
-    /// Panic is index outside of 0..64
+    /// Panics if index outside of 0..64
     pub fn set(
         &mut self,
         index: usize,
