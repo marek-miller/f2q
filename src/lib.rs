@@ -128,10 +128,12 @@ impl PauliCode {
     /// ```rust
     /// # use hamil64::{Pauli, PauliCode};
     ///
-    /// let code = PauliCode::new((0b01, 0b10));
+    /// let code = PauliCode::new((0b0100, 0b1110));
     ///
-    /// assert_eq!(code.pauli(0), Some(Pauli::X));
+    /// assert_eq!(code.pauli(0), Some(Pauli::I));
+    /// assert_eq!(code.pauli(1), Some(Pauli::X));
     /// assert_eq!(code.pauli(32), Some(Pauli::Y));
+    /// assert_eq!(code.pauli(33), Some(Pauli::Z));
     /// ```
     #[must_use]
     pub fn new(pack: (u64, u64)) -> Self {
@@ -355,15 +357,15 @@ mod tests {
 
     #[test]
     fn test_pauli_01() {
-        assert_eq!(Pauli::try_from(0u128).unwrap(), Pauli::I);
-        assert_eq!(Pauli::try_from(1u128).unwrap(), Pauli::X);
-        assert_eq!(Pauli::try_from(2u128).unwrap(), Pauli::Y);
-        assert_eq!(Pauli::try_from(3u128).unwrap(), Pauli::Z);
+        assert_eq!(Pauli::try_from(0u32).unwrap(), Pauli::I);
+        assert_eq!(Pauli::try_from(1u32).unwrap(), Pauli::X);
+        assert_eq!(Pauli::try_from(2u32).unwrap(), Pauli::Y);
+        assert_eq!(Pauli::try_from(3u32).unwrap(), Pauli::Z);
     }
 
     #[test]
     fn test_pauli_02() {
-        let err = Pauli::try_from(4u128).unwrap_err();
+        let err = Pauli::try_from(4u16).unwrap_err();
         assert_eq!(err, Error::CodeValue);
     }
 
@@ -483,12 +485,42 @@ mod tests {
     }
 
     #[test]
+    fn test_paulicode_codes_iter_03() {
+        use Pauli::*;
+        let result = PauliCode::new((0b0101_0000, 0b1111_1010))
+            .iter()
+            .take(36)
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            result,
+            &[
+                I, I, X, X, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I,
+                I, I, I, I, I, I, I, I, I, I, I, Y, Y, Z, Z
+            ]
+        );
+    }
+
+    #[test]
     fn test_paulicode_from_paulis_01() {
         use Pauli::*;
 
         assert_eq!(
             PauliCode::from_paulis([I, X, Y, Z]),
             PauliCode::new((0b1110_0100, 0b00))
+        );
+    }
+
+    #[test]
+    fn test_paulicode_from_paulis_02() {
+        use Pauli::*;
+
+        assert_eq!(
+            PauliCode::from_paulis([
+                I, I, X, X, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I,
+                I, I, I, I, I, I, I, I, I, I, I, Y, Y, Z, Z
+            ]),
+            PauliCode::new((0b0101_0000, 0b1111_1010))
         );
     }
 
