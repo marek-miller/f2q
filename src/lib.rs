@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     fmt::Display,
+    ops::Add,
 };
 
 use num::Float;
@@ -32,16 +33,6 @@ pub enum Pauli {
     X,
     Y,
     Z,
-}
-
-impl Pauli {
-    /// # Panics
-    ///
-    /// Panics if value is outside 0..4
-    #[must_use]
-    pub fn from_u128(value: u64) -> Self {
-        Self::try_from(value).expect("should be an integer between 0 and 3")
-    }
 }
 
 macro_rules! impl_pauli_int {
@@ -347,6 +338,112 @@ where
     ) {
         let prev_coeff = self.coeff(code);
         let _ = self.update(code, coeff + prev_coeff);
+    }
+}
+
+pub trait Terms<T> {
+    fn add_to(
+        &mut self,
+        hamil: &mut PauliHamil<T>,
+    );
+}
+
+impl<T> Terms<T> for PauliHamil<T>
+where
+    T: Float,
+{
+    fn add_to(
+        &mut self,
+        hamil: &mut PauliHamil<T>,
+    ) {
+        for (code, value) in self.as_map() {
+            hamil.add_to(*code, *value);
+        }
+    }
+}
+
+pub enum Hamil<T> {
+    Offset(T),
+    Sum(Box<Self>, Box<Self>),
+    Terms(Box<dyn Terms<T>>),
+}
+
+impl<T> Default for Hamil<T>
+where
+    T: Default,
+{
+    fn default() -> Self {
+        Self::Offset(T::default())
+    }
+}
+
+impl<T> Add for Hamil<T> {
+    type Output = Self;
+
+    fn add(
+        self,
+        rhs: Self,
+    ) -> Self::Output {
+        Self::Sum(Box::new(self), Box::new(rhs))
+    }
+}
+
+impl<T> Hamil<T> {
+    pub fn add_hamil(
+        self,
+        other: Self,
+    ) -> Self {
+        self + other
+    }
+
+    pub fn add_offset(
+        self,
+        value: T,
+    ) -> Self {
+        self + Self::Offset(value)
+    }
+
+    pub fn add_terms(
+        self,
+        terms: Box<dyn Terms<T>>,
+    ) -> Self
+    where
+        T: Float,
+    {
+        self + Self::Terms(terms)
+    }
+}
+
+impl<T> Terms<T> for Hamil<T>
+where
+    T: Float,
+{
+    fn add_to(
+        &mut self,
+        hamil: &mut PauliHamil<T>,
+    ) {
+        match self {
+            Self::Offset(t) => {
+                hamil.add_to(PauliCode::default(), *t);
+            }
+            Self::Terms(terms) => terms.add_to(hamil),
+            Self::Sum(h1, h2) => {
+                h1.add_to(hamil);
+                h2.add_to(hamil);
+            }
+        }
+    }
+}
+
+impl<T> From<Hamil<T>> for PauliHamil<T>
+where
+    T: Float,
+{
+    fn from(value: Hamil<T>) -> Self {
+        let mut hamil = value;
+        let mut repr = PauliHamil::new();
+        hamil.add_to(&mut repr);
+        repr
     }
 }
 
