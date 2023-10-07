@@ -280,17 +280,17 @@ impl<'a> Iterator for Codes<'a> {
 }
 
 #[derive(Debug)]
-pub struct PauliHamil<T> {
+pub struct PauliSum<T> {
     map: HashMap<PauliCode, T>,
 }
 
-impl<T> Default for PauliHamil<T> {
+impl<T> Default for PauliSum<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> PauliHamil<T> {
+impl<T> PauliSum<T> {
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -308,7 +308,7 @@ impl<T> PauliHamil<T> {
     }
 }
 
-impl<T> PauliHamil<T>
+impl<T> PauliSum<T>
 where
     T: Float,
 {
@@ -344,17 +344,17 @@ where
 pub trait Terms<T> {
     fn add_to(
         &mut self,
-        hamil: &mut PauliHamil<T>,
+        hamil: &mut PauliSum<T>,
     );
 }
 
-impl<T> Terms<T> for PauliHamil<T>
+impl<T> Terms<T> for PauliSum<T>
 where
     T: Float,
 {
     fn add_to(
         &mut self,
-        hamil: &mut PauliHamil<T>,
+        hamil: &mut PauliSum<T>,
     ) {
         for (code, value) in self.as_map() {
             hamil.add_to(*code, *value);
@@ -420,7 +420,7 @@ where
 {
     fn add_to(
         &mut self,
-        hamil: &mut PauliHamil<T>,
+        hamil: &mut PauliSum<T>,
     ) {
         match self {
             Self::Offset(t) => {
@@ -435,13 +435,13 @@ where
     }
 }
 
-impl<T> From<Hamil<T>> for PauliHamil<T>
+impl<T> From<Hamil<T>> for PauliSum<T>
 where
     T: Float,
 {
     fn from(value: Hamil<T>) -> Self {
         let mut hamil = value;
-        let mut repr = PauliHamil::new();
+        let mut repr = PauliSum::new();
         hamil.add_to(&mut repr);
         repr
     }
@@ -624,7 +624,7 @@ mod tests {
     #[test]
     fn test_paulihamil_init_01() {
         let code = PauliCode::new((1234, 0));
-        let mut hamil = PauliHamil::new();
+        let mut hamil = PauliSum::new();
 
         hamil.as_map_mut().insert(code, 4321.);
         let coeff = hamil.coeff(code);
