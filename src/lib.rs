@@ -5,6 +5,8 @@ use std::{
 
 use num::Float;
 
+const PAULI_MASK: u128 = 3;
+
 #[derive(Debug, PartialEq)]
 pub enum Error {
     NoCode,
@@ -36,7 +38,8 @@ impl Pauli {
     /// # Panics
     ///
     /// Panics if value is outside 0..4
-    fn from_u128(value: u128) -> Self {
+    #[must_use]
+    pub fn from_u128(value: u128) -> Self {
         Self::try_from(value).expect("should be an integer between 0 and 3")
     }
 }
@@ -84,6 +87,12 @@ pub struct PauliCode {
     pack: u128,
 }
 
+impl Default for PauliCode {
+    fn default() -> Self {
+        Self::new(0)
+    }
+}
+
 impl PauliCode {
     #[must_use]
     pub fn new(pack: u128) -> Self {
@@ -95,6 +104,82 @@ impl PauliCode {
     #[must_use]
     pub fn as_u128(&self) -> &u128 {
         &self.pack
+    }
+
+    /// # Safety
+    ///
+    /// Make sure index is within 0..64
+    #[must_use]
+    #[allow(clippy::missing_panics_doc)]
+    pub unsafe fn pauli_unchecked(
+        &self,
+        index: u8,
+    ) -> Pauli {
+        let pauli_int = (self.pack >> (index * 2)) & PAULI_MASK;
+        Pauli::try_from(pauli_int).expect("incorrect encoding. This is a bug")
+    }
+
+    #[must_use]
+    pub fn pauli(
+        &self,
+        index: u8,
+    ) -> Option<Pauli> {
+        if index >= 64 {
+            None
+        } else {
+            // SAFETY: We just checked if index is within bounds
+            Some(unsafe { self.pauli_unchecked(index) })
+        }
+    }
+
+    /// # Safety
+    ///
+    /// Make sure index is within 0..64
+    pub unsafe fn pauli_mut_unchecked<OP>(
+        &mut self,
+        index: u8,
+        f: OP,
+    ) where
+        OP: FnOnce(&mut Pauli),
+    {
+        let mut pauli = self.pauli_unchecked(index);
+        f(&mut pauli);
+        self.pack &= !(PAULI_MASK << (index * 2));
+        self.pack |= u128::from(pauli) << (index * 2);
+    }
+
+    pub fn pauli_mut<OP>(
+        &mut self,
+        index: u8,
+        f: OP,
+    ) where
+        OP: FnOnce(Option<&mut Pauli>),
+    {
+        if index >= 64 {
+            f(None);
+        } else {
+            // SAFETY: We just checked if index is within bounds
+            unsafe {
+                self.pauli_mut_unchecked(index, |x: &mut Pauli| f(Some(x)));
+            }
+        }
+    }
+
+    /// # Panics
+    ///
+    /// Panic is index outside of 0..64
+    pub fn set(
+        &mut self,
+        index: u8,
+        pauli: Pauli,
+    ) {
+        self.pauli_mut(index, |x| {
+            if let Some(p) = x {
+                *p = pauli;
+            } else {
+                panic!("index should be within 0..64");
+            }
+        });
     }
 
     #[must_use]
@@ -146,10 +231,9 @@ impl<'a> Iterator for Codes<'a> {
             return None;
         }
 
-        let pauli_int = (self.code.pack >> (self.index * 2)) & 0b11;
+        let pauli = self.code.pauli(self.index);
         self.index += 1;
-
-        Some(Pauli::from_u128(pauli_int))
+        pauli
     }
 }
 
@@ -227,8 +311,81 @@ mod tests {
 
     #[test]
     fn test_paulicode_init() {
-        let pauli = PauliCode::new(0b01);
-        assert_eq!(*pauli.as_u128(), 0b01);
+        let code = PauliCode::new(0b01);
+        assert_eq!(*code.as_u128(), 0b01);
+    }
+
+    #[test]
+    fn test_paulicode_pauli_02() {
+        let code = PauliCode::new(0b0101);
+
+        assert_eq!(code.pauli(0), Some(Pauli::X));
+        assert_eq!(code.pauli(1), Some(Pauli::X));
+        assert_eq!(code.pauli(2), Some(Pauli::I));
+        assert_eq!(code.pauli(63), Some(Pauli::I));
+
+        assert_eq!(code.pauli(64), None);
+        assert_eq!(code.pauli(123), None);
+    }
+
+    #[test]
+    fn test_paulicode_pauli_mut_01() {
+        let mut code = PauliCode::default();
+        assert_eq!(code.pauli(7).unwrap(), Pauli::I);
+
+        code.pauli_mut(7, |x| {
+            if let Some(pauli) = x {
+                *pauli = Pauli::Z;
+            }
+        });
+        assert_eq!(code.pauli(7).unwrap(), Pauli::Z);
+    }
+
+    #[test]
+    fn test_paulicode_set_pauli_01() {
+        let mut code = PauliCode::new(29_332_281_938);
+        assert_eq!(code.pauli(7).unwrap(), Pauli::I);
+
+        code.set(7, Pauli::Y);
+        assert_eq!(code.pauli(7).unwrap(), Pauli::Y);
+    }
+
+    #[test]
+    #[should_panic(expected = "index should be within 0..64")]
+    fn test_paulicode_set_pauli_02() {
+        let mut code = PauliCode::default();
+        assert_eq!(code.pauli(7).unwrap(), Pauli::I);
+
+        code.set(65, Pauli::Y);
+        assert_eq!(code.pauli(7).unwrap(), Pauli::Y);
+    }
+
+    #[test]
+    fn test_paulicode_set_pauli_03() {
+        let mut code = PauliCode::default();
+
+        for i in 0..13 {
+            code.set(i, Pauli::X);
+        }
+        for i in 13..29 {
+            code.set(i, Pauli::Y);
+        }
+        for i in 29..61 {
+            code.set(i, Pauli::Z);
+        }
+
+        for i in 0..13 {
+            assert_eq!(code.pauli(i).unwrap(), Pauli::X, "{i}");
+        }
+        for i in 13..29 {
+            assert_eq!(code.pauli(i).unwrap(), Pauli::Y, "{i}");
+        }
+        for i in 29..61 {
+            assert_eq!(code.pauli(i).unwrap(), Pauli::Z, "{i}");
+        }
+        for i in 61..64 {
+            assert_eq!(code.pauli(i).unwrap(), Pauli::I, "{i}");
+        }
     }
 
     #[test]
