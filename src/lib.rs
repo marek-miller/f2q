@@ -331,7 +331,7 @@ where
         self.map.insert(code, coeff)
     }
 
-    pub fn add_to(
+    pub fn add(
         &mut self,
         code: PauliCode,
         coeff: T,
@@ -344,7 +344,7 @@ where
 pub trait Terms<T> {
     fn add_to(
         &mut self,
-        hamil: &mut PauliSum<T>,
+        repr: &mut PauliSum<T>,
     );
 }
 
@@ -354,10 +354,10 @@ where
 {
     fn add_to(
         &mut self,
-        hamil: &mut PauliSum<T>,
+        repr: &mut PauliSum<T>,
     ) {
         for (code, value) in self.as_map() {
-            hamil.add_to(*code, *value);
+            repr.add(*code, *value);
         }
     }
 }
@@ -389,13 +389,6 @@ impl<T> Add for Hamil<T> {
 }
 
 impl<T> Hamil<T> {
-    pub fn add_hamil(
-        self,
-        other: Self,
-    ) -> Self {
-        self + other
-    }
-
     pub fn add_offset(
         self,
         value: T,
@@ -412,6 +405,13 @@ impl<T> Hamil<T> {
     {
         self + Self::Terms(terms)
     }
+
+    pub fn add_hamil(
+        self,
+        other: Self,
+    ) -> Self {
+        self + other
+    }
 }
 
 impl<T> Terms<T> for Hamil<T>
@@ -420,16 +420,16 @@ where
 {
     fn add_to(
         &mut self,
-        hamil: &mut PauliSum<T>,
+        repr: &mut PauliSum<T>,
     ) {
         match self {
             Self::Offset(t) => {
-                hamil.add_to(PauliCode::default(), *t);
+                repr.add(PauliCode::default(), *t);
             }
-            Self::Terms(terms) => terms.add_to(hamil),
+            Self::Terms(terms) => terms.add_to(repr),
             Self::Sum(h1, h2) => {
-                h1.add_to(hamil);
-                h2.add_to(hamil);
+                h1.add_to(repr);
+                h2.add_to(repr);
             }
         }
     }
