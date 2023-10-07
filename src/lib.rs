@@ -26,7 +26,7 @@ impl Display for Error {
 
 impl std::error::Error for Error {}
 
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum Pauli {
     #[default]
     I,
@@ -389,6 +389,7 @@ impl<T> Add for Hamil<T> {
 }
 
 impl<T> Hamil<T> {
+    #[must_use]
     pub fn add_offset(
         self,
         value: T,
@@ -396,6 +397,7 @@ impl<T> Hamil<T> {
         self + Self::Offset(value)
     }
 
+    #[must_use]
     pub fn add_terms(
         self,
         terms: Box<dyn Terms<T>>,
@@ -406,6 +408,7 @@ impl<T> Hamil<T> {
         self + Self::Terms(terms)
     }
 
+    #[must_use]
     pub fn add_hamil(
         self,
         other: Self,
@@ -445,6 +448,15 @@ where
         hamil.add_to(&mut repr);
         repr
     }
+}
+
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+pub enum Orbital {
+    #[default]
+    Zero,
+    Down,
+    Up,
+    UpDown,
 }
 
 #[cfg(test)]
