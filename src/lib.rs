@@ -16,7 +16,7 @@ impl Display for Error {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match self {
-            Self::NoCode => write!(f, "WrongCode"),
+            Self::NoCode => write!(f, "NoCode"),
         }
     }
 }
@@ -33,9 +33,11 @@ pub enum Pauli {
 }
 
 impl Pauli {
+    /// # Panics
+    ///
+    /// Panics if value is outside 0..4
     fn from_u128(value: u128) -> Self {
-        Self::try_from(value)
-            .expect("value should be an integer between 0 and 3")
+        Self::try_from(value).expect("should be an integer between 0 and 3")
     }
 }
 
@@ -83,16 +85,19 @@ pub struct PauliCode {
 }
 
 impl PauliCode {
+    #[must_use]
     pub fn new(pack: u128) -> Self {
         Self {
             pack,
         }
     }
 
+    #[must_use]
     pub fn as_u128(&self) -> &u128 {
         &self.pack
     }
 
+    #[must_use]
     pub fn iter(&self) -> Codes<'_> {
         Codes::new(self)
     }
@@ -102,9 +107,18 @@ impl PauliCode {
         I: IntoIterator<Item = Pauli>,
     {
         let pack = (0..32)
-            .zip(iter.into_iter())
+            .zip(iter)
             .fold(0, |acc, (i, pauli)| acc + (u128::from(pauli) << (i * 2)));
         Self::new(pack)
+    }
+}
+
+impl<'a> IntoIterator for &'a PauliCode {
+    type IntoIter = Codes<'a>;
+    type Item = Pauli;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 
@@ -132,7 +146,7 @@ impl<'a> Iterator for Codes<'a> {
             return None;
         }
 
-        let pauli_int = (self.code.pack >> self.index * 2) & 0b11;
+        let pauli_int = (self.code.pack >> (self.index * 2)) & 0b11;
         self.index += 1;
 
         Some(Pauli::from_u128(pauli_int))
@@ -144,13 +158,21 @@ pub struct PauliHamil<T> {
     map: HashMap<PauliCode, T>,
 }
 
+impl<T> Default for PauliHamil<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> PauliHamil<T> {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             map: HashMap::new(),
         }
     }
 
+    #[must_use]
     pub fn as_map(&self) -> &HashMap<PauliCode, T> {
         &self.map
     }
@@ -164,6 +186,7 @@ impl<T> PauliHamil<T>
 where
     T: Float,
 {
+    #[must_use]
     pub fn coeff(
         &self,
         code: &PauliCode,
@@ -177,6 +200,7 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
@@ -212,16 +236,16 @@ mod tests {
         use Pauli::*;
         let result = PauliCode::new(0b01).iter().take(3).collect::<Vec<_>>();
 
-        assert_eq!(result, &[X, I, I])
+        assert_eq!(result, &[X, I, I]);
     }
 
     #[test]
     fn test_paulicode_codes_iter_02() {
         use Pauli::*;
         let result =
-            PauliCode::new(0b111001).iter().take(5).collect::<Vec<_>>();
+            PauliCode::new(0b11_1001).iter().take(5).collect::<Vec<_>>();
 
-        assert_eq!(result, &[X, Y, Z, I, I])
+        assert_eq!(result, &[X, Y, Z, I, I]);
     }
 
     #[test]
@@ -230,8 +254,8 @@ mod tests {
 
         assert_eq!(
             PauliCode::from_paulis([I, X, Y, Z]),
-            PauliCode::new(0b11100100)
-        )
+            PauliCode::new(0b1110_0100)
+        );
     }
 
     #[test]
@@ -240,6 +264,7 @@ mod tests {
         let mut hamil = PauliHamil::new();
 
         hamil.as_map_mut().insert(code, 4321.);
-        assert_eq!(hamil.coeff(&code), 4321.)
+        let coeff = hamil.coeff(&code);
+        assert!(f64::abs(coeff - 4321.) < f64::EPSILON);
     }
 }
