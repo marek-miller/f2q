@@ -142,7 +142,7 @@ impl PauliCode {
 
     #[must_use]
     pub fn as_u128(&self) -> u128 {
-        self.pack.0 as u128 + ((self.pack.1 as u128) << 64)
+        u128::from(self.pack.0) + (u128::from(self.pack.1) << 64)
     }
 
     /// # Safety
@@ -152,7 +152,7 @@ impl PauliCode {
     #[allow(clippy::missing_panics_doc)]
     pub unsafe fn pauli_unchecked(
         &self,
-        index: u8,
+        index: usize,
     ) -> Pauli {
         let pauli_int = if index < 32 {
             (self.pack.0 >> (index * 2)) & PAULI_MASK
@@ -165,7 +165,7 @@ impl PauliCode {
     #[must_use]
     pub fn pauli(
         &self,
-        index: u8,
+        index: usize,
     ) -> Option<Pauli> {
         if index >= 64 {
             None
@@ -180,7 +180,7 @@ impl PauliCode {
     /// Make sure index is within 0..64
     pub unsafe fn pauli_mut_unchecked<OP>(
         &mut self,
-        index: u8,
+        index: usize,
         f: OP,
     ) where
         OP: FnOnce(&mut Pauli),
@@ -198,7 +198,7 @@ impl PauliCode {
 
     pub fn pauli_mut<OP>(
         &mut self,
-        index: u8,
+        index: usize,
         f: OP,
     ) where
         OP: FnOnce(Option<&mut Pauli>),
@@ -218,7 +218,7 @@ impl PauliCode {
     /// Panic is index outside of 0..64
     pub fn set(
         &mut self,
-        index: u8,
+        index: usize,
         pauli: Pauli,
     ) {
         self.pauli_mut(index, |x| {
@@ -241,7 +241,7 @@ impl PauliCode {
     {
         let mut code = Self::default();
         for (i, pauli) in iter.into_iter().take(64).enumerate() {
-            code.set(i as u8, pauli);
+            code.set(i, pauli);
         }
         code
     }
@@ -260,7 +260,7 @@ impl<'a> IntoIterator for &'a PauliCode {
 #[derive(Debug)]
 pub struct Codes<'a> {
     code:  &'a PauliCode,
-    index: u8,
+    index: usize,
 }
 
 impl<'a> Codes<'a> {
