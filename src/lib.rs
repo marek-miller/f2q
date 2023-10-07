@@ -5,11 +5,11 @@ use std::{
 
 use num::Float;
 
-const PAULI_MASK: u128 = 3;
+const PAULI_MASK: u64 = 3;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-    NoCode,
+    CodeValue,
 }
 
 impl Display for Error {
@@ -18,7 +18,7 @@ impl Display for Error {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match self {
-            Self::NoCode => write!(f, "NoCode"),
+            Self::CodeValue => write!(f, "CodeValue"),
         }
     }
 }
@@ -39,7 +39,7 @@ impl Pauli {
     ///
     /// Panics if value is outside 0..4
     #[must_use]
-    pub fn from_u128(value: u128) -> Self {
+    pub fn from_u128(value: u64) -> Self {
         Self::try_from(value).expect("should be an integer between 0 and 3")
     }
 }
@@ -58,7 +58,7 @@ macro_rules! impl_pauli_int {
                         1 => Ok(X),
                         2 => Ok(Y),
                         3 => Ok(Z),
-                        _ => Err(Self::Error::NoCode),
+                        _ => Err(Self::Error::CodeValue),
                     }
                 }
             }
@@ -84,26 +84,65 @@ impl_pauli_int!(i8 i16 i32 i64 i128);
 /// Pauli string of up to 64 qubits.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PauliCode {
-    pack: u128,
+    pack: (u64, u64),
 }
 
 impl Default for PauliCode {
     fn default() -> Self {
-        Self::new(0)
+        Self::new((0, 0))
     }
 }
 
 impl PauliCode {
+    /// Create new code.
+    ///
+    /// The pauli product is specified by providing a tuple `(u64, u64)` with 2
+    /// bits for each Pauli operator in the tensor product:
+    ///
+    /// ```text
+    /// Pauli::I = 0b00
+    /// Pauli::X = 0b01
+    /// Pauli::Y = 0b10
+    /// Pauli::Z = 0b11
+    /// ```
+    ///
+    /// The first integer in the tuple represents qubits 0 to 31 (included),
+    /// and the second integer represents qubits 32 to 63 (included).
+    /// The pairs of bits in each integer follow little-endian convention.
+    /// For example, `PauliCode::new((0b1001,0))` represents the following Pauli
+    /// product of 64 Pauli operators:
+    ///
+    /// ```text
+    /// [X, Y, I, I, ... , I]
+    /// ```
+    ///
+    /// whereas `PauliCode::new((0, 0b0111))` represents:
+    ///
+    /// ```text
+    /// [I, I, .. I, Z, X, I, ... , I],
+    /// ```
+    /// with `Z` at site 32.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use hamil64::{Pauli, PauliCode};
+    ///
+    /// let code = PauliCode::new((0b01, 0b10));
+    ///
+    /// assert_eq!(code.pauli(0), Some(Pauli::X));
+    /// assert_eq!(code.pauli(32), Some(Pauli::Y));
+    /// ```
     #[must_use]
-    pub fn new(pack: u128) -> Self {
+    pub fn new(pack: (u64, u64)) -> Self {
         Self {
             pack,
         }
     }
 
     #[must_use]
-    pub fn as_u128(&self) -> &u128 {
-        &self.pack
+    pub fn as_u128(&self) -> u128 {
+        self.pack.0 as u128 + ((self.pack.1 as u128) << 64)
     }
 
     /// # Safety
@@ -115,7 +154,11 @@ impl PauliCode {
         &self,
         index: u8,
     ) -> Pauli {
-        let pauli_int = (self.pack >> (index * 2)) & PAULI_MASK;
+        let pauli_int = if index < 32 {
+            (self.pack.0 >> (index * 2)) & PAULI_MASK
+        } else {
+            (self.pack.1 >> ((index - 32) * 2)) & PAULI_MASK
+        };
         Pauli::try_from(pauli_int).expect("incorrect encoding. This is a bug")
     }
 
@@ -144,8 +187,13 @@ impl PauliCode {
     {
         let mut pauli = self.pauli_unchecked(index);
         f(&mut pauli);
-        self.pack &= !(PAULI_MASK << (index * 2));
-        self.pack |= u128::from(pauli) << (index * 2);
+        if index < 32 {
+            self.pack.0 &= !(PAULI_MASK << (index * 2));
+            self.pack.0 |= u64::from(pauli) << (index * 2);
+        } else {
+            self.pack.1 &= !(PAULI_MASK << ((index - 32) * 2));
+            self.pack.1 |= u64::from(pauli) << ((index - 32) * 2);
+        }
     }
 
     pub fn pauli_mut<OP>(
@@ -191,10 +239,11 @@ impl PauliCode {
     where
         I: IntoIterator<Item = Pauli>,
     {
-        let pack = (0..32)
-            .zip(iter)
-            .fold(0, |acc, (i, pauli)| acc + (u128::from(pauli) << (i * 2)));
-        Self::new(pack)
+        let mut code = Self::default();
+        for (i, pauli) in iter.into_iter().take(64).enumerate() {
+            code.set(i as u8, pauli);
+        }
+        code
     }
 }
 
@@ -273,12 +322,29 @@ where
     #[must_use]
     pub fn coeff(
         &self,
-        code: &PauliCode,
+        code: PauliCode,
     ) -> T {
-        match self.map.get(code) {
+        match self.map.get(&code) {
             Some(coeff) => *coeff,
             None => T::zero(),
         }
+    }
+
+    pub fn update(
+        &mut self,
+        code: PauliCode,
+        coeff: T,
+    ) -> Option<T> {
+        self.map.insert(code, coeff)
+    }
+
+    pub fn add_to(
+        &mut self,
+        code: PauliCode,
+        coeff: T,
+    ) {
+        let prev_coeff = self.coeff(code);
+        let _ = self.update(code, coeff + prev_coeff);
     }
 }
 
@@ -298,7 +364,7 @@ mod tests {
     #[test]
     fn test_pauli_02() {
         let err = Pauli::try_from(4u128).unwrap_err();
-        assert_eq!(err, Error::NoCode);
+        assert_eq!(err, Error::CodeValue);
     }
 
     #[test]
@@ -311,13 +377,19 @@ mod tests {
 
     #[test]
     fn test_paulicode_init() {
-        let code = PauliCode::new(0b01);
-        assert_eq!(*code.as_u128(), 0b01);
+        let code = PauliCode::new((0b01, 0b00));
+        assert_eq!(code.as_u128(), 0b01);
+    }
+
+    #[test]
+    fn test_paulicode_default() {
+        let code = PauliCode::default();
+        assert_eq!(code, PauliCode::new((0, 0)));
     }
 
     #[test]
     fn test_paulicode_pauli_02() {
-        let code = PauliCode::new(0b0101);
+        let code = PauliCode::new((0b0101, 0b00));
 
         assert_eq!(code.pauli(0), Some(Pauli::X));
         assert_eq!(code.pauli(1), Some(Pauli::X));
@@ -343,7 +415,7 @@ mod tests {
 
     #[test]
     fn test_paulicode_set_pauli_01() {
-        let mut code = PauliCode::new(29_332_281_938);
+        let mut code = PauliCode::new((29_332_281_938, 0b00));
         assert_eq!(code.pauli(7).unwrap(), Pauli::I);
 
         code.set(7, Pauli::Y);
@@ -391,7 +463,10 @@ mod tests {
     #[test]
     fn test_paulicode_codes_iter_01() {
         use Pauli::*;
-        let result = PauliCode::new(0b01).iter().take(3).collect::<Vec<_>>();
+        let result = PauliCode::new((0b01, 0b00))
+            .iter()
+            .take(3)
+            .collect::<Vec<_>>();
 
         assert_eq!(result, &[X, I, I]);
     }
@@ -399,8 +474,10 @@ mod tests {
     #[test]
     fn test_paulicode_codes_iter_02() {
         use Pauli::*;
-        let result =
-            PauliCode::new(0b11_1001).iter().take(5).collect::<Vec<_>>();
+        let result = PauliCode::new((0b11_1001, 0b00))
+            .iter()
+            .take(5)
+            .collect::<Vec<_>>();
 
         assert_eq!(result, &[X, Y, Z, I, I]);
     }
@@ -411,17 +488,17 @@ mod tests {
 
         assert_eq!(
             PauliCode::from_paulis([I, X, Y, Z]),
-            PauliCode::new(0b1110_0100)
+            PauliCode::new((0b1110_0100, 0b00))
         );
     }
 
     #[test]
     fn test_paulihamil_init_01() {
-        let code = PauliCode::new(1234);
+        let code = PauliCode::new((1234, 0));
         let mut hamil = PauliHamil::new();
 
         hamil.as_map_mut().insert(code, 4321.);
-        let coeff = hamil.coeff(&code);
+        let coeff = hamil.coeff(code);
         assert!(f64::abs(coeff - 4321.) < f64::EPSILON);
     }
 }
