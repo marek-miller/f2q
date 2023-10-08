@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     fmt::Display,
+    hash::Hash,
     ops::Add,
 };
 
@@ -69,8 +70,8 @@ macro_rules! impl_pauli_int {
     };
 }
 
-impl_pauli_int!(u8 u16 u32 u64 u128);
-impl_pauli_int!(i8 i16 i32 i64 i128);
+impl_pauli_int!(u8 u16 u32 u64 u128 usize);
+impl_pauli_int!(i8 i16 i32 i64 i128 isize);
 
 /// Pauli string of up to 64 qubits.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
@@ -134,7 +135,7 @@ impl PauliCode {
     }
 
     #[must_use]
-    pub fn as_u128(&self) -> u128 {
+    pub fn enumerate(&self) -> u128 {
         u128::from(self.pack.0) + (u128::from(self.pack.1) << 64)
     }
 
@@ -279,18 +280,22 @@ impl<'a> Iterator for Codes<'a> {
     }
 }
 
+pub trait Code: Clone + Eq + Hash + Default {}
+
+impl Code for PauliCode {}
+
 #[derive(Debug)]
-pub struct PauliSum<T> {
-    map: HashMap<PauliCode, T>,
+pub struct SumRepr<T, K> {
+    map: HashMap<K, T>,
 }
 
-impl<T> Default for PauliSum<T> {
+impl<T, K> Default for SumRepr<T, K> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> PauliSum<T> {
+impl<T, K> SumRepr<T, K> {
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -299,25 +304,26 @@ impl<T> PauliSum<T> {
     }
 
     #[must_use]
-    pub fn as_map(&self) -> &HashMap<PauliCode, T> {
+    pub fn as_map(&self) -> &HashMap<K, T> {
         &self.map
     }
 
-    pub fn as_map_mut(&mut self) -> &mut HashMap<PauliCode, T> {
+    pub fn as_map_mut(&mut self) -> &mut HashMap<K, T> {
         &mut self.map
     }
 }
 
-impl<T> PauliSum<T>
+impl<T, K> SumRepr<T, K>
 where
     T: Float,
+    K: Code,
 {
     #[must_use]
     pub fn coeff(
         &self,
-        code: PauliCode,
+        code: &K,
     ) -> T {
-        match self.map.get(&code) {
+        match self.map.get(code) {
             Some(coeff) => *coeff,
             None => T::zero(),
         }
@@ -325,7 +331,7 @@ where
 
     pub fn update(
         &mut self,
-        code: PauliCode,
+        code: K,
         coeff: T,
     ) -> Option<T> {
         self.map.insert(code, coeff)
@@ -333,42 +339,45 @@ where
 
     pub fn add(
         &mut self,
-        code: PauliCode,
+        code: K,
         coeff: T,
     ) {
-        let prev_coeff = self.coeff(code);
+        let prev_coeff = self.coeff(&code);
         let _ = self.update(code, coeff + prev_coeff);
     }
 }
 
-pub trait Terms<T> {
+pub type PauliSum<T> = SumRepr<T, PauliCode>;
+
+pub trait Terms<T, K> {
     fn add_to(
         &mut self,
-        repr: &mut PauliSum<T>,
+        repr: &mut SumRepr<T, K>,
     );
 }
 
-impl<T> Terms<T> for PauliSum<T>
+impl<T, K> Terms<T, K> for SumRepr<T, K>
 where
     T: Float,
+    K: Code,
 {
     fn add_to(
         &mut self,
-        repr: &mut PauliSum<T>,
+        repr: &mut SumRepr<T, K>,
     ) {
         for (code, value) in self.as_map() {
-            repr.add(*code, *value);
+            repr.add(code.clone(), *value);
         }
     }
 }
 
-pub enum Hamil<T> {
+pub enum Hamil<T, K> {
     Offset(T),
     Sum(Box<Self>, Box<Self>),
-    Terms(Box<dyn Terms<T>>),
+    Terms(Box<dyn Terms<T, K>>),
 }
 
-impl<T> Default for Hamil<T>
+impl<T, K> Default for Hamil<T, K>
 where
     T: Default,
 {
@@ -377,7 +386,7 @@ where
     }
 }
 
-impl<T> Add for Hamil<T> {
+impl<T, K> Add for Hamil<T, K> {
     type Output = Self;
 
     fn add(
@@ -388,7 +397,7 @@ impl<T> Add for Hamil<T> {
     }
 }
 
-impl<T> Hamil<T> {
+impl<T, K> Hamil<T, K> {
     #[must_use]
     pub fn add_offset(
         self,
@@ -400,7 +409,7 @@ impl<T> Hamil<T> {
     #[must_use]
     pub fn add_terms(
         self,
-        terms: Box<dyn Terms<T>>,
+        terms: Box<dyn Terms<T, K>>,
     ) -> Self
     where
         T: Float,
@@ -417,17 +426,18 @@ impl<T> Hamil<T> {
     }
 }
 
-impl<T> Terms<T> for Hamil<T>
+impl<T, K> Terms<T, K> for Hamil<T, K>
 where
     T: Float,
+    K: Code,
 {
     fn add_to(
         &mut self,
-        repr: &mut PauliSum<T>,
+        repr: &mut SumRepr<T, K>,
     ) {
         match self {
             Self::Offset(t) => {
-                repr.add(PauliCode::default(), *t);
+                repr.add(K::default(), *t);
             }
             Self::Terms(terms) => terms.add_to(repr),
             Self::Sum(h1, h2) => {
@@ -438,25 +448,93 @@ where
     }
 }
 
-impl<T> From<Hamil<T>> for PauliSum<T>
+impl<T, K> From<Hamil<T, K>> for SumRepr<T, K>
 where
     T: Float,
+    K: Code,
 {
-    fn from(value: Hamil<T>) -> Self {
+    fn from(value: Hamil<T, K>) -> Self {
         let mut hamil = value;
-        let mut repr = PauliSum::new();
+        let mut repr = SumRepr::new();
         hamil.add_to(&mut repr);
         repr
     }
 }
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub enum Orbital {
+pub enum Spin {
     #[default]
-    Zero,
     Down,
     Up,
-    UpDown,
+}
+
+macro_rules! impl_spin_int {
+    ($($Typ:ty)* ) => {
+        $(
+            impl From<Spin> for $Typ {
+                fn from(value: Spin) -> Self {
+                    match value {
+                        Spin::Down => 0,
+                        Spin::Up => 1,
+                    }
+                }
+            }
+        )*
+    };
+}
+
+impl_spin_int!(u8 u16 u32 u64 u128 usize);
+impl_spin_int!(i8 i16 i32 i64 i128 isize);
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub struct Orbital {
+    n: usize,
+    s: Spin,
+}
+
+impl Default for Orbital {
+    fn default() -> Self {
+        Self {
+            n: 0,
+            s: Default::default(),
+        }
+    }
+}
+
+impl Orbital {
+    pub fn new(
+        n: usize,
+        s: Spin,
+    ) -> Self {
+        Self {
+            n,
+            s,
+        }
+    }
+
+    /// # Panics
+    ///
+    /// Panics is the orbitals index cannot fit into `usize`,
+    pub fn enumerate(&self) -> usize {
+        if self.n > usize::MAX / 2 - usize::from(self.s) {
+            panic!("orbital index out of bound")
+        }
+        self.n * 2 + usize::from(self.s)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, Hash)]
+pub enum Integral {
+    #[default]
+    Constant,
+    OneElectron {
+        cr: Orbital,
+        an: Orbital,
+    },
+    TwoElectron {
+        cr: (Orbital, Orbital),
+        an: (Orbital, Orbital),
+    },
 }
 
 #[cfg(test)]
@@ -489,7 +567,7 @@ mod tests {
     #[test]
     fn test_paulicode_init() {
         let code = PauliCode::new((0b01, 0b00));
-        assert_eq!(code.as_u128(), 0b01);
+        assert_eq!(code.enumerate(), 0b01);
     }
 
     #[test]
@@ -634,12 +712,42 @@ mod tests {
     }
 
     #[test]
-    fn test_paulihamil_init_01() {
+    fn test_paulisum_init_01() {
         let code = PauliCode::new((1234, 0));
-        let mut hamil = PauliSum::new();
+        let mut hamil = SumRepr::new();
 
         hamil.as_map_mut().insert(code, 4321.);
-        let coeff = hamil.coeff(code);
+        let coeff = hamil.coeff(&code);
         assert!(f64::abs(coeff - 4321.) < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_spin_init_01() {
+        let spin = Spin::Down;
+        assert_eq!(u8::from(spin), 0);
+        let spin = Spin::Up;
+        assert_eq!(u8::from(spin), 1);
+
+        let spin = Spin::default();
+        assert_eq!(u8::from(spin), 0);
+    }
+
+    #[test]
+    fn test_orbital_enumerate_01() {
+        let orb = Orbital::default();
+        assert_eq!(orb.enumerate(), 0);
+
+        let orb = Orbital::new(3, Spin::Down);
+        assert_eq!(orb.enumerate(), 6);
+
+        let orb = Orbital::new(8, Spin::Up);
+        assert_eq!(orb.enumerate(), 17);
+    }
+
+    #[test]
+    #[should_panic(expected = "orbital index out of bound")]
+    fn test_orbital_enumerate_02() {
+        let orb = Orbital::new(usize::MAX / 2, Spin::Up);
+        assert_eq!(orb.enumerate(), usize::MAX);
     }
 }
