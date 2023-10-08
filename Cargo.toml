@@ -1,5 +1,5 @@
 [package]
-name = "hamil64"
+name = "hamil-repr"
 version = "0.1.0"
 edition = "2021"
 

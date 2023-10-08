@@ -324,7 +324,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use hamil64::{Pauli, PauliCode};
+    /// # use hamil_repr::{Pauli, PauliCode};
     ///
     /// let code = PauliCode::new((0b0100, 0b1110));
     ///
