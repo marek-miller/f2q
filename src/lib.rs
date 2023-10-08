@@ -6,6 +6,10 @@ use std::{
 };
 
 use num::Float;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 const PAULI_MASK: u64 = 3;
 
@@ -29,18 +33,27 @@ impl std::error::Error for Error {}
 
 pub trait Code: Clone + Eq + Hash + Default {}
 
-#[derive(Debug)]
-pub struct SumRepr<T, K> {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SumRepr<T, K>
+where
+    K: Code,
+{
     map: HashMap<K, T>,
 }
 
-impl<T, K> Default for SumRepr<T, K> {
+impl<T, K> Default for SumRepr<T, K>
+where
+    K: Code,
+{
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T, K> SumRepr<T, K> {
+impl<T, K> SumRepr<T, K>
+where
+    K: Code,
+{
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -94,7 +107,111 @@ where
 
 pub type PauliSum<T> = SumRepr<T, PauliCode>;
 
-pub trait Terms<T, K> {
+#[derive(Debug)]
+pub struct IterRepr<T, K, I>
+where
+    I: Iterator<Item = (T, K)>,
+{
+    iter: I,
+}
+
+impl<T, K, I> IterRepr<T, K, I>
+where
+    I: Iterator<Item = (T, K)>,
+{
+    pub fn new(iter: I) -> Self {
+        Self {
+            iter,
+        }
+    }
+}
+
+impl<T, K, I> Terms<T, K> for IterRepr<T, K, I>
+where
+    T: Float,
+    K: Code,
+    I: Iterator<Item = (T, K)>,
+{
+    fn add_to(
+        &mut self,
+        repr: &mut SumRepr<T, K>,
+    ) {
+        for (coeff, code) in self.iter.by_ref() {
+            repr.add(code, coeff);
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct OpRepr<T, K, OP>
+where
+    OP: FnMut() -> Option<(T, K)>,
+{
+    f: OP,
+}
+
+impl<T, K, OP> OpRepr<T, K, OP>
+where
+    OP: FnMut() -> Option<(T, K)>,
+{
+    pub fn new(f: OP) -> Self {
+        Self {
+            f,
+        }
+    }
+}
+
+impl<T, K, OP> Terms<T, K> for OpRepr<T, K, OP>
+where
+    T: Float,
+    K: Code,
+    OP: FnMut() -> Option<(T, K)>,
+{
+    fn add_to(
+        &mut self,
+        repr: &mut SumRepr<T, K>,
+    ) {
+        while let Some((coeff, code)) = (self.f)() {
+            repr.add(code, coeff);
+        }
+    }
+}
+
+pub struct HeapRepr<'a, T, K> {
+    f: Box<dyn FnMut() -> Option<(T, K)> + 'a>,
+}
+
+impl<'a, T, K> HeapRepr<'a, T, K> {
+    /// Allocated memory for the closure on the heap.
+    pub fn new<OP>(f: OP) -> Self
+    where
+        OP: FnMut() -> Option<(T, K)> + 'a,
+    {
+        Self {
+            f: Box::new(f)
+        }
+    }
+}
+
+impl<'a, T, K> Terms<T, K> for HeapRepr<'a, T, K>
+where
+    T: Float,
+    K: Code,
+{
+    fn add_to(
+        &mut self,
+        repr: &mut SumRepr<T, K>,
+    ) {
+        while let Some((coeff, code)) = (self.f)() {
+            repr.add(code, coeff);
+        }
+    }
+}
+
+pub trait Terms<T, K>
+where
+    K: Code,
+{
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
@@ -395,22 +512,14 @@ macro_rules! impl_spin_int {
 impl_spin_int!(u8 u16 u32 u64 u128 usize);
 impl_spin_int!(i8 i16 i32 i64 i128 isize);
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Default)]
 pub struct Orbital {
     n: usize,
     s: Spin,
 }
 
-impl Default for Orbital {
-    fn default() -> Self {
-        Self {
-            n: 0,
-            s: Default::default(),
-        }
-    }
-}
-
 impl Orbital {
+    #[must_use]
     pub fn new(
         n: usize,
         s: Spin,
@@ -424,16 +533,18 @@ impl Orbital {
     /// # Panics
     ///
     /// Panics is the orbitals index cannot fit into `usize`,
+    #[must_use]
     pub fn enumerate(&self) -> usize {
-        if self.n > usize::MAX / 2 - usize::from(self.s) {
-            panic!("orbital index out of bound")
-        }
+        assert!(
+            self.n <= usize::MAX / 2 - usize::from(self.s),
+            "orbital index out of bound"
+        );
         self.n * 2 + usize::from(self.s)
     }
 }
 
 #[derive(Debug, Clone, Copy, Default, Hash, PartialEq, Eq)]
-pub enum Integral {
+pub enum FermiIntegral {
     #[default]
     Constant,
     OneElectron {
@@ -446,9 +557,9 @@ pub enum Integral {
     },
 }
 
-impl Code for Integral {}
+impl Code for FermiIntegral {}
 
-pub type IntegralSum<T> = SumRepr<T, Integral>;
+pub type FermiSum<T> = SumRepr<T, FermiIntegral>;
 
 pub enum Hamil<T, K> {
     Offset(T),
@@ -541,7 +652,7 @@ where
 }
 
 pub type PauliHamil<T> = Hamil<T, PauliCode>;
-pub type FermiHamil<T> = Hamil<T, Integral>;
+pub type FermiHamil<T> = Hamil<T, FermiIntegral>;
 
 #[cfg(test)]
 mod tests {
