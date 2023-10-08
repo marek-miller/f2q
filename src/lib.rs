@@ -654,6 +654,15 @@ where
 pub type PauliHamil<T> = Hamil<T, PauliCode>;
 pub type FermiHamil<T> = Hamil<T, FermiIntegral>;
 
+impl<T> From<SumRepr<T, FermiIntegral>> for SumRepr<T, PauliCode>
+where
+    T: Float,
+{
+    fn from(_value: SumRepr<T, FermiIntegral>) -> Self {
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
