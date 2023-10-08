@@ -27,6 +27,95 @@ impl Display for Error {
 
 impl std::error::Error for Error {}
 
+pub trait Code: Clone + Eq + Hash + Default {}
+
+#[derive(Debug)]
+pub struct SumRepr<T, K> {
+    map: HashMap<K, T>,
+}
+
+impl<T, K> Default for SumRepr<T, K> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T, K> SumRepr<T, K> {
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+        }
+    }
+
+    #[must_use]
+    pub fn as_map(&self) -> &HashMap<K, T> {
+        &self.map
+    }
+
+    pub fn as_map_mut(&mut self) -> &mut HashMap<K, T> {
+        &mut self.map
+    }
+}
+
+impl<T, K> SumRepr<T, K>
+where
+    T: Float,
+    K: Code,
+{
+    #[must_use]
+    pub fn coeff(
+        &self,
+        code: &K,
+    ) -> T {
+        match self.map.get(code) {
+            Some(coeff) => *coeff,
+            None => T::zero(),
+        }
+    }
+
+    pub fn update(
+        &mut self,
+        code: K,
+        coeff: T,
+    ) -> Option<T> {
+        self.map.insert(code, coeff)
+    }
+
+    pub fn add(
+        &mut self,
+        code: K,
+        coeff: T,
+    ) {
+        let prev_coeff = self.coeff(&code);
+        let _ = self.update(code, coeff + prev_coeff);
+    }
+}
+
+pub type PauliSum<T> = SumRepr<T, PauliCode>;
+
+pub trait Terms<T, K> {
+    fn add_to(
+        &mut self,
+        repr: &mut SumRepr<T, K>,
+    );
+}
+
+impl<T, K> Terms<T, K> for SumRepr<T, K>
+where
+    T: Float,
+    K: Code,
+{
+    fn add_to(
+        &mut self,
+        repr: &mut SumRepr<T, K>,
+    ) {
+        for (code, value) in self.as_map() {
+            repr.add(code.clone(), *value);
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum Pauli {
     #[default]
@@ -225,8 +314,8 @@ impl PauliCode {
     }
 
     #[must_use]
-    pub fn iter(&self) -> Codes<'_> {
-        Codes::new(self)
+    pub fn iter(&self) -> PauliIter<'_> {
+        PauliIter::new(self)
     }
 
     pub fn from_paulis<I>(iter: I) -> Self
@@ -242,7 +331,7 @@ impl PauliCode {
 }
 
 impl<'a> IntoIterator for &'a PauliCode {
-    type IntoIter = Codes<'a>;
+    type IntoIter = PauliIter<'a>;
     type Item = Pauli;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -252,12 +341,12 @@ impl<'a> IntoIterator for &'a PauliCode {
 
 // Iterate over Paulis in PauliCode
 #[derive(Debug)]
-pub struct Codes<'a> {
+pub struct PauliIter<'a> {
     code:  &'a PauliCode,
     index: usize,
 }
 
-impl<'a> Codes<'a> {
+impl<'a> PauliIter<'a> {
     fn new(code: &'a PauliCode) -> Self {
         Self {
             code,
@@ -266,7 +355,7 @@ impl<'a> Codes<'a> {
     }
 }
 
-impl<'a> Iterator for Codes<'a> {
+impl<'a> Iterator for PauliIter<'a> {
     type Item = Pauli;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -279,97 +368,87 @@ impl<'a> Iterator for Codes<'a> {
         pauli
     }
 }
-
-pub trait Code: Clone + Eq + Hash + Default {}
-
 impl Code for PauliCode {}
 
-#[derive(Debug)]
-pub struct SumRepr<T, K> {
-    map: HashMap<K, T>,
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+pub enum Spin {
+    #[default]
+    Down,
+    Up,
 }
 
-impl<T, K> Default for SumRepr<T, K> {
+macro_rules! impl_spin_int {
+    ($($Typ:ty)* ) => {
+        $(
+            impl From<Spin> for $Typ {
+                fn from(value: Spin) -> Self {
+                    match value {
+                        Spin::Down => 0,
+                        Spin::Up => 1,
+                    }
+                }
+            }
+        )*
+    };
+}
+
+impl_spin_int!(u8 u16 u32 u64 u128 usize);
+impl_spin_int!(i8 i16 i32 i64 i128 isize);
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub struct Orbital {
+    n: usize,
+    s: Spin,
+}
+
+impl Default for Orbital {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<T, K> SumRepr<T, K> {
-    #[must_use]
-    pub fn new() -> Self {
         Self {
-            map: HashMap::new(),
-        }
-    }
-
-    #[must_use]
-    pub fn as_map(&self) -> &HashMap<K, T> {
-        &self.map
-    }
-
-    pub fn as_map_mut(&mut self) -> &mut HashMap<K, T> {
-        &mut self.map
-    }
-}
-
-impl<T, K> SumRepr<T, K>
-where
-    T: Float,
-    K: Code,
-{
-    #[must_use]
-    pub fn coeff(
-        &self,
-        code: &K,
-    ) -> T {
-        match self.map.get(code) {
-            Some(coeff) => *coeff,
-            None => T::zero(),
-        }
-    }
-
-    pub fn update(
-        &mut self,
-        code: K,
-        coeff: T,
-    ) -> Option<T> {
-        self.map.insert(code, coeff)
-    }
-
-    pub fn add(
-        &mut self,
-        code: K,
-        coeff: T,
-    ) {
-        let prev_coeff = self.coeff(&code);
-        let _ = self.update(code, coeff + prev_coeff);
-    }
-}
-
-pub type PauliSum<T> = SumRepr<T, PauliCode>;
-
-pub trait Terms<T, K> {
-    fn add_to(
-        &mut self,
-        repr: &mut SumRepr<T, K>,
-    );
-}
-
-impl<T, K> Terms<T, K> for SumRepr<T, K>
-where
-    T: Float,
-    K: Code,
-{
-    fn add_to(
-        &mut self,
-        repr: &mut SumRepr<T, K>,
-    ) {
-        for (code, value) in self.as_map() {
-            repr.add(code.clone(), *value);
+            n: 0,
+            s: Default::default(),
         }
     }
 }
+
+impl Orbital {
+    pub fn new(
+        n: usize,
+        s: Spin,
+    ) -> Self {
+        Self {
+            n,
+            s,
+        }
+    }
+
+    /// # Panics
+    ///
+    /// Panics is the orbitals index cannot fit into `usize`,
+    pub fn enumerate(&self) -> usize {
+        if self.n > usize::MAX / 2 - usize::from(self.s) {
+            panic!("orbital index out of bound")
+        }
+        self.n * 2 + usize::from(self.s)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, Hash, PartialEq, Eq)]
+pub enum Integral {
+    #[default]
+    Constant,
+    OneElectron {
+        cr: Orbital,
+        an: Orbital,
+    },
+    TwoElectron {
+        cr: (Orbital, Orbital),
+        an: (Orbital, Orbital),
+    },
+}
+
+impl Code for Integral {}
+
+pub type IntegralSum<T> = SumRepr<T, Integral>;
 
 pub enum Hamil<T, K> {
     Offset(T),
@@ -461,81 +540,8 @@ where
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub enum Spin {
-    #[default]
-    Down,
-    Up,
-}
-
-macro_rules! impl_spin_int {
-    ($($Typ:ty)* ) => {
-        $(
-            impl From<Spin> for $Typ {
-                fn from(value: Spin) -> Self {
-                    match value {
-                        Spin::Down => 0,
-                        Spin::Up => 1,
-                    }
-                }
-            }
-        )*
-    };
-}
-
-impl_spin_int!(u8 u16 u32 u64 u128 usize);
-impl_spin_int!(i8 i16 i32 i64 i128 isize);
-
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct Orbital {
-    n: usize,
-    s: Spin,
-}
-
-impl Default for Orbital {
-    fn default() -> Self {
-        Self {
-            n: 0,
-            s: Default::default(),
-        }
-    }
-}
-
-impl Orbital {
-    pub fn new(
-        n: usize,
-        s: Spin,
-    ) -> Self {
-        Self {
-            n,
-            s,
-        }
-    }
-
-    /// # Panics
-    ///
-    /// Panics is the orbitals index cannot fit into `usize`,
-    pub fn enumerate(&self) -> usize {
-        if self.n > usize::MAX / 2 - usize::from(self.s) {
-            panic!("orbital index out of bound")
-        }
-        self.n * 2 + usize::from(self.s)
-    }
-}
-
-#[derive(Debug, Clone, Copy, Default, Hash)]
-pub enum Integral {
-    #[default]
-    Constant,
-    OneElectron {
-        cr: Orbital,
-        an: Orbital,
-    },
-    TwoElectron {
-        cr: (Orbital, Orbital),
-        an: (Orbital, Orbital),
-    },
-}
+pub type PauliHamil<T> = Hamil<T, PauliCode>;
+pub type FermiHamil<T> = Hamil<T, Integral>;
 
 #[cfg(test)]
 mod tests {
