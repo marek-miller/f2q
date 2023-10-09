@@ -23,7 +23,7 @@ impl Spin {
     /// # Example
     ///
     /// ```rust
-    /// # use hamil_repr::sec::Spin;
+    /// # use f2q::sec::Spin;
     ///
     /// let spin = Spin::Up;
     /// assert!(spin.is_up());
@@ -44,7 +44,7 @@ impl Spin {
     /// # Examples
     ///
     /// ```rust
-    /// # use hamil_repr::sec::Spin;
+    /// # use f2q::sec::Spin;
     ///
     /// let spin = Spin::Down;
     /// assert_eq!(spin.flip(), Spin::Up);
@@ -62,7 +62,7 @@ impl Spin {
     /// # Example
     ///
     /// ```rust
-    /// # use hamil_repr::sec::Spin;
+    /// # use f2q::sec::Spin;
     ///
     /// let spins: Vec<_> = Spin::both().collect();
     ///
@@ -114,7 +114,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use hamil_repr::sec::{Orbital, Spin};
+    /// # use f2q::sec::{Orbital, Spin};
     ///
     /// let orb = Orbital::new(0, Spin::Down);
     /// assert_eq!(orb.index(), 0);
@@ -143,7 +143,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use hamil_repr::sec::{Orbital, Spin};
+    /// # use f2q::sec::{Orbital, Spin};
     ///
     /// let orb = Orbital::new(0, Spin::Down);
     /// assert_eq!(orb.index(), 0);
@@ -165,7 +165,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use hamil_repr::sec::{Orbital, Spin};
+    /// # use f2q::sec::{Orbital, Spin};
     ///
     /// let orbital = Orbital::from_index(3);
     ///
@@ -184,7 +184,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use hamil_repr::sec::{Orbital, Spin};
+    /// # use f2q::sec::{Orbital, Spin};
     ///
     /// let orbitals: Vec<_> = Orbital::gen_range((1..=3)).collect();
     ///
@@ -254,7 +254,7 @@ impl Integral {
     /// # Examples
     ///
     /// ```rust
-    /// # use hamil_repr::sec::Integral;
+    /// # use f2q::sec::Integral;
     ///
     /// let integral = Integral::new();
     ///
@@ -271,7 +271,7 @@ impl Integral {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use hamil_repr::sec::{Integral, Orbital, Spin};
+    /// # use f2q::sec::{Integral, Orbital, Spin};
     ///
     /// let integral = Integral::one_electron(
     ///     Orbital::new(0, Spin::Down),
@@ -308,7 +308,7 @@ impl Integral {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use hamil_repr::sec::{Integral, Orbital, Spin};
+    /// # use f2q::sec::{Integral, Orbital, Spin};
     ///
     /// let integral = Integral::two_electron(
     ///     (Orbital::new(0, Spin::Down), Orbital::new(0, Spin::Up)),

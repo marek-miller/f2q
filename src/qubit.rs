@@ -97,7 +97,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use hamil_repr::qubit::{Pauli, PauliCode};
+    /// # use f2q::qubit::{Pauli, PauliCode};
     ///
     /// let code = PauliCode::new((0b0100, 0b1110));
     ///

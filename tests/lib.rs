@@ -1,4 +1,4 @@
-use hamil_repr::{
+use f2q::{
     qubit::{
         Pauli,
         PauliCode,

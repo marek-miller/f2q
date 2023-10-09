@@ -3,7 +3,7 @@ use std::{
     time::Instant,
 };
 
-use hamil_repr::{
+use f2q::{
     maps::JordanWigner,
     sec::{
         Integral,
