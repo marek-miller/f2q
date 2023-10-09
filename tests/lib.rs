@@ -1,7 +1,14 @@
-use super::*;
-use crate::q2::{
-    Orbital,
-    Spin,
+use hamil_repr::{
+    qubit::{
+        Pauli,
+        PauliCode,
+    },
+    sec::{
+        Orbital,
+        Spin,
+    },
+    terms::SumRepr,
+    Error,
 };
 
 #[test]

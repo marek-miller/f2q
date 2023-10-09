@@ -3,31 +3,17 @@ use std::{
     hash::Hash,
 };
 
-mod hamil;
-mod mapping;
-mod pauli;
+use terms::SumRepr;
 
-#[cfg(test)]
-mod tests;
+pub mod maps;
+pub mod qubit;
+pub mod sec;
+pub mod terms;
 
-pub mod q2;
-pub mod repr;
+/// Representation of Hermitian operators
+pub trait Code: Copy + Clone + Eq + Hash + Default {}
 
-pub use hamil::Hamil;
-pub use pauli::{
-    Pauli,
-    PauliCode,
-};
-#[doc(inline)]
-pub use repr::SumRepr;
-
-pub type PauliHamil<T> = Hamil<T, PauliCode>;
-pub type PauliSum<T> = SumRepr<T, PauliCode>;
-
-/// Representation of hermitian operators
-pub trait Code: Clone + Eq + Hash + Default {}
-
-/// Convert and serialize sum terms in various encodings
+/// Convert and serialize sum of terms in various encodings
 pub trait Terms<T, K>
 where
     K: Code,

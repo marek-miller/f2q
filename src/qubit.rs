@@ -1,3 +1,5 @@
+//! Qubit representation
+
 use crate::Code;
 pub use crate::Error;
 
@@ -95,7 +97,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use hamil_repr::{Pauli, PauliCode};
+    /// # use hamil_repr::qubit::{Pauli, PauliCode};
     ///
     /// let code = PauliCode::new((0b0100, 0b1110));
     ///

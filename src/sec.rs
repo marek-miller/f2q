@@ -1,11 +1,5 @@
 //! Second quantization
-use crate::{
-    Code,
-    Hamil,
-};
-
-pub type FermiHamil<T> = Hamil<T, Integral>;
-pub type FermiSum<T> = crate::SumRepr<T, Integral>;
+use crate::Code;
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum Spin {

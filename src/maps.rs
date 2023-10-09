@@ -1,13 +1,17 @@
+//! Mappings between various encodings
+
 use num::Float;
 
 use crate::{
-    q2::{
+    qubit::{
+        Pauli,
+        PauliCode,
+    },
+    sec::{
         Integral,
         Orbital,
     },
-    Pauli,
-    PauliCode,
-    SumRepr,
+    terms::SumRepr,
     Terms,
 };
 
@@ -16,6 +20,7 @@ pub struct JordanWigner<'a, T> {
 }
 
 impl<'a, T> JordanWigner<'a, T> {
+    #[must_use]
     pub fn new(repr: &'a SumRepr<T, Integral>) -> Self {
         Self {
             repr,
