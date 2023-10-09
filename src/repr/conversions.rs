@@ -260,23 +260,23 @@ where
     }
 }
 
-#[test]
-fn test_conversion_01() {
-    let integral = Integral::Constant;
-    let mut fermi_repr = SumRepr::new();
-
-    fermi_repr.add(integral, 1.0);
-
-    let pauli_repr = SumRepr::<_, PauliCode>::from(fermi_repr);
-    let value = pauli_repr.as_map().get(&PauliCode::default()).unwrap();
-    assert_eq!(*value, 1.0);
-}
-
 #[cfg(test)]
 mod tests {
 
     use super::*;
     use crate::q2::Spin;
+
+    #[test]
+    fn test_conversion_01() {
+        let integral = Integral::Constant;
+        let mut fermi_repr = SumRepr::new();
+
+        fermi_repr.add(integral, 1.0);
+
+        let pauli_repr = SumRepr::<_, PauliCode>::from(fermi_repr);
+        let value = pauli_repr.as_map().get(&PauliCode::default()).unwrap();
+        assert_eq!(*value, 1.0);
+    }
 
     #[test]
     fn test_conversion_02() {
