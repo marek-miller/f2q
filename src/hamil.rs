@@ -86,13 +86,13 @@ where
     }
 }
 
-impl<T, K> From<Hamil<T, K>> for SumRepr<T, K>
+impl<T, K> From<&mut Hamil<T, K>> for SumRepr<T, K>
 where
     T: Float,
     K: Code,
 {
-    fn from(value: Hamil<T, K>) -> Self {
-        let mut hamil = value;
+    fn from(value: &mut Hamil<T, K>) -> Self {
+        let hamil = value;
         let mut repr = SumRepr::new();
         hamil.add_to(&mut repr);
         repr

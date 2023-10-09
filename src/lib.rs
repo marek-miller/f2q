@@ -4,6 +4,7 @@ use std::{
 };
 
 mod hamil;
+mod mapping;
 mod pauli;
 
 #[cfg(test)]
