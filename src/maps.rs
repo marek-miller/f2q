@@ -80,7 +80,7 @@ fn pauli_add_one_electron_integral_equal<T: Float>(
     pauli_repr.add(code, coeff * one_half);
 
     let mut code = PauliCode::default();
-    code.set(cr.enumerate(), Pauli::Z);
+    code.set(cr.index(), Pauli::Z);
     pauli_repr.add(code, -coeff * one_half);
 }
 
@@ -95,15 +95,15 @@ fn pauli_add_one_electron_integral_nonequal<T: Float>(
 
     let mut code = PauliCode::default();
     // we know that orbitals are ordered: cr <= an
-    for i in cr.enumerate() + 1..an.enumerate() {
+    for i in cr.index() + 1..an.index() {
         code.set(i, Pauli::Z);
     }
-    code.set(cr.enumerate(), Pauli::X);
-    code.set(an.enumerate(), Pauli::X);
+    code.set(cr.index(), Pauli::X);
+    code.set(an.index(), Pauli::X);
     pauli_repr.add(code, coeff * one_half);
 
-    code.set(cr.enumerate(), Pauli::Y);
-    code.set(an.enumerate(), Pauli::Y);
+    code.set(cr.index(), Pauli::Y);
+    code.set(an.index(), Pauli::Y);
     pauli_repr.add(code, -coeff * one_half);
 }
 
@@ -113,12 +113,7 @@ fn pauli_add_two_electron_integral<T: Float>(
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
 ) {
-    let (p, q, r, s) = (
-        cr.0.enumerate(),
-        cr.1.enumerate(),
-        an.0.enumerate(),
-        an.1.enumerate(),
-    );
+    let (p, q, r, s) = (cr.0.index(), cr.1.index(), an.0.index(), an.1.index());
 
     if p == s && q == r {
         pauli_add_two_electron_integral_pq(p, q, coeff, pauli_repr);

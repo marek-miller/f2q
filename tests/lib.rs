@@ -204,18 +204,18 @@ fn test_spin_init_01() {
 #[test]
 fn test_orbital_enumerate_01() {
     let orb = Orbital::default();
-    assert_eq!(orb.enumerate(), 0);
+    assert_eq!(orb.index(), 0);
 
     let orb = Orbital::new(3, Spin::Down);
-    assert_eq!(orb.enumerate(), 6);
+    assert_eq!(orb.index(), 6);
 
     let orb = Orbital::new(8, Spin::Up);
-    assert_eq!(orb.enumerate(), 17);
+    assert_eq!(orb.index(), 17);
 }
 
 #[test]
 #[should_panic(expected = "orbital index out of bound")]
 fn test_orbital_enumerate_02() {
     let orb = Orbital::new(usize::MAX / 2, Spin::Up);
-    assert_eq!(orb.enumerate(), usize::MAX);
+    assert_eq!(orb.index(), usize::MAX);
 }

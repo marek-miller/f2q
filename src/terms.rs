@@ -99,7 +99,7 @@ where
         repr: &mut SumRepr<T, K>,
     ) {
         for (code, value) in self.as_map() {
-            repr.add(code.clone(), *value);
+            repr.add(*code, *value);
         }
     }
 }
