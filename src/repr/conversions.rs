@@ -118,7 +118,7 @@ fn pauli_add_two_electron_integral<T: Float>(
     } else if q == r {
         pauli_add_two_electron_integral_pqs(p, q, s, coeff, pauli_repr);
     } else {
-        todo!()
+        pauli_add_two_electron_integral_pqrs(p, q, r, s, coeff, pauli_repr);
     }
 }
 
@@ -147,13 +147,103 @@ fn pauli_add_two_electron_integral_pq<T: Float>(
 }
 
 fn pauli_add_two_electron_integral_pqs<T: Float>(
-    _p: usize,
-    _q: usize,
-    _s: usize,
-    _coeff: T,
-    _pauli_repr: &mut SumRepr<T, PauliCode>,
+    p: usize,
+    q: usize,
+    s: usize,
+    coeff: T,
+    pauli_repr: &mut SumRepr<T, PauliCode>,
 ) {
-    todo!()
+    let frac =
+        T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
+
+    let mut code = PauliCode::default();
+
+    for i in p + 1..s {
+        code.set(i, Pauli::Z);
+    }
+    code.set(p, Pauli::X);
+    code.set(s, Pauli::X);
+    pauli_repr.add(code, frac * coeff);
+
+    code.set(q, Pauli::Z);
+    pauli_repr.add(code, -frac * coeff);
+
+    code.set(p, Pauli::Y);
+    code.set(s, Pauli::Y);
+    code.set(q, Pauli::I);
+    pauli_repr.add(code, frac * coeff);
+
+    code.set(q, Pauli::Z);
+    pauli_repr.add(code, -frac * coeff);
+}
+
+fn pauli_add_two_electron_integral_pqrs<T: Float>(
+    p: usize,
+    q: usize,
+    r: usize,
+    s: usize,
+    coeff: T,
+    pauli_repr: &mut SumRepr<T, PauliCode>,
+) {
+    let frac =
+        T::from(0.125).expect("cannot obtain floating point fraction: 0.125");
+
+    let mut code = PauliCode::default();
+
+    for i in p + 1..q {
+        code.set(i, Pauli::Z);
+    }
+    for i in s + 1..r {
+        code.set(i, Pauli::Z);
+    }
+
+    code.set(p, Pauli::X);
+    code.set(s, Pauli::X);
+    code.set(r, Pauli::X);
+    code.set(s, Pauli::X);
+    pauli_repr.add(code, frac * coeff);
+
+    code.set(p, Pauli::X);
+    code.set(s, Pauli::X);
+    code.set(r, Pauli::Y);
+    code.set(s, Pauli::Y);
+    pauli_repr.add(code, -frac * coeff);
+
+    code.set(p, Pauli::X);
+    code.set(s, Pauli::Y);
+    code.set(r, Pauli::X);
+    code.set(s, Pauli::Y);
+    pauli_repr.add(code, frac * coeff);
+
+    code.set(p, Pauli::Y);
+    code.set(s, Pauli::X);
+    code.set(r, Pauli::X);
+    code.set(s, Pauli::Y);
+    pauli_repr.add(code, frac * coeff);
+
+    code.set(p, Pauli::Y);
+    code.set(s, Pauli::X);
+    code.set(r, Pauli::Y);
+    code.set(s, Pauli::X);
+    pauli_repr.add(code, frac * coeff);
+
+    code.set(p, Pauli::Y);
+    code.set(s, Pauli::Y);
+    code.set(r, Pauli::X);
+    code.set(s, Pauli::X);
+    pauli_repr.add(code, -frac * coeff);
+
+    code.set(p, Pauli::X);
+    code.set(s, Pauli::Y);
+    code.set(r, Pauli::Y);
+    code.set(s, Pauli::X);
+    pauli_repr.add(code, frac * coeff);
+
+    code.set(p, Pauli::Y);
+    code.set(s, Pauli::Y);
+    code.set(r, Pauli::Y);
+    code.set(s, Pauli::Y);
+    pauli_repr.add(code, frac * coeff);
 }
 
 impl<T> Terms<T, PauliCode> for Hamil<T, Integral>
