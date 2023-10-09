@@ -31,6 +31,7 @@ impl Spin {
     /// let spin = Spin::Down;
     /// assert!(!spin.is_up());
     /// ```
+    #[must_use]
     pub fn is_up(&self) -> bool {
         match self {
             Self::Down => false,
@@ -48,6 +49,7 @@ impl Spin {
     /// let spin = Spin::Down;
     /// assert_eq!(spin.flip(), Spin::Up);
     /// ```
+    #[must_use]
     pub fn flip(&self) -> Self {
         match self {
             Self::Down => Self::Up,
@@ -73,9 +75,10 @@ impl Spin {
 
 impl From<bool> for Spin {
     fn from(value: bool) -> Self {
-        match value {
-            false => Spin::Down,
-            true => Spin::Up,
+        if value {
+            Spin::Up
+        } else {
+            Spin::Down
         }
     }
 }
@@ -168,6 +171,7 @@ impl Orbital {
     ///
     /// assert_eq!(orbital, Orbital::new(1, Spin::Up));
     /// ```
+    #[must_use]
     pub fn from_index(idx: usize) -> Self {
         Self::new(idx / 2, Spin::from(idx & 1 != 0))
     }
@@ -175,7 +179,7 @@ impl Orbital {
     /// Generate orbitals with indeces in the given range.
     ///
     /// If the start bound is unbounded, the iterator starts from zero.
-    /// If the end bound is unbounded, it is taken to be usize::MAx (incl.)
+    /// If the end bound is unbounded, it is taken to be `usize::MAx` (incl.)
     ///
     /// # Examples
     ///
@@ -215,7 +219,7 @@ impl Orbital {
     }
 }
 
-/// Electronic integral with creation (cr) and annihilation (hr)
+/// Electronic integral with creation (cr) and annihilation (an)
 /// operators indexed by orbitals in canonical order:
 ///
 /// - If Integral is a one-electron integral and `p = cr.index()`, `q =
@@ -256,6 +260,7 @@ impl Integral {
     ///
     /// assert_eq!(integral, Integral::Constant);
     /// ```
+    #[must_use]
     pub fn new() -> Integral {
         Self::default()
     }
@@ -280,6 +285,7 @@ impl Integral {
     /// );
     /// assert!(integral.is_none());
     /// ```
+    #[must_use]
     pub fn one_electron(
         cr: Orbital,
         an: Orbital,
@@ -309,13 +315,14 @@ impl Integral {
     ///     (Orbital::new(1, Spin::Down), Orbital::new(0, Spin::Down)),
     /// );
     /// assert!(integral.is_some());
-    /// 
+    ///
     /// let integral = Integral::two_electron(
     ///     (Orbital::new(0, Spin::Down), Orbital::new(0, Spin::Down)),
     ///     (Orbital::new(1, Spin::Down), Orbital::new(0, Spin::Down)),
     /// );
     /// assert!(integral.is_none());
     /// ```
+    #[must_use]
     pub fn two_electron(
         cr: (Orbital, Orbital),
         an: (Orbital, Orbital),

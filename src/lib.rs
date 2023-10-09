@@ -41,3 +41,70 @@ impl Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+/// Iterate over all pairs in a slice.
+#[derive(Debug)]
+pub struct Pairs<'a, T> {
+    data: &'a [T],
+    i:    usize,
+    j:    usize,
+}
+
+impl<'a, T> Pairs<'a, T> {
+    pub fn new(data: &'a [T]) -> Self {
+        Self {
+            data,
+            i: 0,
+            j: 0,
+        }
+    }
+}
+
+impl<'a, T> Iterator for Pairs<'a, T> {
+    type Item = (&'a T, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i >= self.data.len() {
+            return None;
+        }
+
+        let out = (&self.data[self.i], &self.data[self.j]);
+
+        self.j += 1;
+
+        if self.j >= self.data.len() {
+            self.j = 0;
+            self.i += 1;
+        }
+
+        Some(out)
+    }
+}
+
+#[test]
+fn test_pairs() {
+    let data = [0, 1, 2, 3];
+    let result = Pairs::new(&data).collect::<Vec<_>>();
+
+    assert_eq!(
+        result,
+        &[
+            (&0, &0),
+            (&0, &1),
+            (&0, &2),
+            (&0, &3),
+            (&1, &0),
+            (&1, &1),
+            (&1, &2),
+            (&1, &3),
+            (&2, &0),
+            (&2, &1),
+            (&2, &2),
+            (&2, &3),
+            (&3, &0),
+            (&3, &1),
+            (&3, &2),
+            (&3, &3),
+        ]
+    );
+}
