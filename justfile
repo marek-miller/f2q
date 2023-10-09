@@ -9,3 +9,5 @@ lint-pedantic:
 example EXAMPLE:
     cargo run --release --example {{EXAMPLE}}
 
+test:
+    cargo test 

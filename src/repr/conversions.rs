@@ -157,7 +157,6 @@ fn pauli_add_two_electron_integral_pqs<T: Float>(
         T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
 
     let mut code = PauliCode::default();
-
     for i in p + 1..s {
         code.set(i, Pauli::Z);
     }
@@ -258,5 +257,45 @@ where
         <Self as Terms<T, Integral>>::add_to(self, &mut fermi_repr);
         let mut pauli_repr = SumRepr::<T, PauliCode>::from(fermi_repr);
         pauli_repr.add_to(repr);
+    }
+}
+
+#[test]
+fn test_conversion_01() {
+    let integral = Integral::Constant;
+    let mut fermi_repr = SumRepr::new();
+
+    fermi_repr.add(integral, 1.0);
+
+    let pauli_repr = SumRepr::<_, PauliCode>::from(fermi_repr);
+    let value = pauli_repr.as_map().get(&PauliCode::default()).unwrap();
+    assert_eq!(*value, 1.0);
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use crate::q2::Spin;
+
+    #[test]
+    fn test_conversion_02() {
+        let p = Orbital::new(0, Spin::Up);
+
+        let integral = Integral::OneElectron {
+            cr: p, an: p
+        };
+        let mut fermi_repr = SumRepr::new();
+        fermi_repr.add(integral, 1.0);
+
+        let pauli_repr = SumRepr::<_, PauliCode>::from(fermi_repr);
+
+        let value = pauli_repr.as_map().get(&PauliCode::default()).unwrap();
+        assert_eq!(*value, 0.5);
+        let value = pauli_repr
+            .as_map()
+            .get(&PauliCode::from_paulis([Pauli::I, Pauli::Z]))
+            .unwrap();
+        assert_eq!(*value, -0.5);
     }
 }
