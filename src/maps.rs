@@ -12,6 +12,7 @@ use crate::{
         Orbital,
     },
     terms::SumRepr,
+    Error,
     Terms,
 };
 
@@ -35,7 +36,7 @@ where
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, PauliCode>,
-    ) {
+    ) -> Result<(), Error> {
         for (&code, &coeff) in self.repr.as_map() {
             match code {
                 Integral::Constant => {
@@ -51,6 +52,7 @@ where
                 } => pauli_add_two_electron_integral(cr, an, coeff, repr),
             }
         }
+        Ok(())
     }
 }
 

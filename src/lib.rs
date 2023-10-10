@@ -46,7 +46,7 @@ where
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
-    );
+    ) -> Result<(), Error>;
 }
 
 #[derive(Debug, PartialEq)]

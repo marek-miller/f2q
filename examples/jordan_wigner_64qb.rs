@@ -12,7 +12,7 @@ use rand::Rng;
 
 const ORBITAL_MAX_IDX: usize = 64;
 
-fn main() {
+fn main() -> Result<(), f2q::Error> {
     let mut rng = rand::thread_rng();
 
     let orbitals = Orbital::gen_range(0..ORBITAL_MAX_IDX).collect::<Vec<_>>();
@@ -47,7 +47,7 @@ fn main() {
 
     let now = Instant::now();
     let pauli_sum = &mut SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(pauli_sum);
+    JordanWigner::new(&fermi_sum).add_to(pauli_sum)?;
 
     println!("Done.");
     println!(
@@ -55,4 +55,6 @@ fn main() {
         pauli_sum.as_map().len(),
         now.elapsed().as_millis()
     );
+
+    Ok(())
 }

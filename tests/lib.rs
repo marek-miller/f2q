@@ -335,7 +335,9 @@ fn jordan_wigner_01() {
     fermi_sum.add(Integral::Constant, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let coeff = pauli_sum.as_map().get(&PauliCode::default()).unwrap();
     assert!(
@@ -352,7 +354,9 @@ fn check_jordan_wigner_one_pp(index: usize) {
     fermi_sum.add(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let code = PauliCode::default();
     let coeff = pauli_sum.as_map().get(&code).unwrap();
@@ -396,7 +400,9 @@ fn check_jordan_wigner_one_pq(
     fermi_sum.add(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index2 {
@@ -444,7 +450,9 @@ fn check_jordan_wigner_two_pq(
     fermi_sum.add(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let code = PauliCode::default();
     let coeff = pauli_sum.as_map().get(&code).unwrap();
@@ -511,7 +519,9 @@ fn check_jordan_wigner_two_pqs(
     fermi_sum.add(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index3 {
@@ -598,7 +608,9 @@ fn check_jordan_wigner_two_pqrs(
     fermi_sum.add(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let base_code = {
         let mut code = PauliCode::default();
