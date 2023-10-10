@@ -104,7 +104,7 @@ fn pauli_add_one_electron_integral_nonequal<T: Float>(
 
     code.set(cr.index(), Pauli::Y);
     code.set(an.index(), Pauli::Y);
-    pauli_repr.add(code, -coeff * one_half);
+    pauli_repr.add(code, coeff * one_half);
 }
 
 fn pauli_add_two_electron_integral<T: Float>(
@@ -199,49 +199,49 @@ fn pauli_add_two_electron_integral_pqrs<T: Float>(
     }
 
     code.set(p, Pauli::X);
-    code.set(s, Pauli::X);
+    code.set(q, Pauli::X);
     code.set(r, Pauli::X);
     code.set(s, Pauli::X);
     pauli_repr.add(code, frac * coeff);
 
     code.set(p, Pauli::X);
-    code.set(s, Pauli::X);
+    code.set(q, Pauli::X);
     code.set(r, Pauli::Y);
     code.set(s, Pauli::Y);
     pauli_repr.add(code, -frac * coeff);
 
     code.set(p, Pauli::X);
-    code.set(s, Pauli::Y);
+    code.set(q, Pauli::Y);
     code.set(r, Pauli::X);
     code.set(s, Pauli::Y);
     pauli_repr.add(code, frac * coeff);
 
     code.set(p, Pauli::Y);
-    code.set(s, Pauli::X);
+    code.set(q, Pauli::X);
     code.set(r, Pauli::X);
     code.set(s, Pauli::Y);
     pauli_repr.add(code, frac * coeff);
 
     code.set(p, Pauli::Y);
-    code.set(s, Pauli::X);
+    code.set(q, Pauli::X);
     code.set(r, Pauli::Y);
     code.set(s, Pauli::X);
     pauli_repr.add(code, frac * coeff);
 
     code.set(p, Pauli::Y);
-    code.set(s, Pauli::Y);
+    code.set(q, Pauli::Y);
     code.set(r, Pauli::X);
     code.set(s, Pauli::X);
     pauli_repr.add(code, -frac * coeff);
 
     code.set(p, Pauli::X);
-    code.set(s, Pauli::Y);
+    code.set(q, Pauli::Y);
     code.set(r, Pauli::Y);
     code.set(s, Pauli::X);
     pauli_repr.add(code, frac * coeff);
 
     code.set(p, Pauli::Y);
-    code.set(s, Pauli::Y);
+    code.set(q, Pauli::Y);
     code.set(r, Pauli::Y);
     code.set(s, Pauli::Y);
     pauli_repr.add(code, frac * coeff);

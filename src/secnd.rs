@@ -172,8 +172,8 @@ impl Orbital {
     /// assert_eq!(orbital, Orbital::new(1, Spin::Up));
     /// ```
     #[must_use]
-    pub fn from_index(idx: usize) -> Self {
-        Self::new(idx / 2, Spin::from(idx & 1 != 0))
+    pub fn from_index(index: usize) -> Self {
+        Self::new(index / 2, Spin::from(index & 1 != 0))
     }
 
     /// Generate orbitals with indeces in the given range.
@@ -202,20 +202,6 @@ impl Orbital {
     where
         R: RangeBounds<usize>,
     {
-        // let start = match range.start_bound() {
-        //     Bound::Included(&x) => x,
-        //     Bound::Excluded(&x) if x < usize::MAX => x + 1,
-        //     Bound::Excluded(_) => usize::MAX,
-        //     Bound::Unbounded => 0,
-        // };
-
-        // let end = match range.end_bound() {
-        //     Bound::Included(&x) if x < usize::MAX => x + 1,
-        //     Bound::Included(_) => usize::MAX,
-        //     Bound::Excluded(&x) => x,
-        //     Bound::Unbounded => usize::MAX,
-        // };
-
         OrbitalRange::new(range)
     }
 }

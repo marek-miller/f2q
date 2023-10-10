@@ -10,6 +10,7 @@ pub mod qubit;
 pub mod secnd;
 pub mod terms;
 
+/// Full and flattened API  
 pub mod prelude {
     pub use crate::{
         maps::JordanWigner,
