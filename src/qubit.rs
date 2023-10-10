@@ -259,6 +259,36 @@ impl PauliCode {
         }
     }
 
+    /// Set Pauli operator at `index`.
+    ///
+    /// # Safety
+    ///
+    /// The user must ensure that that `i` is within `0..64` (excl.)
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// let mut code = PauliCode::default();
+    /// assert_eq!(code.pauli(17), Some(Pauli::I));
+    ///
+    /// unsafe {
+    ///     code.set_unchecked(17, Pauli::Z);
+    /// }
+    ///
+    /// assert_eq!(code.pauli(17), Some(Pauli::Z));
+    /// ```
+    pub unsafe fn set_unchecked(
+        &mut self,
+        index: usize,
+        pauli: Pauli,
+    ) {
+        self.pauli_mut_unchecked(index, |p| {
+            *p = pauli;
+        });
+    }
+
     /// Modify the Pauli operator in the code at site `i`.
     ///
     /// If index `i` is less then `64`, the supplied closure will receive a
