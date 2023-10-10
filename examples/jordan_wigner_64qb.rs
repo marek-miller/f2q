@@ -46,8 +46,9 @@ fn main() -> Result<(), f2q::Error> {
     let _ = std::io::stdout().flush();
 
     let now = Instant::now();
-    let pauli_sum = &mut SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(pauli_sum)?;
+    let mut pauli_sum = SumRepr::new();
+
+    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum)?;
 
     println!("Done.");
     println!(

@@ -45,59 +45,82 @@ where
                 Integral::OneElectron {
                     cr,
                     an,
-                } => pauli_add_one_electron_integral(cr, an, coeff, repr),
+                } => one_electron_integral(cr, an, coeff, repr)?,
                 Integral::TwoElectron {
                     cr,
                     an,
-                } => pauli_add_two_electron_integral(cr, an, coeff, repr),
+                } => two_electron_integral(cr, an, coeff, repr)?,
             }
         }
+
         Ok(())
     }
 }
 
-fn pauli_add_one_electron_integral<T: Float>(
+fn one_electron_integral<T: Float>(
     cr: Orbital,
     an: Orbital,
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
-) {
+) -> Result<(), Error> {
     if cr == an {
-        pauli_add_one_electron_integral_equal(cr, an, coeff, pauli_repr);
+        one_electron_integral_equal(cr, an, coeff, pauli_repr)?;
     } else {
-        pauli_add_one_electron_integral_nonequal(cr, an, coeff, pauli_repr);
+        one_electron_integral_nonequal(cr, an, coeff, pauli_repr)?;
     }
+
+    Ok(())
 }
 
-fn pauli_add_one_electron_integral_equal<T: Float>(
+fn one_electron_integral_equal<T: Float>(
     cr: Orbital,
     _an: Orbital,
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
-) {
+) -> Result<(), Error> {
+    if cr.index() >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "cr index out of bound".to_string(),
+        });
+    }
+
     let term = coeff
         * T::from(0.5).expect("cannot obtain floating point fraction: 0.5");
 
     let mut code = PauliCode::default();
     pauli_repr.add(code, term);
 
-    code.set(cr.index(), Pauli::Z);
+    // SAFETY: We checked bounds above
+    unsafe {
+        code.set_unchecked(cr.index(), Pauli::Z);
+    }
     pauli_repr.add(code, -term);
+
+    Ok(())
 }
 
-fn pauli_add_one_electron_integral_nonequal<T: Float>(
+fn one_electron_integral_nonequal<T: Float>(
     cr: Orbital,
     an: Orbital,
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
-) {
+) -> Result<(), Error> {
     let term = coeff
         * T::from(0.5).expect("cannot obtain floating point fraction: 0.5");
 
     let mut code = PauliCode::default();
 
-    assert!(cr.index() < 64, "cr index out of bound");
-    assert!(an.index() < 64, "cr index out of bound");
+    if cr.index() >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "cr index out of bound".to_string(),
+        });
+    }
+
+    if an.index() >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "an index out of bound".to_string(),
+        });
+    }
 
     // SAFETY:
     // We just checked if indices are within bound
@@ -118,33 +141,46 @@ fn pauli_add_one_electron_integral_nonequal<T: Float>(
         code.set_unchecked(an.index(), Pauli::Y);
     }
     pauli_repr.add(code, term);
+
+    Ok(())
 }
 
-fn pauli_add_two_electron_integral<T: Float>(
+fn two_electron_integral<T: Float>(
     cr: (Orbital, Orbital),
     an: (Orbital, Orbital),
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
-) {
+) -> Result<(), Error> {
     let (p, q, r, s) = (cr.0.index(), cr.1.index(), an.0.index(), an.1.index());
 
     if p == s && q == r {
-        pauli_add_two_electron_integral_pq(p, q, coeff, pauli_repr);
+        two_electron_integral_pq(p, q, coeff, pauli_repr)?;
     } else if q == r {
-        pauli_add_two_electron_integral_pqs(p, q, s, coeff, pauli_repr);
+        two_electron_integral_pqs(p, q, s, coeff, pauli_repr)?;
     } else {
-        pauli_add_two_electron_integral_pqrs(p, q, r, s, coeff, pauli_repr);
+        two_electron_integral_pqrs(p, q, r, s, coeff, pauli_repr)?;
     }
+
+    Ok(())
 }
 
-fn pauli_add_two_electron_integral_pq<T: Float>(
+fn two_electron_integral_pq<T: Float>(
     p: usize,
     q: usize,
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
-) {
-    assert!(p < 64);
-    assert!(q < 64);
+) -> Result<(), Error> {
+    if p >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "p index out of bound".to_string(),
+        });
+    }
+
+    if q >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "q index out of bound".to_string(),
+        });
+    }
 
     let term = coeff
         * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
@@ -170,18 +206,34 @@ fn pauli_add_two_electron_integral_pq<T: Float>(
     }
     // Z_p Z_q
     pauli_repr.add(code, term);
+
+    Ok(())
 }
 
-fn pauli_add_two_electron_integral_pqs<T: Float>(
+fn two_electron_integral_pqs<T: Float>(
     p: usize,
     q: usize,
     s: usize,
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
-) {
-    assert!(p < 64);
-    assert!(q < 64);
-    assert!(s < 64);
+) -> Result<(), Error> {
+    if p >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "p index out of bound".to_string(),
+        });
+    }
+
+    if q >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "q index out of bound".to_string(),
+        });
+    }
+
+    if s >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "s index out of bound".to_string(),
+        });
+    }
 
     let term = coeff
         * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
@@ -214,20 +266,41 @@ fn pauli_add_two_electron_integral_pqs<T: Float>(
         code.set_unchecked(q, Pauli::I);
     }
     pauli_repr.add(code, term);
+
+    Ok(())
 }
 
-fn pauli_add_two_electron_integral_pqrs<T: Float>(
+fn two_electron_integral_pqrs<T: Float>(
     p: usize,
     q: usize,
     r: usize,
     s: usize,
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
-) {
-    assert!(p < 64);
-    assert!(q < 64);
-    assert!(r < 64);
-    assert!(s < 64);
+) -> Result<(), Error> {
+    if p >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "p index out of bound".to_string(),
+        });
+    }
+
+    if q >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "q index out of bound".to_string(),
+        });
+    }
+
+    if r >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "q index out of bound".to_string(),
+        });
+    }
+
+    if s >= 64 {
+        return Err(Error::PauliIndex {
+            msg: "s index out of bound".to_string(),
+        });
+    }
 
     let term = coeff
         * T::from(0.125).expect("cannot obtain floating point fraction: 0.125");
@@ -309,4 +382,6 @@ fn pauli_add_two_electron_integral_pqrs<T: Float>(
         code.set_unchecked(s, Pauli::Y);
     }
     pauli_repr.add(code, term);
+
+    Ok(())
 }
