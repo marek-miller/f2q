@@ -7,7 +7,7 @@ use crate::{
         Pauli,
         PauliCode,
     },
-    sec::{
+    secnd::{
         Integral,
         Orbital,
     },

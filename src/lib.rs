@@ -7,8 +7,33 @@ use terms::SumRepr;
 
 pub mod maps;
 pub mod qubit;
-pub mod sec;
+pub mod secnd;
 pub mod terms;
+
+pub mod prelude {
+    pub use crate::{
+        maps::JordanWigner,
+        qubit::{
+            Pauli,
+            PauliCode,
+            PauliIter,
+        },
+        secnd::{
+            Integral,
+            Orbital,
+            Spin,
+        },
+        terms::{
+            Hamil,
+            HeapRepr,
+            StackRepr,
+            SumRepr,
+        },
+        Code,
+        Pairs,
+        Terms,
+    };
+}
 
 /// Representation of Hermitian operators
 pub trait Code: Copy + Clone + Eq + Hash + Default {}
@@ -26,7 +51,8 @@ where
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-    CodeIndex,
+    /// Invalid index of a Pauli operator
+    PauliIndex { msg: String },
 }
 
 impl Display for Error {
@@ -35,7 +61,9 @@ impl Display for Error {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match self {
-            Self::CodeIndex => write!(f, "CodeValue"),
+            Self::PauliIndex {
+                msg,
+            } => write!(f, "PauliIndex: {}", msg),
         }
     }
 }
@@ -81,30 +109,3 @@ impl<'a, T> Iterator for Pairs<'a, T> {
     }
 }
 
-#[test]
-fn test_pairs() {
-    let data = [0, 1, 2, 3];
-    let result = Pairs::new(&data).collect::<Vec<_>>();
-
-    assert_eq!(
-        result,
-        &[
-            (&0, &0),
-            (&0, &1),
-            (&0, &2),
-            (&0, &3),
-            (&1, &0),
-            (&1, &1),
-            (&1, &2),
-            (&1, &3),
-            (&2, &0),
-            (&2, &1),
-            (&2, &2),
-            (&2, &3),
-            (&3, &0),
-            (&3, &1),
-            (&3, &2),
-            (&3, &3),
-        ]
-    );
-}

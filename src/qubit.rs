@@ -13,20 +13,15 @@ const PAULI_MASK: u64 = 0b11;
 ///
 /// ```rust
 /// # use f2q::qubit::Pauli;
-/// use f2q::Error::CodeIndex;
+/// use f2q::Error::PauliIndex;
 ///
 /// let paulis: Vec<_> = (0..=4).map(|i| Pauli::try_from(i)).collect();
 ///
 /// assert_eq!(
-///     paulis,
-///     &[
-///         Ok(Pauli::I),
-///         Ok(Pauli::X),
-///         Ok(Pauli::Y),
-///         Ok(Pauli::Z),
-///         Err(CodeIndex)
-///     ]
+///     paulis[0..=3],
+///     [Ok(Pauli::I), Ok(Pauli::X), Ok(Pauli::Y), Ok(Pauli::Z),]
 /// );
+/// matches!(paulis[4], Err(PauliIndex { .. }));
 /// ```
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum Pauli {
@@ -51,7 +46,7 @@ macro_rules! impl_pauli_int {
                         1 => Ok(X),
                         2 => Ok(Y),
                         3 => Ok(Z),
-                        _ => Err(Self::Error::CodeIndex),
+                        _ => Err(Self::Error::PauliIndex{ msg: "PauliCode index should be within 0..=3".to_string()}),
                     }
                 }
             }

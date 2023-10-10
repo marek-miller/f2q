@@ -7,16 +7,7 @@ use std::{
     time::Instant,
 };
 
-use f2q::{
-    maps::JordanWigner,
-    sec::{
-        Integral,
-        Orbital,
-    },
-    terms::SumRepr,
-    Pairs,
-    Terms,
-};
+use f2q::prelude::*;
 use rand::Rng;
 
 const ORBITAL_MAX_IDX: usize = 64;

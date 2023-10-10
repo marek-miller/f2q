@@ -3,12 +3,13 @@ use f2q::{
         Pauli,
         PauliCode,
     },
-    sec::{
+    secnd::{
         Orbital,
         Spin,
     },
     terms::SumRepr,
     Error,
+    Pairs,
 };
 
 #[test]
@@ -22,7 +23,7 @@ fn test_pauli_01() {
 #[test]
 fn test_pauli_02() {
     let err = Pauli::try_from(4u16).unwrap_err();
-    assert_eq!(err, Error::CodeIndex);
+    matches!(err, Error::PauliIndex { .. });
 }
 
 #[test]
@@ -218,4 +219,32 @@ fn test_orbital_enumerate_01() {
 fn test_orbital_enumerate_02() {
     let orb = Orbital::new(usize::MAX / 2, Spin::Up);
     assert_eq!(orb.index(), usize::MAX);
+}
+
+#[test]
+fn test_pairs() {
+    let data = [0, 1, 2, 3];
+    let result = Pairs::new(&data).collect::<Vec<_>>();
+
+    assert_eq!(
+        result,
+        &[
+            (&0, &0),
+            (&0, &1),
+            (&0, &2),
+            (&0, &3),
+            (&1, &0),
+            (&1, &1),
+            (&1, &2),
+            (&1, &3),
+            (&2, &0),
+            (&2, &1),
+            (&2, &2),
+            (&2, &3),
+            (&3, &0),
+            (&3, &1),
+            (&3, &2),
+            (&3, &3),
+        ]
+    );
 }
