@@ -251,7 +251,7 @@ impl Iterator for OrbitalRange {
                         if *i < end {
                             *i += 1;
                         } else {
-                            self.end = None
+                            self.end = None;
                         }
                         Some(orbital)
                     }

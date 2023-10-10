@@ -128,7 +128,7 @@ fn test_paulicode_set_pauli_03() {
 fn test_paulicode_codes_iter_01() {
     use Pauli::*;
     let result = PauliCode::new((0b01, 0b00))
-        .iter()
+        .into_iter()
         .take(3)
         .collect::<Vec<_>>();
 
@@ -139,7 +139,7 @@ fn test_paulicode_codes_iter_01() {
 fn test_paulicode_codes_iter_02() {
     use Pauli::*;
     let result = PauliCode::new((0b11_1001, 0b00))
-        .iter()
+        .into_iter()
         .take(5)
         .collect::<Vec<_>>();
 
@@ -150,7 +150,7 @@ fn test_paulicode_codes_iter_02() {
 fn test_paulicode_codes_iter_03() {
     use Pauli::*;
     let result = PauliCode::new((0b0101_0000, 0b1111_1010))
-        .iter()
+        .into_iter()
         .take(36)
         .collect::<Vec<_>>();
 
@@ -515,7 +515,7 @@ fn check_jordan_wigner_two_pqs(
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z)
+        code.set(i, Pauli::Z);
     }
     code.set(index1, Pauli::X);
     code.set(index3, Pauli::X);
@@ -528,7 +528,7 @@ fn check_jordan_wigner_two_pqs(
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z)
+        code.set(i, Pauli::Z);
     }
     code.set(index1, Pauli::Y);
     code.set(index3, Pauli::Y);
@@ -541,7 +541,7 @@ fn check_jordan_wigner_two_pqs(
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z)
+        code.set(i, Pauli::Z);
     }
     code.set(index1, Pauli::X);
     code.set(index3, Pauli::X);
@@ -555,7 +555,7 @@ fn check_jordan_wigner_two_pqs(
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z)
+        code.set(i, Pauli::Z);
     }
     code.set(index1, Pauli::Y);
     code.set(index3, Pauli::Y);
@@ -577,6 +577,7 @@ fn jordan_wigner_two_pqs() {
     check_jordan_wigner_two_pqs(11, 37, 22);
 }
 
+#[allow(clippy::too_many_lines)]
 fn check_jordan_wigner_two_pqrs(
     index1: usize,
     index2: usize,
@@ -602,15 +603,15 @@ fn check_jordan_wigner_two_pqrs(
     let base_code = {
         let mut code = PauliCode::default();
         for i in index1 + 1..index2 {
-            code.set(i, Pauli::Z)
+            code.set(i, Pauli::Z);
         }
         for i in index4 + 1..index3 {
-            code.set(i, Pauli::Z)
+            code.set(i, Pauli::Z);
         }
         code
     };
 
-    let mut code = base_code.clone();
+    let mut code = base_code;
     code.set(index1, Pauli::X);
     code.set(index2, Pauli::X);
     code.set(index3, Pauli::X);
@@ -622,7 +623,7 @@ fn check_jordan_wigner_two_pqrs(
         "{coeff} {expected}"
     );
 
-    let mut code = base_code.clone();
+    let mut code = base_code;
     code.set(index1, Pauli::X);
     code.set(index2, Pauli::X);
     code.set(index3, Pauli::Y);
@@ -634,7 +635,7 @@ fn check_jordan_wigner_two_pqrs(
         "{coeff} {expected}"
     );
 
-    let mut code = base_code.clone();
+    let mut code = base_code;
     code.set(index1, Pauli::X);
     code.set(index2, Pauli::Y);
     code.set(index3, Pauli::X);
@@ -646,7 +647,7 @@ fn check_jordan_wigner_two_pqrs(
         "{coeff} {expected}"
     );
 
-    let mut code = base_code.clone();
+    let mut code = base_code;
     code.set(index1, Pauli::Y);
     code.set(index2, Pauli::X);
     code.set(index3, Pauli::X);
@@ -658,7 +659,7 @@ fn check_jordan_wigner_two_pqrs(
         "{coeff} {expected}"
     );
 
-    let mut code = base_code.clone();
+    let mut code = base_code;
     code.set(index1, Pauli::Y);
     code.set(index2, Pauli::X);
     code.set(index3, Pauli::Y);
@@ -670,7 +671,7 @@ fn check_jordan_wigner_two_pqrs(
         "{coeff} {expected}"
     );
 
-    let mut code = base_code.clone();
+    let mut code = base_code;
     code.set(index1, Pauli::Y);
     code.set(index2, Pauli::Y);
     code.set(index3, Pauli::X);
@@ -682,7 +683,7 @@ fn check_jordan_wigner_two_pqrs(
         "{coeff} {expected}"
     );
 
-    let mut code = base_code.clone();
+    let mut code = base_code;
     code.set(index1, Pauli::X);
     code.set(index2, Pauli::Y);
     code.set(index3, Pauli::Y);
@@ -694,7 +695,7 @@ fn check_jordan_wigner_two_pqrs(
         "{coeff} {expected}"
     );
 
-    let mut code = base_code.clone();
+    let mut code = base_code;
     code.set(index1, Pauli::Y);
     code.set(index2, Pauli::Y);
     code.set(index3, Pauli::Y);

@@ -335,24 +335,6 @@ impl PauliCode {
         });
     }
 
-    /// Iterate over Paulis in the code.
-    ///
-    /// # Exaples
-    ///
-    /// ```rust
-    /// # use f2q::qubit::{Pauli, PauliCode};
-    /// let code = PauliCode::new((0b1001, 0b11));
-    ///
-    /// let paulis: Vec<_> = code.iter().collect();
-    ///
-    /// assert_eq!(paulis[0], Pauli::X);
-    /// assert_eq!(paulis[1], Pauli::Y);
-    /// assert_eq!(paulis[32], Pauli::Z);
-    /// ```
-    pub fn iter(&self) -> impl Iterator<Item = Pauli> + '_ {
-        PauliIter::new(self)
-    }
-
     /// Build the code from an iterator over Paulis.
     ///
     /// # Examples
@@ -383,8 +365,8 @@ impl PauliCode {
     }
 }
 
-impl<'a> IntoIterator for &'a PauliCode {
-    type IntoIter = PauliIter<'a>;
+impl IntoIterator for PauliCode {
+    type IntoIter = PauliIter;
     type Item = Pauli;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -394,13 +376,13 @@ impl<'a> IntoIterator for &'a PauliCode {
 
 /// Iterate over Paulis in `PauliCode`
 #[derive(Debug)]
-pub struct PauliIter<'a> {
-    code:  &'a PauliCode,
+pub struct PauliIter {
+    code:  PauliCode,
     index: usize,
 }
 
-impl<'a> PauliIter<'a> {
-    fn new(code: &'a PauliCode) -> Self {
+impl PauliIter {
+    fn new(code: PauliCode) -> Self {
         Self {
             code,
             index: 0,
@@ -408,7 +390,7 @@ impl<'a> PauliIter<'a> {
     }
 }
 
-impl<'a> Iterator for PauliIter<'a> {
+impl Iterator for PauliIter {
     type Item = Pauli;
 
     fn next(&mut self) -> Option<Self::Item> {
