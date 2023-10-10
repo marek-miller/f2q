@@ -1,11 +1,33 @@
 //! Qubit representation
 
-use crate::Code;
-pub use crate::Error;
+use crate::{
+    Code,
+    Error,
+};
 
 const PAULI_MASK: u64 = 0b11;
 
 /// Pauli operator
+///
+/// # Examples
+///
+/// ```rust
+/// # use f2q::qubit::Pauli;
+/// use f2q::Error::CodeIndex;
+///
+/// let paulis: Vec<_> = (0..=4).map(|i| Pauli::try_from(i)).collect();
+///
+/// assert_eq!(
+///     paulis,
+///     &[
+///         Ok(Pauli::I),
+///         Ok(Pauli::X),
+///         Ok(Pauli::Y),
+///         Ok(Pauli::Z),
+///         Err(CodeIndex)
+///     ]
+/// );
+/// ```
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum Pauli {
     #[default]
@@ -53,6 +75,15 @@ impl_pauli_int!(u8 u16 u32 u64 u128 usize);
 impl_pauli_int!(i8 i16 i32 i64 i128 isize);
 
 /// Pauli string of up to 64 qubits.
+///
+/// # Examples
+///
+/// ```rust
+/// # use f2q::qubit::PauliCode;
+/// let code = PauliCode::default();
+///
+/// assert_eq!(code.enumerate(), 0);
+/// ```
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PauliCode {
     pack: (u64, u64),
@@ -77,11 +108,11 @@ impl PauliCode {
     /// Pauli::Z = 0b11
     /// ```
     ///
-    /// The first integer in the tuple represents qubits 0 to 31 (included),
-    /// and the second integer represents qubits 32 to 63 (included).
-    /// The pairs of bits in each integer follow little-endian convention.
-    /// For example, `PauliCode::new((0b1001,0))` represents the following Pauli
-    /// product of 64 Pauli operators:
+    /// The first integer in the tuple represents qubits 0 to 31 (incl.),
+    /// and the second integer represents qubits 32 to 63 (incl.).
+    /// The pairs of bits in each integer follow the little-endian convention.
+    /// For example, `PauliCode::new((0b1001, 0))` represents the following
+    /// Pauli product of 64 Pauli operators:
     ///
     /// ```text
     /// [X, Y, I, I, ... , I]
@@ -92,7 +123,8 @@ impl PauliCode {
     /// ```text
     /// [I, I, .. I, Z, X, I, ... , I],
     /// ```
-    /// with `Z` at site 32.
+    ///
+    /// with `Z`'s 0-based index 32.
     ///
     /// # Examples
     ///
@@ -113,14 +145,40 @@ impl PauliCode {
         }
     }
 
+    /// Enumerate Pauli code.
+    ///
+    /// This convert the code to a 128-wide integer.
+    /// The code consisting of only `Pauli:I` has index zero.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::qubit::PauliCode;
+    /// let code = PauliCode::new((3, 4));
+    ///
+    /// assert_eq!(code.enumerate(), 3 + (4 << 64));
+    /// ```
     #[must_use]
     pub fn enumerate(&self) -> u128 {
         u128::from(self.pack.0) + (u128::from(self.pack.1) << 64)
     }
 
+    /// Read out the Pauli operator at site `i`.
+    ///
+    ///
     /// # Safety
     ///
-    /// Make sure index is within 0..64
+    /// The user must ensure that that `i` is within 0..64 (excl.)
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{PauliCode, Pauli};
+    /// let code = PauliCode::new((0b1000, 0));
+    /// let pauli = unsafe { code.pauli_unchecked(1) };
+    ///
+    /// assert_eq!(pauli, Pauli::Y);
+    /// ```
     #[must_use]
     #[allow(clippy::missing_panics_doc)]
     pub unsafe fn pauli_unchecked(
@@ -135,6 +193,24 @@ impl PauliCode {
         Pauli::try_from(pauli_int).expect("incorrect encoding. This is a bug")
     }
 
+    /// Read out the Pauli operator at site `i`.
+    ///
+    /// # Returns
+    ///
+    /// Returns None if index `i` is larger or equal `64`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{PauliCode, Pauli};
+    /// let code = PauliCode::new((0b1000, 0));
+    ///
+    /// let pauli = code.pauli(1);
+    /// assert_eq!(pauli, Some(Pauli::Y));
+    ///
+    /// let pauli = code.pauli(64);
+    /// assert_eq!(pauli, None);
+    /// ```
     #[must_use]
     pub fn pauli(
         &self,
@@ -148,9 +224,28 @@ impl PauliCode {
         }
     }
 
+    /// Modify the Pauli operator in the code at site `i`.
+    ///
+    /// The supplied closure will receive a mutable reference to the relevant
+    /// Pauli.
+    ///
     /// # Safety
     ///
-    /// Make sure index is within 0..64
+    /// The user must ensure that that `i` is within `0..64` (excl.)
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// let mut code = PauliCode::new((0, 0b01));
+    /// assert_eq!(code.pauli(32), Some(Pauli::X));
+    ///
+    /// unsafe {
+    ///     code.pauli_mut_unchecked(32, |pauli| *pauli = Pauli::Y);
+    /// }
+    ///
+    /// assert_eq!(code.pauli(32), Some(Pauli::Y));
+    /// ```
     pub unsafe fn pauli_mut_unchecked<OP>(
         &mut self,
         index: usize,
@@ -169,6 +264,34 @@ impl PauliCode {
         }
     }
 
+    /// Modify the Pauli operator in the code at site `i`.
+    ///
+    /// If index `i` is less then `64`, the supplied closure will receive a
+    /// mutable reference to the relevant Pauli.  Otherwise it will receive
+    /// None.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// let mut code = PauliCode::new((0, 0b01));
+    /// assert_eq!(code.pauli(32), Some(Pauli::X));
+    ///
+    /// code.pauli_mut(32, |x| {
+    ///     if let Some(pauli) = x {
+    ///         *pauli = Pauli::Y
+    ///     }
+    /// });
+    /// assert_eq!(code.pauli(32), Some(Pauli::Y));
+    ///
+    /// let mut was_it_none = false;
+    /// code.pauli_mut(64, |x| {
+    ///     if x.is_none() {
+    ///         was_it_none = true
+    ///     }
+    /// });
+    /// assert!(was_it_none);
+    /// ```
     pub fn pauli_mut<OP>(
         &mut self,
         index: usize,
@@ -186,9 +309,23 @@ impl PauliCode {
         }
     }
 
+    /// Set Pauli operator at `index`.
+    ///
     /// # Panics
     ///
-    /// Panics if index outside of 0..64
+    /// Panics if index outside of `0..64` (excl.)
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// let mut code = PauliCode::default();
+    /// assert_eq!(code.pauli(17), Some(Pauli::I));
+    ///
+    /// code.set(17, Pauli::Z);
+    ///
+    /// assert_eq!(code.pauli(17), Some(Pauli::Z));
+    /// ```
     pub fn set(
         &mut self,
         index: usize,
@@ -203,11 +340,42 @@ impl PauliCode {
         });
     }
 
-    #[must_use]
-    pub fn iter(&self) -> PauliIter<'_> {
+    /// Iterate over Paulis in the code.
+    ///
+    /// # Exaples
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// let code = PauliCode::new((0b1001, 0b11));
+    ///
+    /// let paulis: Vec<_> = code.iter().collect();
+    ///
+    /// assert_eq!(paulis[0], Pauli::X);
+    /// assert_eq!(paulis[1], Pauli::Y);
+    /// assert_eq!(paulis[32], Pauli::Z);
+    /// ```
+    pub fn iter(&self) -> impl Iterator<Item = Pauli> + '_ {
         PauliIter::new(self)
     }
 
+    /// Build the code from an iterator over Paulis.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// use f2q::qubit::Pauli::{
+    ///     X,
+    ///     Y,
+    ///     Z,
+    /// };
+    ///
+    /// let code = PauliCode::from_paulis([X, Y, Z]);
+    ///
+    /// assert_eq!(code.pauli(0), Some(X));
+    /// assert_eq!(code.pauli(1), Some(Y));
+    /// assert_eq!(code.pauli(2), Some(Z));
+    /// ```
     pub fn from_paulis<I>(iter: I) -> Self
     where
         I: IntoIterator<Item = Pauli>,
@@ -225,11 +393,11 @@ impl<'a> IntoIterator for &'a PauliCode {
     type Item = Pauli;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.iter()
+        PauliIter::new(self)
     }
 }
 
-// Iterate over Paulis in PauliCode
+/// Iterate over Paulis in `PauliCode`
 #[derive(Debug)]
 pub struct PauliIter<'a> {
     code:  &'a PauliCode,
