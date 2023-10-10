@@ -1,3 +1,5 @@
+use std::ops::RangeBounds;
+
 use f2q::{
     qubit::{
         Pauli,
@@ -182,7 +184,7 @@ fn test_paulicode_from_paulis_02() {
 }
 
 #[test]
-fn test_paulisum_init_01() {
+fn test_sumrepr_init_01() {
     let code = PauliCode::new((1234, 0));
     let mut hamil = SumRepr::new();
 
@@ -222,8 +224,8 @@ fn test_orbital_enumerate_02() {
 }
 
 #[test]
-fn test_pairs() {
-    let data = [0, 1, 2, 3];
+fn pairs_01() {
+    let data = [0, 1, 2];
     let result = Pairs::new(&data).collect::<Vec<_>>();
 
     assert_eq!(
@@ -232,19 +234,85 @@ fn test_pairs() {
             (&0, &0),
             (&0, &1),
             (&0, &2),
-            (&0, &3),
             (&1, &0),
             (&1, &1),
             (&1, &2),
-            (&1, &3),
             (&2, &0),
             (&2, &1),
             (&2, &2),
-            (&2, &3),
-            (&3, &0),
-            (&3, &1),
-            (&3, &2),
-            (&3, &3),
         ]
     );
+}
+
+#[test]
+fn pairs_02() {
+    let data = vec![0; 17];
+    let result = Pairs::new(&data).collect::<Vec<_>>();
+    assert_eq!(result.len(), 17 * 17);
+}
+
+#[test]
+fn pairs_empty() {
+    let data: [usize; 0] = [];
+    let result = Pairs::new(&data).collect::<Vec<_>>();
+
+    assert_eq!(result, &[]);
+}
+
+#[test]
+fn orbital_gen_range_01() {
+    let orbitals: Vec<_> = Orbital::gen_range(0..0).collect();
+    assert!(orbitals.is_empty());
+
+    let orbitals: Vec<_> = Orbital::gen_range(..0).collect();
+    assert!(orbitals.is_empty());
+
+    let orbitals: Vec<_> = Orbital::gen_range(0..=0).collect();
+    assert_eq!(orbitals.len(), 1);
+
+    let orbitals: Vec<_> = Orbital::gen_range(..=0).collect();
+    assert_eq!(orbitals.len(), 1);
+}
+
+#[test]
+fn orbital_gen_range_02() {
+    let um = usize::MAX;
+    let orbitals: Vec<_> = Orbital::gen_range(um..um).collect();
+    assert!(orbitals.is_empty());
+
+    let orbitals: Vec<_> = Orbital::gen_range(um..).collect();
+    assert_eq!(orbitals.len(), 1);
+
+    let orbitals: Vec<_> = Orbital::gen_range(um..=um).collect();
+    assert_eq!(orbitals.len(), 1);
+}
+
+#[allow(clippy::reversed_empty_ranges)]
+#[test]
+fn orbital_gen_range_03() {
+    let orbitals: Vec<_> = Orbital::gen_range(2..0).collect();
+    assert!(orbitals.is_empty());
+
+    let orbitals: Vec<_> = Orbital::gen_range(3..1).collect();
+    assert!(orbitals.is_empty());
+}
+
+fn orbital_gen_range_idxs<R>(range: R) -> Vec<usize>
+where
+    R: RangeBounds<usize>,
+{
+    Orbital::gen_range(range).map(|orb| orb.index()).collect()
+}
+
+#[test]
+fn orbital_gen_range_04() {
+    assert_eq!(orbital_gen_range_idxs(0..1), &[0]);
+    assert_eq!(orbital_gen_range_idxs(0..=1), &[0, 1]);
+    assert_eq!(orbital_gen_range_idxs(0..2), &[0, 1]);
+    assert_eq!(orbital_gen_range_idxs(0..=2), &[0, 1, 2]);
+    assert_eq!(orbital_gen_range_idxs(0..3), &[0, 1, 2]);
+    assert_eq!(orbital_gen_range_idxs(0..=3), &[0, 1, 2, 3]);
+
+    assert_eq!(orbital_gen_range_idxs(11..15), &[11, 12, 13, 14]);
+    assert_eq!(orbital_gen_range_idxs(11..=15), &[11, 12, 13, 14, 15]);
 }

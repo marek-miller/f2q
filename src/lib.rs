@@ -16,7 +16,6 @@ pub mod prelude {
         qubit::{
             Pauli,
             PauliCode,
-            PauliIter,
         },
         secnd::{
             Integral,
@@ -63,7 +62,7 @@ impl Display for Error {
         match self {
             Self::PauliIndex {
                 msg,
-            } => write!(f, "PauliIndex: {}", msg),
+            } => write!(f, "PauliIndex: {msg}"),
         }
     }
 }
@@ -108,4 +107,3 @@ impl<'a, T> Iterator for Pairs<'a, T> {
         Some(out)
     }
 }
-

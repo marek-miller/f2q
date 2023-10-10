@@ -179,7 +179,8 @@ impl Orbital {
     /// Generate orbitals with indeces in the given range.
     ///
     /// If the start bound is unbounded, the iterator starts from zero.
-    /// If the end bound is unbounded, it is taken to be `usize::MAx` (incl.)
+    /// If the end bound is unbounded, it is taken to be `usize::MAX` (incl.)
+    ///
     ///
     /// # Examples
     ///
@@ -201,21 +202,78 @@ impl Orbital {
     where
         R: RangeBounds<usize>,
     {
-        let start = match range.start_bound() {
-            Bound::Included(&x) => x,
-            Bound::Excluded(&x) if x < usize::MAX => x + 1,
-            Bound::Excluded(_) => usize::MAX,
-            Bound::Unbounded => 0,
+        // let start = match range.start_bound() {
+        //     Bound::Included(&x) => x,
+        //     Bound::Excluded(&x) if x < usize::MAX => x + 1,
+        //     Bound::Excluded(_) => usize::MAX,
+        //     Bound::Unbounded => 0,
+        // };
+
+        // let end = match range.end_bound() {
+        //     Bound::Included(&x) if x < usize::MAX => x + 1,
+        //     Bound::Included(_) => usize::MAX,
+        //     Bound::Excluded(&x) => x,
+        //     Bound::Unbounded => usize::MAX,
+        // };
+
+        OrbitalRange::new(range)
+    }
+}
+
+struct OrbitalRange {
+    end:   Option<usize>,
+    index: Option<usize>,
+}
+
+impl OrbitalRange {
+    fn new<R>(range: R) -> Self
+    where
+        R: RangeBounds<usize>,
+    {
+        let index = match range.start_bound() {
+            Bound::Included(&x) => Some(x),
+            Bound::Excluded(&x) if x < usize::MAX => Some(x + 1),
+            Bound::Excluded(_) => None,
+            Bound::Unbounded => Some(0),
         };
 
         let end = match range.end_bound() {
-            Bound::Included(&x) => x,
-            Bound::Excluded(&x) if x > 0 => x - 1,
-            Bound::Excluded(_) => 0,
-            Bound::Unbounded => usize::MAX,
+            Bound::Included(&y) => Some(y),
+            Bound::Excluded(&y) if y > 0 => Some(y - 1),
+            Bound::Excluded(_) => None,
+            Bound::Unbounded => Some(usize::MAX),
         };
 
-        (start..=end).map(Orbital::from_index)
+        Self {
+            end,
+            index,
+        }
+    }
+}
+
+impl Iterator for OrbitalRange {
+    type Item = Orbital;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.end {
+            Some(end) => match &mut self.index {
+                Some(i) => {
+                    if *i > end {
+                        None
+                    } else {
+                        let orbital = Orbital::from_index(*i);
+                        if *i < end {
+                            *i += 1;
+                        } else {
+                            self.end = None
+                        }
+                        Some(orbital)
+                    }
+                }
+                None => None,
+            },
+            None => None,
+        }
     }
 }
 
