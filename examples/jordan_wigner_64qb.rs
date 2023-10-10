@@ -1,3 +1,7 @@
+//! Convert full 32-fermion Hamiltonian using Jordan-Wigner mapping
+//!
+//! All integrals are present, the coefficients are arbitrary.
+
 use std::{
     io::Write,
     time::Instant,
@@ -20,27 +24,29 @@ const DELTA: f64 = 0.012_345;
 fn main() {
     let now = Instant::now();
 
+    let mut coeff = DELTA;
+
     let orbitals = Orbital::gen_range(0..ORBITAL_MAX_IDX).collect::<Vec<_>>();
+    let orbital_pairs = Pairs::new(&orbitals).collect::<Vec<_>>();
 
     let mut fermi_sum = SumRepr::new();
     fermi_sum.add(Integral::Constant, 1.0);
 
-    let mut coeff = DELTA;
-
-    for (&p, &q) in Pairs::new(&orbitals) {
-        if let Some(integral) = Integral::one_electron(p, q) {
-            fermi_sum.add(integral, coeff);
-        }
+    for code in orbital_pairs
+        .iter()
+        .flat_map(|(&p, &q)| Integral::one_electron(p, q))
+    {
+        fermi_sum.add(code, coeff);
+        // this is completely arbitrary
         coeff += DELTA;
     }
 
-    for (&p, &q) in Pairs::new(&orbitals) {
-        for (&r, &s) in Pairs::new(&orbitals) {
-            if let Some(integral) = Integral::two_electron((p, q), (r, s)) {
-                fermi_sum.add(integral, coeff);
-            }
-            coeff += DELTA;
-        }
+    for code in Pairs::new(&orbital_pairs)
+        .flat_map(|((&p, &q), (&r, &s))| Integral::two_electron((p, q), (r, s)))
+    {
+        fermi_sum.add(code, coeff);
+        // this is completely arbitrary
+        coeff += DELTA;
     }
 
     println!(
