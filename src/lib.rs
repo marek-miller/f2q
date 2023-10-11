@@ -19,7 +19,7 @@ pub mod prelude {
             PauliCode,
         },
         secnd::{
-            Integral,
+            Fermions,
             Orbital,
             Spin,
         },

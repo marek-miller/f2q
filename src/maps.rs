@@ -8,7 +8,7 @@ use crate::{
         PauliCode,
     },
     secnd::{
-        Integral,
+        Fermions,
         Orbital,
     },
     terms::SumRepr,
@@ -16,12 +16,12 @@ use crate::{
 };
 
 pub struct JordanWigner<'a, T> {
-    repr: &'a SumRepr<T, Integral>,
+    repr: &'a SumRepr<T, Fermions>,
 }
 
 impl<'a, T> JordanWigner<'a, T> {
     #[must_use]
-    pub fn new(repr: &'a SumRepr<T, Integral>) -> Self {
+    pub fn new(repr: &'a SumRepr<T, Fermions>) -> Self {
         Self {
             repr,
         }
@@ -38,14 +38,14 @@ where
     ) {
         for (&code, &coeff) in self.repr.as_map() {
             match code {
-                Integral::Constant => {
+                Fermions::Offset => {
                     repr.add_term(PauliCode::default(), coeff);
                 }
-                Integral::OneElectron {
+                Fermions::One {
                     cr,
                     an,
                 } => pauli_add_one_electron_integral(cr, an, coeff, repr),
-                Integral::TwoElectron {
+                Fermions::Two {
                     cr,
                     an,
                 } => pauli_add_two_electron_integral(cr, an, coeff, repr),
