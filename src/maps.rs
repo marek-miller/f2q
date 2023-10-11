@@ -79,30 +79,30 @@ where
                 Fermions::One {
                     cr,
                     an,
-                } => pauli_add_one_electron_integral(cr, an, coeff, repr),
+                } => one_electron(cr, an, coeff, repr),
                 Fermions::Two {
                     cr,
                     an,
-                } => pauli_add_two_electron_integral(cr, an, coeff, repr),
+                } => two_electron(cr, an, coeff, repr),
             }
         }
     }
 }
 
-fn pauli_add_one_electron_integral<T: Float>(
+fn one_electron<T: Float>(
     cr: Orbital,
     an: Orbital,
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
 ) {
     if cr == an {
-        pauli_add_one_electron_integral_equal(cr, an, coeff, pauli_repr);
+        one_electron_pp(cr, an, coeff, pauli_repr);
     } else {
-        pauli_add_one_electron_integral_nonequal(cr, an, coeff, pauli_repr);
+        one_electron_pq(cr, an, coeff, pauli_repr);
     }
 }
 
-fn pauli_add_one_electron_integral_equal<T: Float>(
+fn one_electron_pp<T: Float>(
     cr: Orbital,
     _an: Orbital,
     coeff: T,
@@ -118,7 +118,7 @@ fn pauli_add_one_electron_integral_equal<T: Float>(
     pauli_repr.add_term(code, -term);
 }
 
-fn pauli_add_one_electron_integral_nonequal<T: Float>(
+fn one_electron_pq<T: Float>(
     cr: Orbital,
     an: Orbital,
     coeff: T,
@@ -153,7 +153,7 @@ fn pauli_add_one_electron_integral_nonequal<T: Float>(
     pauli_repr.add_term(code, term);
 }
 
-fn pauli_add_two_electron_integral<T: Float>(
+fn two_electron<T: Float>(
     cr: (Orbital, Orbital),
     an: (Orbital, Orbital),
     coeff: T,
@@ -162,15 +162,15 @@ fn pauli_add_two_electron_integral<T: Float>(
     let (p, q, r, s) = (cr.0.index(), cr.1.index(), an.0.index(), an.1.index());
 
     if p == s && q == r {
-        pauli_add_two_electron_integral_pq(p, q, coeff, pauli_repr);
+        two_electron_pq(p, q, coeff, pauli_repr);
     } else if q == r {
-        pauli_add_two_electron_integral_pqs(p, q, s, coeff, pauli_repr);
+        two_electron_pqs(p, q, s, coeff, pauli_repr);
     } else {
-        pauli_add_two_electron_integral_pqrs(p, q, r, s, coeff, pauli_repr);
+        two_electron_pqrs(p, q, r, s, coeff, pauli_repr);
     }
 }
 
-fn pauli_add_two_electron_integral_pq<T: Float>(
+fn two_electron_pq<T: Float>(
     p: usize,
     q: usize,
     coeff: T,
@@ -205,7 +205,7 @@ fn pauli_add_two_electron_integral_pq<T: Float>(
     pauli_repr.add_term(code, term);
 }
 
-fn pauli_add_two_electron_integral_pqs<T: Float>(
+fn two_electron_pqs<T: Float>(
     p: usize,
     q: usize,
     s: usize,
@@ -249,7 +249,7 @@ fn pauli_add_two_electron_integral_pqs<T: Float>(
     pauli_repr.add_term(code, term);
 }
 
-fn pauli_add_two_electron_integral_pqrs<T: Float>(
+fn two_electron_pqrs<T: Float>(
     p: usize,
     q: usize,
     r: usize,
