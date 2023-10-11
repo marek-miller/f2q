@@ -19,7 +19,7 @@ pub mod prelude {
             PauliCode,
         },
         secnd::{
-            Integral,
+            Fermions,
             Orbital,
             Spin,
         },
@@ -38,15 +38,24 @@ pub mod prelude {
 /// Representation of Hermitian operators
 pub trait Code: Copy + Clone + Eq + Hash + Default {}
 
+impl Code for usize {}
+
 /// Convert and serialize sum of terms in various encodings
 pub trait Terms<T, K>
 where
     K: Code,
 {
+    type Error;
+
+    /// Add terms to the supplied [`SumRepr`].
+    ///
+    /// # Errors
+    ///
+    /// Return error on failure.
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
-    );
+    ) -> Result<(), Error>;
 }
 
 #[derive(Debug, PartialEq)]

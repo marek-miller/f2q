@@ -12,7 +12,7 @@ use rand::Rng;
 
 const ORBITAL_MAX_IDX: usize = 64;
 
-fn main() {
+fn main() -> Result<(), f2q::Error> {
     let mut rng = rand::thread_rng();
 
     let orbitals = Orbital::gen_range(0..ORBITAL_MAX_IDX).collect::<Vec<_>>();
@@ -21,19 +21,19 @@ fn main() {
     let now = Instant::now();
     let mut fermi_sum = SumRepr::new();
 
-    fermi_sum.add(Integral::Constant, 1.0);
+    fermi_sum.add_term(Fermions::Offset, 1.0);
     for code in orbital_pairs
         .iter()
-        .filter_map(|(&p, &q)| Integral::one_electron(p, q))
+        .filter_map(|(&p, &q)| Fermions::one_electron(p, q))
     {
         // the coefficient is completely arbitrary
-        fermi_sum.add(code, rng.gen_range(-1.0..1.0));
+        fermi_sum.add_term(code, rng.gen_range(-1.0..1.0));
     }
     for code in Pairs::new(&orbital_pairs).filter_map(|((&p, &q), (&r, &s))| {
-        Integral::two_electron((p, q), (r, s))
+        Fermions::two_electron((p, q), (r, s))
     }) {
         // the coefficient is completely arbitrary
-        fermi_sum.add(code, rng.gen_range(-1.0..1.0));
+        fermi_sum.add_term(code, rng.gen_range(-1.0..1.0));
     }
 
     println!(
@@ -46,8 +46,9 @@ fn main() {
     let _ = std::io::stdout().flush();
 
     let now = Instant::now();
-    let pauli_sum = &mut SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(pauli_sum);
+    let mut pauli_sum = SumRepr::new();
+
+    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum)?;
 
     println!("Done.");
     println!(
@@ -55,4 +56,6 @@ fn main() {
         pauli_sum.as_map().len(),
         now.elapsed().as_millis()
     );
+
+    Ok(())
 }

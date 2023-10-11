@@ -7,7 +7,7 @@ use f2q::{
         PauliCode,
     },
     secnd::{
-        Integral,
+        Fermions,
         Orbital,
         Spin,
     },
@@ -192,7 +192,7 @@ fn test_sumrepr_init_01() {
     let mut hamil = SumRepr::new();
 
     hamil.as_map_mut().insert(code, 4321.);
-    let coeff = hamil.coeff(&code);
+    let coeff = hamil.coeff(code);
     assert!(f64::abs(coeff - 4321.) < f64::EPSILON);
 }
 
@@ -332,10 +332,12 @@ const MOCK_COEFF: f64 = 0.12345;
 #[test]
 fn jordan_wigner_01() {
     let mut fermi_sum = SumRepr::new();
-    fermi_sum.add(Integral::Constant, MOCK_COEFF);
+    fermi_sum.add_term(Fermions::Offset, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let coeff = pauli_sum.as_map().get(&PauliCode::default()).unwrap();
     assert!(
@@ -348,11 +350,13 @@ fn check_jordan_wigner_one_pp(index: usize) {
     let mut fermi_sum = SumRepr::new();
 
     let p = Orbital::from_index(index);
-    let integral = Integral::one_electron(p, p).unwrap();
-    fermi_sum.add(integral, MOCK_COEFF);
+    let integral = Fermions::one_electron(p, p).unwrap();
+    fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let code = PauliCode::default();
     let coeff = pauli_sum.as_map().get(&code).unwrap();
@@ -392,11 +396,13 @@ fn check_jordan_wigner_one_pq(
     assert!(index1 < index2);
     let p = Orbital::from_index(index1);
     let q = Orbital::from_index(index2);
-    let integral = Integral::one_electron(p, q).unwrap();
-    fermi_sum.add(integral, MOCK_COEFF);
+    let integral = Fermions::one_electron(p, q).unwrap();
+    fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index2 {
@@ -440,11 +446,13 @@ fn check_jordan_wigner_two_pq(
     assert!(index1 < index2);
     let p = Orbital::from_index(index1);
     let q = Orbital::from_index(index2);
-    let integral = Integral::two_electron((p, q), (q, p)).unwrap();
-    fermi_sum.add(integral, MOCK_COEFF);
+    let integral = Fermions::two_electron((p, q), (q, p)).unwrap();
+    fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let code = PauliCode::default();
     let coeff = pauli_sum.as_map().get(&code).unwrap();
@@ -507,11 +515,13 @@ fn check_jordan_wigner_two_pqs(
     let p = Orbital::from_index(index1);
     let q = Orbital::from_index(index2);
     let s = Orbital::from_index(index3);
-    let integral = Integral::two_electron((p, q), (q, s)).unwrap();
-    fermi_sum.add(integral, MOCK_COEFF);
+    let integral = Fermions::two_electron((p, q), (q, s)).unwrap();
+    fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index3 {
@@ -594,11 +604,13 @@ fn check_jordan_wigner_two_pqrs(
     let q = Orbital::from_index(index2);
     let r = Orbital::from_index(index3);
     let s = Orbital::from_index(index4);
-    let integral = Integral::two_electron((p, q), (r, s)).unwrap();
-    fermi_sum.add(integral, MOCK_COEFF);
+    let integral = Fermions::two_electron((p, q), (r, s)).unwrap();
+    fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
-    JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum);
+    JordanWigner::new(&fermi_sum)
+        .add_to(&mut pauli_sum)
+        .unwrap();
 
     let base_code = {
         let mut code = PauliCode::default();

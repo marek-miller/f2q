@@ -279,33 +279,33 @@ impl Iterator for OrbitalRange {
 ///
 ///   then `p < q`, `r > s` and `p <= s`.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum Integral {
+pub enum Fermions {
     #[default]
-    Constant,
-    OneElectron {
+    Offset,
+    One {
         cr: Orbital,
         an: Orbital,
     },
-    TwoElectron {
+    Two {
         cr: (Orbital, Orbital),
         an: (Orbital, Orbital),
     },
 }
 
-impl Integral {
+impl Fermions {
     /// Create Integral as constant offset.
     ///
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::secnd::Integral;
+    /// # use f2q::secnd::Fermions;
     ///
-    /// let integral = Integral::new();
+    /// let integral = Fermions::new();
     ///
-    /// assert_eq!(integral, Integral::Constant);
+    /// assert_eq!(integral, Fermions::Offset);
     /// ```
     #[must_use]
-    pub fn new() -> Integral {
+    pub fn new() -> Fermions {
         Self::default()
     }
 
@@ -315,15 +315,15 @@ impl Integral {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use f2q::secnd::{Integral, Orbital, Spin};
+    /// # use f2q::secnd::{Fermions, Orbital, Spin};
     ///
-    /// let integral = Integral::one_electron(
+    /// let integral = Fermions::one_electron(
     ///     Orbital::new(0, Spin::Down),
     ///     Orbital::new(1, Spin::Down),
     /// );
     /// assert!(integral.is_some());
     ///
-    /// let integral = Integral::one_electron(
+    /// let integral = Fermions::one_electron(
     ///     Orbital::new(1, Spin::Down),
     ///     Orbital::new(0, Spin::Down),
     /// );
@@ -334,7 +334,7 @@ impl Integral {
         cr: Orbital,
         an: Orbital,
     ) -> Option<Self> {
-        (cr.index() <= an.index()).then_some(Self::OneElectron {
+        (cr.index() <= an.index()).then_some(Self::One {
             cr,
             an,
         })
@@ -352,15 +352,15 @@ impl Integral {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use f2q::secnd::{Integral, Orbital, Spin};
+    /// # use f2q::secnd::{Fermions, Orbital, Spin};
     ///
-    /// let integral = Integral::two_electron(
+    /// let integral = Fermions::two_electron(
     ///     (Orbital::new(0, Spin::Down), Orbital::new(0, Spin::Up)),
     ///     (Orbital::new(1, Spin::Down), Orbital::new(0, Spin::Down)),
     /// );
     /// assert!(integral.is_some());
     ///
-    /// let integral = Integral::two_electron(
+    /// let integral = Fermions::two_electron(
     ///     (Orbital::new(0, Spin::Down), Orbital::new(0, Spin::Down)),
     ///     (Orbital::new(1, Spin::Down), Orbital::new(0, Spin::Down)),
     /// );
@@ -374,11 +374,11 @@ impl Integral {
         (cr.0.index() < cr.1.index()
             && an.0.index() > an.1.index()
             && cr.0.index() <= an.1.index())
-        .then_some(Self::TwoElectron {
+        .then_some(Self::Two {
             cr,
             an,
         })
     }
 }
 
-impl Code for Integral {}
+impl Code for Fermions {}
