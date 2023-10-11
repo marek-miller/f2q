@@ -1,5 +1,7 @@
 # f2q 🎇
 
+[![Test](https://github.com/Quantum-for-Life/f2q/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Quantum-for-Life/f2q/actions/workflows/test.yml)
+
 Fermion-to-qubit mappings.
 
 High-octane representation of Pauli Hamiltonians with up to 64 qubits.
