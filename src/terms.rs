@@ -15,6 +15,7 @@ use super::{
     Code,
     Terms,
 };
+use crate::Error;
 
 /// Weighted sum of codes
 #[derive(Debug, Serialize, Deserialize)]
@@ -163,10 +164,11 @@ where
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
-    ) {
+    ) -> Result<(), Error> {
         for (code, value) in self.as_map() {
             repr.add_term(*code, *value);
         }
+        Ok(())
     }
 }
 
@@ -253,30 +255,35 @@ where
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
-    ) {
+    ) -> Result<(), Error> {
         match self {
             Self::Offset(t) => {
                 repr.add_term(K::default(), *t);
             }
-            Self::Terms(terms) => terms.add_to(repr),
+            Self::Terms(terms) => terms.add_to(repr)?,
             Self::Sum(h1, h2) => {
-                h1.add_to(repr);
-                h2.add_to(repr);
+                h1.add_to(repr)?;
+                h2.add_to(repr)?;
             }
         }
+
+        Ok(())
     }
 }
 
-impl<T, K> From<Hamil<T, K>> for SumRepr<T, K>
+impl<T, K> TryFrom<Hamil<T, K>> for SumRepr<T, K>
 where
     T: Float,
     K: Code,
 {
-    fn from(value: Hamil<T, K>) -> Self {
+    type Error = Error;
+
+    fn try_from(value: Hamil<T, K>) -> Result<Self, Self::Error> {
         let mut hamil = value;
         let mut repr = SumRepr::new();
-        hamil.add_to(&mut repr);
-        repr
+        hamil.add_to(&mut repr)?;
+
+        Ok(repr)
     }
 }
 
@@ -308,10 +315,12 @@ where
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
-    ) {
+    ) -> Result<(), Error> {
         while let Some((coeff, code)) = (self.f)() {
             repr.add_term(code, coeff);
         }
+
+        Ok(())
     }
 }
 
@@ -339,9 +348,11 @@ where
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
-    ) {
+    ) -> Result<(), Error> {
         while let Some((coeff, code)) = (self.f)() {
             repr.add_term(code, coeff);
         }
+
+        Ok(())
     }
 }
