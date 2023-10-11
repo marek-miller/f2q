@@ -266,16 +266,16 @@ where
             }
             Self::Terms(terms) => terms.add_to(repr)?,
             Self::Sum(h1, h2) => {
-                let mut left = SumRepr::new();
-                let mut right = SumRepr::new();
-                let (res1, res2) = rayon::join(
-                    || h1.add_to(&mut left),
-                    || h2.add_to(&mut right),
+                let mut repr_left = SumRepr::new();
+                let mut repr_right = SumRepr::new();
+                let (res_left, res_right) = rayon::join(
+                    || h1.add_to(&mut repr_left),
+                    || h2.add_to(&mut repr_right),
                 );
-                res1?;
-                res2?;
-                left.add_to(repr)?;
-                right.add_to(repr)?;
+                res_left?;
+                res_right?;
+                repr_left.add_to(repr)?;
+                repr_right.add_to(repr)?;
             }
         }
 
