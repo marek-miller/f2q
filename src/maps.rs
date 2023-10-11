@@ -15,6 +15,41 @@ use crate::{
     Terms,
 };
 
+/// Jordan-Wigner mapping.
+///
+/// This mapping is initialized with [`SumRepr<T,Fermions>`],
+/// but implements [`Terms<T, PauliCode>`].  The standard way
+/// of using it is presented in the following example.
+///
+/// # Examples
+///
+/// ```rust
+/// use f2q::prelude::*;
+///
+/// let idx = 11;
+/// let mut fermi_repr = SumRepr::new();
+///
+/// // Create orbital with qubit index 11
+/// let p = Orbital::from_index(idx);
+///
+/// // Add it as one-electron interaction term to the sum with coefficient: 1.0
+/// fermi_repr.add_term(Fermions::one_electron(p, p).unwrap(), 1.0);
+///
+/// // Map fermionic hamiltonian to a sum of Pauli strings
+/// let mut pauli_repr = SumRepr::new();
+/// JordanWigner::new(&fermi_repr).add_to(&mut pauli_repr);
+///
+/// // We should obtain the following two Pauli strings weights 0.5
+/// let code_i0 = PauliCode::default();
+/// let code_z0 = {
+///     let mut code = PauliCode::default();
+///     code.set(idx, Pauli::Z);
+///     code
+/// };
+///
+/// assert_eq!(pauli_repr.coeff(code_i0), 0.5);
+/// assert_eq!(pauli_repr.coeff(code_z0), -0.5);
+/// ```
 pub struct JordanWigner<'a, T> {
     repr: &'a SumRepr<T, Fermions>,
 }

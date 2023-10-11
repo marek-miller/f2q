@@ -187,7 +187,7 @@ where
     }
 }
 
-/// Dynamic, heterogenous representation of a Hamiltonian
+/// Dynamic representation of a Hamiltonian
 pub enum Hamil<T, K> {
     Offset(T),
     Sum(Box<Self>, Box<Self>),
@@ -214,7 +214,11 @@ impl<T, K> Add for Hamil<T, K> {
     }
 }
 
-impl<T, K> Hamil<T, K> {
+impl<T, K> Hamil<T, K>
+where
+    T: Float,
+    K: Code,
+{
     #[must_use]
     pub fn add_offset(
         self,
@@ -223,14 +227,12 @@ impl<T, K> Hamil<T, K> {
         self + Self::Offset(value)
     }
 
+    /// Add terms to the Hamiltonian.
     #[must_use]
     pub fn add_terms(
         self,
         terms: Box<dyn Terms<T, K>>,
-    ) -> Self
-    where
-        T: Float,
-    {
+    ) -> Self {
         self + Self::Terms(terms)
     }
 
