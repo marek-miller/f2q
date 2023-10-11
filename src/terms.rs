@@ -161,10 +161,12 @@ where
     T: Float,
     K: Code,
 {
+    type Error = Error;
+
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         for (code, value) in self.as_map() {
             repr.add_term(*code, *value);
         }
@@ -193,7 +195,7 @@ where
 pub enum Hamil<T, K> {
     Offset(T),
     Sum(Box<Self>, Box<Self>),
-    Terms(Box<dyn Terms<T, K>>),
+    Terms(Box<dyn Terms<T, K, Error = Error>>),
 }
 
 impl<T, K> Default for Hamil<T, K>
@@ -233,7 +235,7 @@ where
     #[must_use]
     pub fn add_terms(
         self,
-        terms: Box<dyn Terms<T, K>>,
+        terms: Box<dyn Terms<T, K, Error = Error>>,
     ) -> Self {
         self + Self::Terms(terms)
     }
@@ -252,10 +254,12 @@ where
     T: Float,
     K: Code,
 {
+    type Error = Error;
+
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         match self {
             Self::Offset(t) => {
                 repr.add_term(K::default(), *t);
@@ -312,10 +316,12 @@ where
     K: Code,
     OP: FnMut() -> Option<(T, K)>,
 {
+    type Error = Error;
+
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         while let Some((coeff, code)) = (self.f)() {
             repr.add_term(code, coeff);
         }
@@ -345,10 +351,12 @@ where
     T: Float,
     K: Code,
 {
+    type Error = Error;
+
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         while let Some((coeff, code)) = (self.f)() {
             repr.add_term(code, coeff);
         }

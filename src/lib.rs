@@ -45,6 +45,13 @@ pub trait Terms<T, K>
 where
     K: Code,
 {
+    type Error;
+
+    /// Add terms to the supplied [`SumRepr`].
+    ///
+    /// # Errors
+    ///
+    /// Return error on failure.
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, K>,

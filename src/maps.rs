@@ -26,6 +26,7 @@ use crate::{
 ///
 /// ```rust
 /// use f2q::prelude::*;
+/// # fn main() -> Result<(), f2q::Error> {
 ///
 /// let idx = 11;
 /// let mut fermi_repr = SumRepr::new();
@@ -38,7 +39,7 @@ use crate::{
 ///
 /// // Map fermionic hamiltonian to a sum of Pauli strings
 /// let mut pauli_repr = SumRepr::new();
-/// JordanWigner::new(&fermi_repr).add_to(&mut pauli_repr);
+/// JordanWigner::new(&fermi_repr).add_to(&mut pauli_repr)?;
 ///
 /// // We should obtain the following two Pauli strings weights 0.5
 /// let code_i0 = PauliCode::default();
@@ -50,6 +51,8 @@ use crate::{
 ///
 /// assert_eq!(pauli_repr.coeff(code_i0), 0.5);
 /// assert_eq!(pauli_repr.coeff(code_z0), -0.5);
+/// #   Ok(())
+/// # }
 /// ```
 pub struct JordanWigner<'a, T> {
     repr: &'a SumRepr<T, Fermions>,
@@ -68,10 +71,12 @@ impl<'a, T> Terms<T, PauliCode> for JordanWigner<'a, T>
 where
     T: Float,
 {
+    type Error = Error;
+
     fn add_to(
         &mut self,
         repr: &mut SumRepr<T, PauliCode>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         for (&code, &coeff) in self.repr.as_map() {
             match code {
                 Fermions::Offset => {
@@ -338,8 +343,8 @@ fn two_electron_pqrs<T: Float>(
 
     let mut code = PauliCode::default();
 
-    // SAFETY: We just checked if indices are within bound
     for i in p + 1..q {
+        // SAFETY: We just checked if indices are within bound
         unsafe {
             code.set_unchecked(i, Pauli::Z);
         }
