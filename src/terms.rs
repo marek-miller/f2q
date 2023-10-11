@@ -195,7 +195,7 @@ where
 pub enum Hamil<T, K> {
     Offset(T),
     Sum(Box<Self>, Box<Self>),
-    Terms(Box<dyn Terms<T, K, Error = Error>>),
+    Terms(Box<dyn Terms<T, K, Error = Error> + Send + Sync>),
 }
 
 impl<T, K> Default for Hamil<T, K>
@@ -235,7 +235,7 @@ where
     #[must_use]
     pub fn add_terms(
         self,
-        terms: Box<dyn Terms<T, K, Error = Error>>,
+        terms: Box<dyn Terms<T, K, Error = Error> + Send + Sync>,
     ) -> Self {
         self + Self::Terms(terms)
     }
@@ -251,8 +251,8 @@ where
 
 impl<T, K> Terms<T, K> for Hamil<T, K>
 where
-    T: Float,
-    K: Code,
+    T: Float + Send,
+    K: Code + Send,
 {
     type Error = Error;
 
@@ -266,8 +266,16 @@ where
             }
             Self::Terms(terms) => terms.add_to(repr)?,
             Self::Sum(h1, h2) => {
-                h1.add_to(repr)?;
-                h2.add_to(repr)?;
+                let mut left = SumRepr::new();
+                let mut right = SumRepr::new();
+                let (res1, res2) = rayon::join(
+                    || h1.add_to(&mut left),
+                    || h2.add_to(&mut right),
+                );
+                res1?;
+                res2?;
+                left.add_to(repr)?;
+                right.add_to(repr)?;
             }
         }
 
@@ -277,8 +285,8 @@ where
 
 impl<T, K> TryFrom<Hamil<T, K>> for SumRepr<T, K>
 where
-    T: Float,
-    K: Code,
+    T: Float + Send,
+    K: Code + Send,
 {
     type Error = Error;
 
