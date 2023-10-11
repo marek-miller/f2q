@@ -38,6 +38,8 @@ pub mod prelude {
 /// Representation of Hermitian operators
 pub trait Code: Copy + Clone + Eq + Hash + Default {}
 
+impl Code for usize {}
+
 /// Convert and serialize sum of terms in various encodings
 pub trait Terms<T, K>
 where

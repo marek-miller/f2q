@@ -21,19 +21,19 @@ fn main() {
     let now = Instant::now();
     let mut fermi_sum = SumRepr::new();
 
-    fermi_sum.add(Integral::Constant, 1.0);
+    fermi_sum.add_term(Integral::Constant, 1.0);
     for code in orbital_pairs
         .iter()
         .filter_map(|(&p, &q)| Integral::one_electron(p, q))
     {
         // the coefficient is completely arbitrary
-        fermi_sum.add(code, rng.gen_range(-1.0..1.0));
+        fermi_sum.add_term(code, rng.gen_range(-1.0..1.0));
     }
     for code in Pairs::new(&orbital_pairs).filter_map(|((&p, &q), (&r, &s))| {
         Integral::two_electron((p, q), (r, s))
     }) {
         // the coefficient is completely arbitrary
-        fermi_sum.add(code, rng.gen_range(-1.0..1.0));
+        fermi_sum.add_term(code, rng.gen_range(-1.0..1.0));
     }
 
     println!(
