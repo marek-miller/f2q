@@ -2,8 +2,6 @@
 
 use std::ops::Mul;
 
-use num::One;
-
 /// Iterate over all pairs in a slice.
 #[derive(Debug)]
 pub struct Pairs<'a, T> {
@@ -44,7 +42,8 @@ impl<'a, T> Iterator for Pairs<'a, T> {
 }
 
 /// Group structure.
-pub trait Group: Mul<Output = Self> + One {
+pub trait Group: Mul<Output = Self> + Sized {
+    fn identity() -> Self;
     fn inverse(self) -> Self;
 }
 
@@ -59,12 +58,6 @@ pub enum Root4 {
     R2,
     /// R3 = -i
     R3,
-}
-
-impl One for Root4 {
-    fn one() -> Self {
-        Self::R0
-    }
 }
 
 impl Mul for Root4 {
@@ -100,6 +93,10 @@ impl Mul for Root4 {
 }
 
 impl Group for Root4 {
+    fn identity() -> Self {
+        Self::R0
+    }
+
     fn inverse(self) -> Self {
         use Root4::*;
         match self {
@@ -113,9 +110,7 @@ impl Group for Root4 {
 
 #[test]
 fn root4_identity() {
-    let e = Root4::one();
-
-    assert_eq!(e, Root4::R0);
+    assert_eq!(Root4::identity(), Root4::R0);
 }
 
 #[test]
@@ -125,7 +120,6 @@ fn root4_inverse() {
     assert_eq!(Root4::R2.inverse(), Root4::R3);
     assert_eq!(Root4::R3.inverse(), Root4::R2);
 }
-
 
 #[test]
 fn root4_mul() {
