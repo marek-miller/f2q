@@ -1,6 +1,7 @@
 use std::ops::RangeBounds;
 
 use f2q::{
+    math::Pairs,
     prelude::JordanWigner,
     qubit::{
         Pauli,
@@ -13,7 +14,6 @@ use f2q::{
     },
     terms::SumRepr,
     Error,
-    Pairs,
     Terms,
 };
 

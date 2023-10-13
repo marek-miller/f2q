@@ -145,8 +145,6 @@ fn one_electron_pq<T: Float>(
     let term = coeff
         * T::from(0.5).expect("cannot obtain floating point fraction: 0.5");
 
-    let mut code = PauliCode::default();
-
     if cr.index() >= 64 {
         return Err(Error::PauliIndex {
             msg: "cr index out of bound".to_string(),
@@ -159,6 +157,7 @@ fn one_electron_pq<T: Float>(
         });
     }
 
+    let mut code = PauliCode::default();
     // SAFETY:
     // We just checked if indices are within bound
     for i in cr.index() + 1..an.index() {
