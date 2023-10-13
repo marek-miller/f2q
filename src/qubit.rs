@@ -420,6 +420,8 @@ impl PauliCode {
     /// assert_eq!(par_op.pauli(0), Some(Pauli::Z));
     /// assert_eq!(par_op.pauli(1), Some(Pauli::Z));
     /// assert_eq!(par_op.pauli(2), Some(Pauli::I));
+    ///
+    /// assert_eq!(PauliCode::parity_op(0), PauliCode::default());
     /// ```
     pub fn parity_op(num_qubits: usize) -> Self {
         assert!(num_qubits <= 64, "number of qubits must be within 1..64");
@@ -525,6 +527,10 @@ impl PauliGroup {
         code: PauliCode,
     ) -> Self {
         Self(omega, code)
+    }
+
+    pub fn is_hermitian(&self) -> bool {
+        self.0 == Root4::R0 || self.0 == Root4::R1
     }
 }
 

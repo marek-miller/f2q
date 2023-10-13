@@ -5,8 +5,8 @@ use std::{
 
 use terms::SumRepr;
 
-pub mod math;
 pub mod maps;
+pub mod math;
 pub mod qubit;
 pub mod secnd;
 pub mod terms;
@@ -15,6 +15,7 @@ pub mod terms;
 pub mod prelude {
     pub use crate::{
         maps::JordanWigner,
+        math::Pairs,
         qubit::{
             Pauli,
             PauliCode,
@@ -31,7 +32,6 @@ pub mod prelude {
             SumRepr,
         },
         Code,
-        math::Pairs,
         Terms,
     };
 }
