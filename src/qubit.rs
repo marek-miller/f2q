@@ -399,6 +399,33 @@ impl PauliCode {
         }
         code
     }
+
+    /// Parity operator.
+    ///
+    /// Returns code that consists of a consecutive string of `num_qubits`
+    /// [`Pauli::Z`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if `num_qubits > 64`
+    ///
+    /// # Examples
+    ///
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{Pauli, PauliCode};
+    ///
+    /// let par_op = PauliCode::parity_op(2);
+    ///
+    /// assert_eq!(par_op.pauli(0), Some(Pauli::Z));
+    /// assert_eq!(par_op.pauli(1), Some(Pauli::Z));
+    /// assert_eq!(par_op.pauli(2), Some(Pauli::I));
+    /// ```
+    pub fn parity_op(num_qubits: usize) -> Self {
+        assert!(num_qubits <= 64, "number of qubits must be within 1..64");
+
+        PauliCode::from_paulis((0..num_qubits).map(|_| Pauli::Z))
+    }
 }
 
 impl IntoIterator for PauliCode {
