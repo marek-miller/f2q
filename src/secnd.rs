@@ -283,12 +283,12 @@ pub enum Fermions {
     #[default]
     Offset,
     One {
-        cr: Orbital,
-        an: Orbital,
+        cr: Cr,
+        an: An,
     },
     Two {
-        cr: (Orbital, Orbital),
-        an: (Orbital, Orbital),
+        cr: (Cr, Cr),
+        an: (An, An),
     },
 }
 
@@ -315,24 +315,24 @@ impl Fermions {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use f2q::secnd::{Fermions, Orbital, Spin};
+    /// # use f2q::secnd::{Fermions, Orbital, Spin, Cr, An};
     ///
     /// let integral = Fermions::one_electron(
-    ///     Orbital::new(0, Spin::Down),
-    ///     Orbital::new(1, Spin::Down),
+    ///     Cr(Orbital::new(0, Spin::Down)),
+    ///     An(Orbital::new(1, Spin::Down)),
     /// );
     /// assert!(integral.is_some());
     ///
     /// let integral = Fermions::one_electron(
-    ///     Orbital::new(1, Spin::Down),
-    ///     Orbital::new(0, Spin::Down),
+    ///     Cr(Orbital::new(1, Spin::Down)),
+    ///     An(Orbital::new(0, Spin::Down)),
     /// );
     /// assert!(integral.is_none());
     /// ```
     #[must_use]
     pub fn one_electron(
-        cr: Orbital,
-        an: Orbital,
+        cr: Cr,
+        an: An,
     ) -> Option<Self> {
         (cr.index() <= an.index()).then_some(Self::One {
             cr,
@@ -352,24 +352,36 @@ impl Fermions {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use f2q::secnd::{Fermions, Orbital, Spin};
+    /// # use f2q::secnd::{Fermions, Orbital, Spin, Cr, An};
     ///
     /// let integral = Fermions::two_electron(
-    ///     (Orbital::new(0, Spin::Down), Orbital::new(0, Spin::Up)),
-    ///     (Orbital::new(1, Spin::Down), Orbital::new(0, Spin::Down)),
+    ///     (
+    ///         Cr(Orbital::new(0, Spin::Down)),
+    ///         Cr(Orbital::new(0, Spin::Up)),
+    ///     ),
+    ///     (
+    ///         An(Orbital::new(1, Spin::Down)),
+    ///         An(Orbital::new(0, Spin::Down)),
+    ///     ),
     /// );
     /// assert!(integral.is_some());
     ///
     /// let integral = Fermions::two_electron(
-    ///     (Orbital::new(0, Spin::Down), Orbital::new(0, Spin::Down)),
-    ///     (Orbital::new(1, Spin::Down), Orbital::new(0, Spin::Down)),
+    ///     (
+    ///         Cr(Orbital::new(0, Spin::Down)),
+    ///         Cr(Orbital::new(0, Spin::Down)),
+    ///     ),
+    ///     (
+    ///         An(Orbital::new(1, Spin::Down)),
+    ///         An(Orbital::new(0, Spin::Down)),
+    ///     ),
     /// );
     /// assert!(integral.is_none());
     /// ```
     #[must_use]
     pub fn two_electron(
-        cr: (Orbital, Orbital),
-        an: (Orbital, Orbital),
+        cr: (Cr, Cr),
+        an: (An, An),
     ) -> Option<Self> {
         (cr.0.index() < cr.1.index()
             && an.0.index() > an.1.index()
@@ -382,3 +394,23 @@ impl Fermions {
 }
 
 impl Code for Fermions {}
+
+/// Creation operator
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Cr(pub Orbital);
+
+impl Cr {
+    pub fn index(&self) -> usize {
+        self.0.index()
+    }
+}
+
+/// Annihilation operator
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct An(pub Orbital);
+
+impl An {
+    pub fn index(&self) -> usize {
+        self.0.index()
+    }
+}

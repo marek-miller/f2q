@@ -8,8 +8,9 @@ use crate::{
         PauliCode,
     },
     secnd::{
+        An,
+        Cr,
         Fermions,
-        Orbital,
     },
     terms::SumRepr,
     Error,
@@ -35,7 +36,7 @@ use crate::{
 /// let p = Orbital::from_index(idx);
 ///
 /// // Add it as one-electron interaction term to the sum with coefficient: 1.0
-/// fermi_repr.add_term(Fermions::one_electron(p, p).unwrap(), 1.0);
+/// fermi_repr.add_term(Fermions::one_electron(Cr(p), An(p)).unwrap(), 1.0);
 ///
 /// // Map fermionic hamiltonian to a sum of Pauli strings
 /// let mut pauli_repr = SumRepr::new();
@@ -98,12 +99,12 @@ where
 }
 
 fn one_electron<T: Float>(
-    cr: Orbital,
-    an: Orbital,
+    cr: Cr,
+    an: An,
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
 ) -> Result<(), Error> {
-    if cr == an {
+    if cr.index() == an.index() {
         one_electron_pp(cr, an, coeff, pauli_repr)?;
     } else {
         one_electron_pq(cr, an, coeff, pauli_repr)?;
@@ -113,8 +114,8 @@ fn one_electron<T: Float>(
 }
 
 fn one_electron_pp<T: Float>(
-    cr: Orbital,
-    _an: Orbital,
+    cr: Cr,
+    _an: An,
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
 ) -> Result<(), Error> {
@@ -137,8 +138,8 @@ fn one_electron_pp<T: Float>(
 }
 
 fn one_electron_pq<T: Float>(
-    cr: Orbital,
-    an: Orbital,
+    cr: Cr,
+    an: An,
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
 ) -> Result<(), Error> {
@@ -181,8 +182,8 @@ fn one_electron_pq<T: Float>(
 }
 
 fn two_electron<T: Float>(
-    cr: (Orbital, Orbital),
-    an: (Orbital, Orbital),
+    cr: (Cr, Cr),
+    an: (An, An),
     coeff: T,
     pauli_repr: &mut SumRepr<T, PauliCode>,
 ) -> Result<(), Error> {

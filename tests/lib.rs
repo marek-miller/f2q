@@ -8,6 +8,8 @@ use f2q::{
         PauliCode,
     },
     secnd::{
+        An,
+        Cr,
         Fermions,
         Orbital,
         Spin,
@@ -350,7 +352,7 @@ fn check_jordan_wigner_one_pp(index: usize) {
     let mut fermi_sum = SumRepr::new();
 
     let p = Orbital::from_index(index);
-    let integral = Fermions::one_electron(p, p).unwrap();
+    let integral = Fermions::one_electron(Cr(p), An(p)).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
@@ -396,7 +398,7 @@ fn check_jordan_wigner_one_pq(
     assert!(index1 < index2);
     let p = Orbital::from_index(index1);
     let q = Orbital::from_index(index2);
-    let integral = Fermions::one_electron(p, q).unwrap();
+    let integral = Fermions::one_electron(Cr(p), An(q)).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
@@ -446,7 +448,8 @@ fn check_jordan_wigner_two_pq(
     assert!(index1 < index2);
     let p = Orbital::from_index(index1);
     let q = Orbital::from_index(index2);
-    let integral = Fermions::two_electron((p, q), (q, p)).unwrap();
+    let integral =
+        Fermions::two_electron((Cr(p), Cr(q)), (An(q), An(p))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
@@ -515,7 +518,8 @@ fn check_jordan_wigner_two_pqs(
     let p = Orbital::from_index(index1);
     let q = Orbital::from_index(index2);
     let s = Orbital::from_index(index3);
-    let integral = Fermions::two_electron((p, q), (q, s)).unwrap();
+    let integral =
+        Fermions::two_electron((Cr(p), Cr(q)), (An(q), An(s))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
@@ -604,7 +608,8 @@ fn check_jordan_wigner_two_pqrs(
     let q = Orbital::from_index(index2);
     let r = Orbital::from_index(index3);
     let s = Orbital::from_index(index4);
-    let integral = Fermions::two_electron((p, q), (r, s)).unwrap();
+    let integral =
+        Fermions::two_electron((Cr(p), Cr(q)), (An(r), An(s))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();

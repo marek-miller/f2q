@@ -21,6 +21,8 @@ pub mod prelude {
             PauliCode,
         },
         secnd::{
+            An,
+            Cr,
             Fermions,
             Orbital,
             Spin,
