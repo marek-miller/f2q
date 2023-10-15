@@ -154,6 +154,13 @@ where
         let prev_coeff = self.coeff(code);
         let _ = self.update(code, coeff + prev_coeff);
     }
+
+    pub(crate) fn add_tuple(
+        &mut self,
+        (code, coeff): (K, T),
+    ) {
+        self.add_term(code, coeff)
+    }
 }
 
 impl<T, K> Terms<T, K> for SumRepr<T, K>

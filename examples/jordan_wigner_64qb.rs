@@ -24,13 +24,13 @@ fn main() -> Result<(), f2q::Error> {
     fermi_sum.add_term(Fermions::Offset, 1.0);
     for code in orbital_pairs
         .iter()
-        .filter_map(|(&p, &q)| Fermions::one_electron(p, q))
+        .filter_map(|(&p, &q)| Fermions::one_electron(Cr(p), An(q)))
     {
         // the coefficient is completely arbitrary
         fermi_sum.add_term(code, rng.gen_range(-1.0..1.0));
     }
     for code in Pairs::new(&orbital_pairs).filter_map(|((&p, &q), (&r, &s))| {
-        Fermions::two_electron((p, q), (r, s))
+        Fermions::two_electron((Cr(p), Cr(q)), (An(r), An(s)))
     }) {
         // the coefficient is completely arbitrary
         fermi_sum.add_term(code, rng.gen_range(-1.0..1.0));

@@ -15,12 +15,12 @@ fn main() -> Result<(), f2q::Error> {
             if count < 4096 {
                 if let Some(fermion) = Fermions::two_electron(
                     (
-                        Orbital::from_index(rng.gen_range(0..64)),
-                        Orbital::from_index(rng.gen_range(0..64)),
+                        Cr(Orbital::from_index(rng.gen_range(0..64))),
+                        Cr(Orbital::from_index(rng.gen_range(0..64))),
                     ),
                     (
-                        Orbital::from_index(rng.gen_range(0..64)),
-                        Orbital::from_index(rng.gen_range(0..64)),
+                        An(Orbital::from_index(rng.gen_range(0..64))),
+                        An(Orbital::from_index(rng.gen_range(0..64))),
                     ),
                 ) {
                     count += 1;
