@@ -600,16 +600,24 @@ fn next_item_two_pq<T: Float>(
 
     match index {
         0 => {
-            todo!()
+            let code = PauliCode::default();
+            Some((code, term))
         }
         1 => {
-            todo!()
+            let mut code = PauliCode::default();
+            code.set(p, Pauli::Z);
+            Some((code, -term))
         }
         2 => {
-            todo!()
+            let mut code = PauliCode::default();
+            code.set(q, Pauli::Z);
+            Some((code, -term))
         }
         3 => {
-            todo!()
+            let mut code = PauliCode::default();
+            code.set(p, Pauli::Z);
+            code.set(q, Pauli::Z);
+            Some((code, term))
         }
         _ => None,
     }
@@ -622,18 +630,43 @@ fn next_item_two_pqs<T: Float>(
     q: usize,
     s: usize,
 ) -> Option<(PauliCode, T)> {
+    let term = coeff
+        * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
+
+    let code = {
+        let mut code = PauliCode::default();
+        for i in p + 1..s {
+            code.set(i, Pauli::Z);
+        }
+        code
+    };
+
     match index {
         0 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::X);
+            code.set(s, Pauli::X);
+            Some((code, term))
         }
         1 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::X);
+            code.set(q, Pauli::Z);
+            code.set(s, Pauli::X);
+            Some((code, -term))
         }
         2 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::Y);
+            code.set(s, Pauli::Y);
+            Some((code, term))
         }
         3 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::Y);
+            code.set(q, Pauli::Z);
+            code.set(s, Pauli::Y);
+            Some((code, -term))
         }
         _ => None,
     }
@@ -647,30 +680,84 @@ fn next_item_two_pqrs<T: Float>(
     r: usize,
     s: usize,
 ) -> Option<(PauliCode, T)> {
+    let term = coeff
+        * T::from(0.125).expect("cannot obtain floating point fraction: 0.125");
+
+    let code = {
+        let mut code = PauliCode::default();
+        for i in p + 1..q {
+            code.set(i, Pauli::Z);
+        }
+        for i in s + 1..r {
+            code.set(i, Pauli::Z);
+        }
+        code
+    };
+
     match index {
         0 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::X);
+            code.set(q, Pauli::X);
+            code.set(r, Pauli::X);
+            code.set(s, Pauli::X);
+            Some((code, term))
         }
         1 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::X);
+            code.set(q, Pauli::X);
+            code.set(r, Pauli::Y);
+            code.set(s, Pauli::Y);
+            Some((code, -term))
         }
         2 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::X);
+            code.set(q, Pauli::Y);
+            code.set(r, Pauli::X);
+            code.set(s, Pauli::Y);
+            Some((code, term))
         }
         3 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::Y);
+            code.set(q, Pauli::X);
+            code.set(r, Pauli::X);
+            code.set(s, Pauli::Y);
+            Some((code, term))
         }
         4 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::Y);
+            code.set(q, Pauli::X);
+            code.set(r, Pauli::Y);
+            code.set(s, Pauli::X);
+            Some((code, term))
         }
         5 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::Y);
+            code.set(q, Pauli::Y);
+            code.set(r, Pauli::X);
+            code.set(s, Pauli::X);
+            Some((code, -term))
         }
         6 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::X);
+            code.set(q, Pauli::Y);
+            code.set(r, Pauli::Y);
+            code.set(s, Pauli::X);
+            Some((code, term))
         }
         7 => {
-            todo!()
+            let mut code = code;
+            code.set(p, Pauli::Y);
+            code.set(q, Pauli::Y);
+            code.set(r, Pauli::Y);
+            code.set(s, Pauli::Y);
+            Some((code, term))
         }
         _ => None,
     }
