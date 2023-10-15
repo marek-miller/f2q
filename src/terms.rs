@@ -56,19 +56,6 @@ where
         }
     }
 
-    /// Returns a shared reference to a hash map of codes as keys and
-    /// coefficients as values.
-    #[must_use]
-    pub fn as_map(&self) -> &HashMap<K, T> {
-        &self.map
-    }
-
-    /// Returns a mutable reference to a hash map of codes as keys and
-    /// coefficients as values.
-    pub fn as_map_mut(&mut self) -> &mut HashMap<K, T> {
-        &mut self.map
-    }
-
     /// Number of terms in the sum.
     #[must_use]
     pub fn len(&self) -> usize {
@@ -78,6 +65,54 @@ where
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    #[must_use]
+    pub fn iter(&self) -> SumIter<'_, T, K> {
+        SumIter::new(self)
+    }
+}
+
+/// Iterator over terms in [`SumRepr`].
+#[derive(Debug)]
+pub struct SumIter<'a, T, K>
+where
+    K: Code,
+{
+    iter: std::collections::hash_map::Iter<'a, K, T>,
+}
+
+impl<'a, T, K> SumIter<'a, T, K>
+where
+    K: Code,
+{
+    pub fn new(repr: &'a SumRepr<T, K>) -> Self {
+        Self {
+            iter: repr.map.iter(),
+        }
+    }
+}
+
+impl<'a, T, K> Iterator for SumIter<'a, T, K>
+where
+    K: Code,
+{
+    type Item = (&'a T, &'a K);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(code, coeff)| (coeff, code))
+    }
+}
+
+impl<'a, T, K> IntoIterator for &'a SumRepr<T, K>
+where
+    K: Code,
+{
+    type IntoIter = SumIter<'a, T, K>;
+    type Item = (&'a T, &'a K);
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 
@@ -159,7 +194,7 @@ where
         &mut self,
         (code, coeff): (K, T),
     ) {
-        self.add_term(code, coeff)
+        self.add_term(code, coeff);
     }
 }
 
@@ -174,8 +209,8 @@ where
         &mut self,
         repr: &mut SumRepr<T, K>,
     ) -> Result<(), Self::Error> {
-        for (code, value) in self.as_map() {
-            repr.add_term(*code, *value);
+        for (&coeff, &code) in self.iter() {
+            repr.add_term(code, coeff);
         }
         Ok(())
     }

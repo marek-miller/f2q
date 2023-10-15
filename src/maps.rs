@@ -73,12 +73,11 @@ where
         &mut self,
         repr: &mut SumRepr<T, PauliCode>,
     ) -> Result<(), Self::Error> {
-        for (&code, &coeff) in self.repr.as_map() {
-            jordan_wigner::Map::try_from(code)?
-                .map(coeff)
-                .for_each(|x| repr.add_tuple(x));
-        }
-
-        Ok(())
+        self.repr.iter().try_for_each({
+            |(&coeff, &code)| {
+                jordan_wigner::Map::try_from(code)
+                    .map(|jw| jw.map(coeff).for_each(|x| repr.add_tuple(x)))
+            }
+        })
     }
 }

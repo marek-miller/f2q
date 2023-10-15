@@ -38,7 +38,7 @@ fn main() -> Result<(), f2q::Error> {
 
     println!(
         "Generated {} terms in {} ms.",
-        fermi_sum.as_map().len(),
+        fermi_sum.len(),
         now.elapsed().as_millis()
     );
 
@@ -53,7 +53,7 @@ fn main() -> Result<(), f2q::Error> {
     println!("Done.");
     println!(
         "Obtained {} terms in {} ms.",
-        pauli_sum.as_map().len(),
+        pauli_sum.len(),
         now.elapsed().as_millis()
     );
 

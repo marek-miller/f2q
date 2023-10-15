@@ -193,7 +193,7 @@ fn test_sumrepr_init_01() {
     let code = PauliCode::new((1234, 0));
     let mut hamil = SumRepr::new();
 
-    hamil.as_map_mut().insert(code, 4321.);
+    hamil.update(code, 4321.);
     let coeff = hamil.coeff(code);
     assert!(f64::abs(coeff - 4321.) < f64::EPSILON);
 }
@@ -341,7 +341,7 @@ fn jordan_wigner_01() {
         .add_to(&mut pauli_sum)
         .unwrap();
 
-    let coeff = pauli_sum.as_map().get(&PauliCode::default()).unwrap();
+    let coeff = pauli_sum.coeff(PauliCode::default());
     assert!(
         (coeff - MOCK_COEFF).abs() < f64::EPSILON,
         "{MOCK_COEFF} {coeff}"
@@ -361,7 +361,7 @@ fn check_jordan_wigner_one_pp(index: usize) {
         .unwrap();
 
     let code = PauliCode::default();
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.5;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -373,7 +373,7 @@ fn check_jordan_wigner_one_pp(index: usize) {
         code.set(index, Pauli::Z);
         code
     };
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.5;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -412,7 +412,7 @@ fn check_jordan_wigner_one_pq(
     }
     code.set(index1, Pauli::X);
     code.set(index2, Pauli::X);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.5;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -421,7 +421,7 @@ fn check_jordan_wigner_one_pq(
 
     code.set(index1, Pauli::Y);
     code.set(index2, Pauli::Y);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.5;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -458,7 +458,7 @@ fn check_jordan_wigner_two_pq(
         .unwrap();
 
     let code = PauliCode::default();
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -467,7 +467,7 @@ fn check_jordan_wigner_two_pq(
 
     let mut code = PauliCode::default();
     code.set(index1, Pauli::Z);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -476,7 +476,7 @@ fn check_jordan_wigner_two_pq(
 
     let mut code = PauliCode::default();
     code.set(index2, Pauli::Z);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -486,7 +486,7 @@ fn check_jordan_wigner_two_pq(
     let mut code = PauliCode::default();
     code.set(index1, Pauli::Z);
     code.set(index2, Pauli::Z);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -533,7 +533,7 @@ fn check_jordan_wigner_two_pqs(
     }
     code.set(index1, Pauli::X);
     code.set(index3, Pauli::X);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -546,7 +546,7 @@ fn check_jordan_wigner_two_pqs(
     }
     code.set(index1, Pauli::Y);
     code.set(index3, Pauli::Y);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -560,7 +560,7 @@ fn check_jordan_wigner_two_pqs(
     code.set(index1, Pauli::X);
     code.set(index3, Pauli::X);
     code.set(index2, Pauli::Z);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -574,7 +574,7 @@ fn check_jordan_wigner_two_pqs(
     code.set(index1, Pauli::Y);
     code.set(index3, Pauli::Y);
     code.set(index2, Pauli::Z);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -633,7 +633,7 @@ fn check_jordan_wigner_two_pqrs(
     code.set(index2, Pauli::X);
     code.set(index3, Pauli::X);
     code.set(index4, Pauli::X);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -645,7 +645,7 @@ fn check_jordan_wigner_two_pqrs(
     code.set(index2, Pauli::X);
     code.set(index3, Pauli::Y);
     code.set(index4, Pauli::Y);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.125;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -657,7 +657,7 @@ fn check_jordan_wigner_two_pqrs(
     code.set(index2, Pauli::Y);
     code.set(index3, Pauli::X);
     code.set(index4, Pauli::Y);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -669,7 +669,7 @@ fn check_jordan_wigner_two_pqrs(
     code.set(index2, Pauli::X);
     code.set(index3, Pauli::X);
     code.set(index4, Pauli::Y);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -681,7 +681,7 @@ fn check_jordan_wigner_two_pqrs(
     code.set(index2, Pauli::X);
     code.set(index3, Pauli::Y);
     code.set(index4, Pauli::X);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -693,7 +693,7 @@ fn check_jordan_wigner_two_pqrs(
     code.set(index2, Pauli::Y);
     code.set(index3, Pauli::X);
     code.set(index4, Pauli::X);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.125;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -705,7 +705,7 @@ fn check_jordan_wigner_two_pqrs(
     code.set(index2, Pauli::Y);
     code.set(index3, Pauli::Y);
     code.set(index4, Pauli::X);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
@@ -717,7 +717,7 @@ fn check_jordan_wigner_two_pqrs(
     code.set(index2, Pauli::Y);
     code.set(index3, Pauli::Y);
     code.set(index4, Pauli::Y);
-    let coeff = pauli_sum.as_map().get(&code).unwrap();
+    let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
         (coeff - expected).abs() < f64::EPSILON,
