@@ -67,9 +67,53 @@ where
         self.len() == 0
     }
 
+    /// Iterate over terms in the sum.
+    ///
+    /// The returned iterator runs over tuples of shared references of type:
+    /// `(&T, &K)`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::{qubit::PauliCode, terms::SumRepr};
+    ///
+    /// let mut repr = SumRepr::new();
+    ///
+    /// repr.update(PauliCode::default(), 0.5);
+    /// repr.update(PauliCode::new((1, 0)), 0.5);
+    ///
+    /// let sum = repr.iter().fold(0.0, |acc, (&coeff, _)| acc + coeff);
+    ///
+    /// assert_eq!(sum, 1.0);
+    /// ```
     #[must_use]
     pub fn iter(&self) -> SumIter<'_, T, K> {
         SumIter::new(self)
+    }
+
+    /// Iterate over terms in the sum, allow mutable access to coefficients.
+    ///
+    /// The returned iterator runs over tuples of references of type:
+    /// `(&mut T, &K)`.
+    ///
+    ///  /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::{qubit::PauliCode, terms::SumRepr};
+    ///
+    /// let mut repr = SumRepr::new();
+    ///
+    /// repr.update(PauliCode::default(), 0.5);
+    /// repr.update(PauliCode::new((1, 0)), 0.5);
+    /// for (coeff, _) in repr.iter_mut() {
+    ///     *coeff += 0.1;
+    /// }
+    ///
+    /// assert_eq!(repr.coeff(PauliCode::default()), 0.6);
+    /// assert_eq!(repr.coeff(PauliCode::new((1, 0))), 0.6);
+    /// ```
+    pub fn iter_mut(&mut self) -> SumIterMut<'_, T, K> {
+        SumIterMut::new(self)
     }
 }
 
@@ -113,6 +157,37 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
+    }
+}
+
+/// Iterator over terms in [`SumRepr`].
+#[derive(Debug)]
+pub struct SumIterMut<'a, T, K>
+where
+    K: Code,
+{
+    iter: std::collections::hash_map::IterMut<'a, K, T>,
+}
+
+impl<'a, T, K> SumIterMut<'a, T, K>
+where
+    K: Code,
+{
+    pub fn new(repr: &'a mut SumRepr<T, K>) -> Self {
+        Self {
+            iter: repr.map.iter_mut(),
+        }
+    }
+}
+
+impl<'a, T, K> Iterator for SumIterMut<'a, T, K>
+where
+    K: Code,
+{
+    type Item = (&'a mut T, &'a K);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(code, coeff)| (coeff, code))
     }
 }
 
