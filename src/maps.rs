@@ -80,28 +80,8 @@ where
         repr: &mut SumRepr<T, PauliCode>,
     ) -> Result<(), Self::Error> {
         for (&code, &coeff) in self.repr.as_map() {
-            // for (pauli_coeff, pauli_code) in
-            // JWMap::try_from(code)?.map(coeff) {
-            //     repr.add_term(pauli_code, pauli_coeff);
-            // }
-            match code {
-                Fermions::Offset => {
-                    repr.add_term(PauliCode::default(), coeff);
-                }
-                Fermions::One {
-                    cr: _,
-                    an: _,
-                } => {
-                    for (pauli_coeff, pauli_code) in
-                        JWMap::try_from(code)?.map(coeff)
-                    {
-                        repr.add_term(pauli_code, pauli_coeff);
-                    }
-                }
-                Fermions::Two {
-                    cr,
-                    an,
-                } => two_electron(cr, an, coeff, repr)?,
+            for (pauli_code, pauli_coeff) in JWMap::try_from(code)?.map(coeff) {
+                repr.add_term(pauli_code, pauli_coeff);
             }
         }
 
@@ -439,7 +419,7 @@ impl JWMap<Fermions> {
     pub fn map<T>(
         &self,
         coeff: T,
-    ) -> impl Iterator<Item = (T, PauliCode)>
+    ) -> impl Iterator<Item = (PauliCode, T)>
     where
         T: Float,
     {
@@ -509,23 +489,24 @@ impl<T> Iterator for JWIter<T, Fermions>
 where
     T: Float,
 {
-    type Item = (T, PauliCode);
+    type Item = (PauliCode, T);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.code {
             Fermions::Offset => {
                 if self.index == 0 {
-                    Some((self.coeff, PauliCode::default()))
+                    self.index += 1;
+                    Some((PauliCode::default(), self.coeff))
                 } else {
                     None
                 }
             }
             Fermions::One {
-                cr,
-                an,
+                cr: p,
+                an: q,
             } => {
-                let p = cr.index();
-                let q = an.index();
+                let p = p.index();
+                let q = q.index();
                 let item = if p == q {
                     next_item_one_pp(self.index, self.coeff, p)
                 } else {
@@ -535,9 +516,24 @@ where
                 item
             }
             Fermions::Two {
-                cr: _,
-                an: _,
-            } => todo!(),
+                cr: (p, q),
+                an: (r, s),
+            } => {
+                let p = p.index();
+                let q = q.index();
+                let r = r.index();
+                let s = s.index();
+
+                let item = if p == s && q == r {
+                    next_item_two_pq(self.index, self.coeff, p, q)
+                } else if q == r {
+                    next_item_two_pqs(self.index, self.coeff, p, q, s)
+                } else {
+                    next_item_two_pqrs(self.index, self.coeff, p, q, r, s)
+                };
+                self.index = (self.index + 1).min(8);
+                item
+            }
         }
     }
 }
@@ -546,15 +542,15 @@ fn next_item_one_pp<T: Float>(
     index: usize,
     coeff: T,
     p: usize,
-) -> Option<(T, PauliCode)> {
+) -> Option<(PauliCode, T)> {
     let one_half = T::from(0.5).expect("cannot convert 0.5");
 
     match index {
-        0 => Some((coeff * one_half, PauliCode::default())),
+        0 => Some((PauliCode::default(), coeff * one_half)),
         1 => {
             let mut code = PauliCode::default();
             code.set(p, Pauli::Z);
-            Some((-coeff * one_half, code))
+            Some((code, -coeff * one_half))
         }
         _ => None,
     }
@@ -565,7 +561,7 @@ fn next_item_one_pq<T: Float>(
     coeff: T,
     p: usize,
     q: usize,
-) -> Option<(T, PauliCode)> {
+) -> Option<(PauliCode, T)> {
     let one_half = T::from(0.5).expect("cannot convert 0.5");
 
     let code = {
@@ -581,13 +577,100 @@ fn next_item_one_pq<T: Float>(
             let mut code = code;
             code.set(p, Pauli::X);
             code.set(q, Pauli::X);
-            Some((coeff * one_half, code))
+            Some((code, coeff * one_half))
         }
         1 => {
             let mut code = code;
             code.set(p, Pauli::Y);
             code.set(q, Pauli::Y);
-            Some((coeff * one_half, code))
+            Some((code, coeff * one_half))
+        }
+        _ => None,
+    }
+}
+
+fn next_item_two_pq<T: Float>(
+    index: usize,
+    coeff: T,
+    p: usize,
+    q: usize,
+) -> Option<(PauliCode, T)> {
+    let term = coeff
+        * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
+
+    match index {
+        0 => {
+            todo!()
+        }
+        1 => {
+            todo!()
+        }
+        2 => {
+            todo!()
+        }
+        3 => {
+            todo!()
+        }
+        _ => None,
+    }
+}
+
+fn next_item_two_pqs<T: Float>(
+    index: usize,
+    coeff: T,
+    p: usize,
+    q: usize,
+    s: usize,
+) -> Option<(PauliCode, T)> {
+    match index {
+        0 => {
+            todo!()
+        }
+        1 => {
+            todo!()
+        }
+        2 => {
+            todo!()
+        }
+        3 => {
+            todo!()
+        }
+        _ => None,
+    }
+}
+
+fn next_item_two_pqrs<T: Float>(
+    index: usize,
+    coeff: T,
+    p: usize,
+    q: usize,
+    r: usize,
+    s: usize,
+) -> Option<(PauliCode, T)> {
+    match index {
+        0 => {
+            todo!()
+        }
+        1 => {
+            todo!()
+        }
+        2 => {
+            todo!()
+        }
+        3 => {
+            todo!()
+        }
+        4 => {
+            todo!()
+        }
+        5 => {
+            todo!()
+        }
+        6 => {
+            todo!()
+        }
+        7 => {
+            todo!()
         }
         _ => None,
     }
