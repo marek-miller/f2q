@@ -400,6 +400,7 @@ impl Code for Fermions {}
 pub struct Cr(pub Orbital);
 
 impl Cr {
+    #[must_use]
     pub fn index(&self) -> usize {
         self.0.index()
     }
@@ -410,6 +411,7 @@ impl Cr {
 pub struct An(pub Orbital);
 
 impl An {
+    #[must_use]
     pub fn index(&self) -> usize {
         self.0.index()
     }

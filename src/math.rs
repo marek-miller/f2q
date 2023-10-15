@@ -67,7 +67,12 @@ impl Mul for Root4 {
         self,
         rhs: Self,
     ) -> Self::Output {
-        use Root4::*;
+        use Root4::{
+            R0,
+            R1,
+            R2,
+            R3,
+        };
         match self {
             R0 => rhs,
             R1 => match rhs {
@@ -98,7 +103,12 @@ impl Group for Root4 {
     }
 
     fn inverse(self) -> Self {
-        use Root4::*;
+        use Root4::{
+            R0,
+            R1,
+            R2,
+            R3,
+        };
         match self {
             R0 => R0,
             R1 => R1,

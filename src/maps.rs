@@ -13,6 +13,7 @@ use crate::{
         Fermions,
     },
     terms::SumRepr,
+    Code,
     Error,
     Terms,
 };
@@ -79,14 +80,24 @@ where
         repr: &mut SumRepr<T, PauliCode>,
     ) -> Result<(), Self::Error> {
         for (&code, &coeff) in self.repr.as_map() {
+            // for (pauli_coeff, pauli_code) in
+            // JWMap::try_from(code)?.map(coeff) {
+            //     repr.add_term(pauli_code, pauli_coeff);
+            // }
             match code {
                 Fermions::Offset => {
                     repr.add_term(PauliCode::default(), coeff);
                 }
                 Fermions::One {
-                    cr,
-                    an,
-                } => one_electron(cr, an, coeff, repr)?,
+                    cr: _,
+                    an: _,
+                } => {
+                    for (pauli_coeff, pauli_code) in
+                        JWMap::try_from(code)?.map(coeff)
+                    {
+                        repr.add_term(pauli_code, pauli_coeff);
+                    }
+                }
                 Fermions::Two {
                     cr,
                     an,
@@ -420,4 +431,164 @@ fn two_electron_pqrs<T: Float>(
     pauli_repr.add_term(code, term);
 
     Ok(())
+}
+
+pub struct JWMap<K: Code>(K);
+
+impl JWMap<Fermions> {
+    pub fn map<T>(
+        &self,
+        coeff: T,
+    ) -> impl Iterator<Item = (T, PauliCode)>
+    where
+        T: Float,
+    {
+        JWIter::new(coeff, self.0)
+    }
+}
+
+impl TryFrom<Fermions> for JWMap<Fermions> {
+    type Error = Error;
+
+    fn try_from(value: Fermions) -> Result<Self, Self::Error> {
+        match value {
+            Fermions::Offset => Ok(Self(value)),
+            Fermions::One {
+                cr,
+                an,
+            } => {
+                if cr.index() < 64 && an.index() < 64 {
+                    Ok(Self(value))
+                } else {
+                    Err(Error::PauliIndex {
+                        msg: "orbital index must be less than 64".to_string(),
+                    })
+                }
+            }
+            Fermions::Two {
+                cr,
+                an,
+            } => {
+                if cr.0.index() < 64
+                    && cr.1.index() < 64
+                    && an.0.index() < 64
+                    && an.1.index() < 64
+                {
+                    Ok(Self(value))
+                } else {
+                    Err(Error::PauliIndex {
+                        msg: "orbital index must be less than 64".to_string(),
+                    })
+                }
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct JWIter<T, K> {
+    coeff: T,
+    code:  K,
+    index: usize,
+}
+
+impl<T, K> JWIter<T, K> {
+    pub fn new(
+        coeff: T,
+        code: K,
+    ) -> Self {
+        Self {
+            coeff,
+            code,
+            index: 0,
+        }
+    }
+}
+
+impl<T> Iterator for JWIter<T, Fermions>
+where
+    T: Float,
+{
+    type Item = (T, PauliCode);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.code {
+            Fermions::Offset => {
+                if self.index == 0 {
+                    Some((self.coeff, PauliCode::default()))
+                } else {
+                    None
+                }
+            }
+            Fermions::One {
+                cr,
+                an,
+            } => {
+                let p = cr.index();
+                let q = an.index();
+                let item = if p == q {
+                    next_item_one_pp(self.index, self.coeff, p)
+                } else {
+                    next_item_one_pq(self.index, self.coeff, p, q)
+                };
+                self.index = (self.index + 1).min(2);
+                item
+            }
+            Fermions::Two {
+                cr: _,
+                an: _,
+            } => todo!(),
+        }
+    }
+}
+
+fn next_item_one_pp<T: Float>(
+    index: usize,
+    coeff: T,
+    p: usize,
+) -> Option<(T, PauliCode)> {
+    let one_half = T::from(0.5).expect("cannot convert 0.5");
+
+    match index {
+        0 => Some((coeff * one_half, PauliCode::default())),
+        1 => {
+            let mut code = PauliCode::default();
+            code.set(p, Pauli::Z);
+            Some((-coeff * one_half, code))
+        }
+        _ => None,
+    }
+}
+
+fn next_item_one_pq<T: Float>(
+    index: usize,
+    coeff: T,
+    p: usize,
+    q: usize,
+) -> Option<(T, PauliCode)> {
+    let one_half = T::from(0.5).expect("cannot convert 0.5");
+
+    let code = {
+        let mut code = PauliCode::default();
+        for i in p + 1..q {
+            code.set(i, Pauli::Z);
+        }
+        code
+    };
+
+    match index {
+        0 => {
+            let mut code = code;
+            code.set(p, Pauli::X);
+            code.set(q, Pauli::X);
+            Some((coeff * one_half, code))
+        }
+        1 => {
+            let mut code = code;
+            code.set(p, Pauli::Y);
+            code.set(q, Pauli::Y);
+            Some((coeff * one_half, code))
+        }
+        _ => None,
+    }
 }

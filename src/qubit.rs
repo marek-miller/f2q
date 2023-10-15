@@ -423,6 +423,7 @@ impl PauliCode {
     ///
     /// assert_eq!(PauliCode::parity_op(0), PauliCode::default());
     /// ```
+    #[must_use]
     pub fn parity_op(num_qubits: usize) -> Self {
         assert!(num_qubits <= 64, "number of qubits must be within 1..64");
 
@@ -480,7 +481,11 @@ impl Mul for PGrp {
         self,
         rhs: Self,
     ) -> Self::Output {
-        use Root4::*;
+        use Root4::{
+            R0,
+            R2,
+            R3,
+        };
         let (omega, pauli) = match self.1 {
             Pauli::I => (R0, rhs.1),
             Pauli::X => match rhs.1 {
@@ -517,11 +522,12 @@ impl Group for PGrp {
     }
 }
 
-/// Cross-product Root4 x PauliCode
+/// Cross-product Root4 x `PauliCode`
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PauliGroup(Root4, PauliCode);
 
 impl PauliGroup {
+    #[must_use]
     pub fn new(
         omega: Root4,
         code: PauliCode,
@@ -529,6 +535,7 @@ impl PauliGroup {
         Self(omega, code)
     }
 
+    #[must_use]
     pub fn is_hermitian(&self) -> bool {
         self.0 == Root4::R0 || self.0 == Root4::R1
     }
