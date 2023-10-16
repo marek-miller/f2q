@@ -5,11 +5,7 @@ use std::{
     ops::Mul,
 };
 
-use serde::{
-    ser::SerializeTuple,
-    Deserialize,
-    Serialize,
-};
+use serde::Serialize;
 
 use crate::{
     math::{
@@ -45,29 +41,6 @@ pub enum Pauli {
     X,
     Y,
     Z,
-}
-
-impl Pauli {
-    /// String representation of `Pauli`
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use f2q::qubit::Pauli;
-    ///
-    /// assert_eq!(Pauli::I.to_string(), "I");
-    /// assert_eq!(Pauli::X.to_string(), "X");
-    /// assert_eq!(Pauli::Y.to_string(), "Y");
-    /// assert_eq!(Pauli::Z.to_string(), "Z");
-    /// ```
-    pub fn to_string(&self) -> String {
-        match self {
-            Pauli::I => "I".to_string(),
-            Pauli::X => "X".to_string(),
-            Pauli::Y => "Y".to_string(),
-            Pauli::Z => "Z".to_string(),
-        }
-    }
 }
 
 macro_rules! impl_pauli_int {
@@ -112,7 +85,13 @@ impl Display for Pauli {
         &self,
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let str_repr = match self {
+            Pauli::I => "I",
+            Pauli::X => "X",
+            Pauli::Y => "Y",
+            Pauli::Z => "Z",
+        };
+        write!(f, "{str_repr}")
     }
 }
 
@@ -480,39 +459,6 @@ impl PauliCode {
 
         PauliCode::from_paulis((0..num_qubits).map(|_| Pauli::Z))
     }
-
-    /// Convert `PauliCode` to [`String`].
-    ///
-    /// The trailing identity operators [`Pauli:I`] are truncated.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # use f2q::qubit::{Pauli, PauliCode};
-    ///
-    /// assert_eq!(PauliCode::default().to_string(), "I");
-    /// assert_eq!(PauliCode::new((0b01, 0)).to_string(), "X");
-    /// assert_eq!(PauliCode::new((0b1000, 0)).to_string(), "IY");
-    /// assert_eq!(PauliCode::new((0b110000, 0)).to_string(), "IIZ");
-    /// ```
-    pub fn to_string(&self) -> String {
-        if self.enumerate() == 0 {
-            return "I".to_string();
-        }
-
-        let mut pauli_str = String::with_capacity(64);
-        for pauli in self.into_iter() {
-            let ch = match pauli {
-                Pauli::I => 'I',
-                Pauli::X => 'X',
-                Pauli::Y => 'Y',
-                Pauli::Z => 'Z',
-            };
-            pauli_str.push(ch);
-        }
-
-        pauli_str.trim_end_matches("I").to_string()
-    }
 }
 
 impl Serialize for PauliCode {
@@ -573,7 +519,22 @@ impl Display for PauliCode {
         &self,
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        if self.enumerate() == 0 {
+            write!(f, "I")
+        } else {
+            let mut pauli_str = String::with_capacity(64);
+            for pauli in self.into_iter() {
+                let ch = match pauli {
+                    Pauli::I => 'I',
+                    Pauli::X => 'X',
+                    Pauli::Y => 'Y',
+                    Pauli::Z => 'Z',
+                };
+                pauli_str.push(ch);
+            }
+
+            write!(f, "{}", pauli_str.trim_end_matches('I'))
+        }
     }
 }
 

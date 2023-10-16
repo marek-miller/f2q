@@ -23,7 +23,7 @@ pub struct SumRepr<T, K>
 where
     K: Code,
 {
-    map: HashMap<K, T>,
+    terms: HashMap<K, T>,
 }
 
 impl<T, K> Default for SumRepr<T, K>
@@ -52,14 +52,14 @@ where
     #[must_use]
     pub fn new() -> Self {
         Self {
-            map: HashMap::new(),
+            terms: HashMap::new(),
         }
     }
 
     /// Number of terms in the sum.
     #[must_use]
     pub fn len(&self) -> usize {
-        self.map.len()
+        self.terms.len()
     }
 
     #[must_use]
@@ -130,9 +130,10 @@ impl<'a, T, K> SumIter<'a, T, K>
 where
     K: Code,
 {
+    #[must_use]
     pub fn new(repr: &'a SumRepr<T, K>) -> Self {
         Self {
-            iter: repr.map.iter(),
+            iter: repr.terms.iter(),
         }
     }
 }
@@ -175,7 +176,7 @@ where
 {
     pub fn new(repr: &'a mut SumRepr<T, K>) -> Self {
         Self {
-            iter: repr.map.iter_mut(),
+            iter: repr.terms.iter_mut(),
         }
     }
 }
@@ -213,7 +214,7 @@ where
         &self,
         code: K,
     ) -> T {
-        match self.map.get(&code) {
+        match self.terms.get(&code) {
             Some(coeff) => *coeff,
             None => T::zero(),
         }
@@ -240,7 +241,7 @@ where
         code: K,
         coeff: T,
     ) -> Option<T> {
-        self.map.insert(code, coeff)
+        self.terms.insert(code, coeff)
     }
 
     /// Add coefficient to the given code.

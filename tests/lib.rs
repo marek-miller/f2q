@@ -787,12 +787,13 @@ fn paulicode_from_u128() {
     assert_eq!(PauliCode::from(0u128).enumerate(), 0u128);
     assert_eq!(PauliCode::from(1u128).enumerate(), 1u128);
     assert_eq!(
-        PauliCode::from(11111111111111111u128).enumerate(),
-        11111111111111111u128
+        PauliCode::from(11_111_111_111_111_111_u128).enumerate(),
+        11_111_111_111_111_111_u128
     );
     assert_eq!(
-        PauliCode::from(1234567898765432112345678987654321u128).enumerate(),
-        1234567898765432112345678987654321u128
+        PauliCode::from(1_234_567_898_765_432_112_345_678_987_654_321_u128)
+            .enumerate(),
+        1_234_567_898_765_432_112_345_678_987_654_321_u128
     );
     assert_eq!(PauliCode::from(u128::MAX).enumerate(), u128::MAX);
 }
