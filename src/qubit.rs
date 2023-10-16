@@ -1,6 +1,15 @@
 //! Qubit representation
 
-use std::ops::Mul;
+use std::{
+    fmt::Display,
+    ops::Mul,
+};
+
+use serde::{
+    ser::SerializeTuple,
+    Deserialize,
+    Serialize,
+};
 
 use crate::{
     math::{
@@ -36,6 +45,29 @@ pub enum Pauli {
     X,
     Y,
     Z,
+}
+
+impl Pauli {
+    /// String representation of `Pauli`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::qubit::Pauli;
+    ///
+    /// assert_eq!(Pauli::I.to_string(), "I");
+    /// assert_eq!(Pauli::X.to_string(), "X");
+    /// assert_eq!(Pauli::Y.to_string(), "Y");
+    /// assert_eq!(Pauli::Z.to_string(), "Z");
+    /// ```
+    pub fn to_string(&self) -> String {
+        match self {
+            Pauli::I => "I".to_string(),
+            Pauli::X => "X".to_string(),
+            Pauli::Y => "Y".to_string(),
+            Pauli::Z => "Z".to_string(),
+        }
+    }
 }
 
 macro_rules! impl_pauli_int {
@@ -75,6 +107,15 @@ macro_rules! impl_pauli_int {
 impl_pauli_int!(u8 u16 u32 u64 u128 usize);
 impl_pauli_int!(i8 i16 i32 i64 i128 isize);
 
+impl Display for Pauli {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
 /// Pauli string of up to 64 qubits.
 ///
 /// # Examples
@@ -85,7 +126,7 @@ impl_pauli_int!(i8 i16 i32 i64 i128 isize);
 ///
 /// assert_eq!(code.enumerate(), 0);
 /// ```
-#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct PauliCode {
     pack: (u64, u64),
 }
@@ -471,6 +512,15 @@ impl Iterator for PauliIter {
 }
 
 impl Code for PauliCode {}
+
+impl Display for PauliCode {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        todo!()
+    }
+}
 
 struct PGrp(Root4, Pauli);
 
