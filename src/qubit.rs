@@ -116,6 +116,12 @@ impl Display for Pauli {
     }
 }
 
+impl From<Pauli> for String {
+    fn from(value: Pauli) -> Self {
+        value.to_string()
+    }
+}
+
 /// Pauli string of up to 64 qubits.
 ///
 /// # Examples
@@ -470,6 +476,39 @@ impl PauliCode {
 
         PauliCode::from_paulis((0..num_qubits).map(|_| Pauli::Z))
     }
+
+    /// Convert `PauliCode` to [`String`].
+    ///
+    /// The trailing identity operators [`Pauli:I`] are truncated.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{Pauli, PauliCode};
+    ///
+    /// assert_eq!(PauliCode::default().to_string(), "I");
+    /// assert_eq!(PauliCode::new((0b01, 0)).to_string(), "X");
+    /// assert_eq!(PauliCode::new((0b1000, 0)).to_string(), "IY");
+    /// assert_eq!(PauliCode::new((0b110000, 0)).to_string(), "IIZ");
+    /// ```
+    pub fn to_string(&self) -> String {
+        if self.enumerate() == 0 {
+            return "I".to_string();
+        }
+
+        let mut pauli_str = String::with_capacity(64);
+        for pauli in self.into_iter() {
+            let ch = match pauli {
+                Pauli::I => 'I',
+                Pauli::X => 'X',
+                Pauli::Y => 'Y',
+                Pauli::Z => 'Z',
+            };
+            pauli_str.push(ch);
+        }
+
+        pauli_str.trim_end_matches("I").to_string()
+    }
 }
 
 impl IntoIterator for PauliCode {
@@ -518,7 +557,7 @@ impl Display for PauliCode {
         &self,
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
-        todo!()
+        write!(f, "{}", self.to_string())
     }
 }
 

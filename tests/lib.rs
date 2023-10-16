@@ -734,3 +734,29 @@ fn jordan_wigner_two_pqrs() {
     check_jordan_wigner_two_pqrs(11, 32, 31, 19);
     check_jordan_wigner_two_pqrs(11, 31, 61, 29);
 }
+
+#[test]
+fn pauli_code_to_string() {
+    assert_eq!(PauliCode::default().to_string(), "I");
+    assert_eq!(PauliCode::new((1, 0)).to_string(), "X");
+    assert_eq!(PauliCode::new((2, 0)).to_string(), "Y");
+    assert_eq!(PauliCode::new((3, 0)).to_string(), "Z");
+
+    assert_eq!(
+        PauliCode::new((0, 1)).to_string(),
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIX"
+    );
+    assert_eq!(
+        PauliCode::new((0, 2)).to_string(),
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIY"
+    );
+    assert_eq!(
+        PauliCode::new((0, 3)).to_string(),
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIZ"
+    );
+
+    assert_eq!(
+        PauliCode::new((u64::MAX, u64::MAX)).to_string(),
+        "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    );
+}
