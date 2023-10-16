@@ -1,11 +1,15 @@
 use std::ops::RangeBounds;
 
 use f2q::{
-    math::Pairs,
+    math::{
+        Group,
+        Pairs,
+    },
     prelude::JordanWigner,
     qubit::{
         Pauli,
         PauliCode,
+        PauliGroup,
     },
     secnd::{
         An,
@@ -759,4 +763,21 @@ fn pauli_code_to_string() {
         PauliCode::new((u64::MAX, u64::MAX)).to_string(),
         "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     );
+}
+
+#[test]
+fn pauli_group_identity() {
+    let e = PauliGroup::identity();
+
+    let g = PauliGroup::from(PauliCode::new((0, 0)));
+    assert_eq!(e * g, g);
+    assert_eq!(g * e, g);
+
+    let g = PauliGroup::from(PauliCode::new((1, 2)));
+    assert_eq!(e * g, g);
+    assert_eq!(g * e, g);
+
+    let g = PauliGroup::from(PauliCode::new((12345, 67890)));
+    assert_eq!(e * g, g);
+    assert_eq!(g * e, g);
 }
