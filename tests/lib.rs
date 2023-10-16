@@ -781,3 +781,18 @@ fn pauli_group_identity() {
     assert_eq!(e * g, g);
     assert_eq!(g * e, g);
 }
+
+#[test]
+fn paulicode_from_u128() {
+    assert_eq!(PauliCode::from(0u128).enumerate(), 0u128);
+    assert_eq!(PauliCode::from(1u128).enumerate(), 1u128);
+    assert_eq!(
+        PauliCode::from(11111111111111111u128).enumerate(),
+        11111111111111111u128
+    );
+    assert_eq!(
+        PauliCode::from(1234567898765432112345678987654321u128).enumerate(),
+        1234567898765432112345678987654321u128
+    );
+    assert_eq!(PauliCode::from(u128::MAX).enumerate(), u128::MAX);
+}

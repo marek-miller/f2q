@@ -198,6 +198,9 @@ impl PauliCode {
     /// This convert the code to a 128-wide integer.
     /// The code consisting of only `Pauli:I` has index zero.
     ///
+    /// You can also use implementation of [`From<PauliCode>`] for `u128`
+    /// (and vice versa).
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -205,6 +208,7 @@ impl PauliCode {
     /// let code = PauliCode::new((3, 4));
     ///
     /// assert_eq!(code.enumerate(), 3 + (4 << 64));
+    /// assert_eq!(u128::from(code), 3 + (4 << 64));
     /// ```
     #[must_use]
     pub fn enumerate(&self) -> u128 {
@@ -511,6 +515,18 @@ impl PauliCode {
     }
 }
 
+impl Serialize for PauliCode {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
 impl IntoIterator for PauliCode {
     type IntoIter = PauliIter;
     type Item = Pauli;
@@ -558,6 +574,18 @@ impl Display for PauliCode {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         write!(f, "{}", self.to_string())
+    }
+}
+
+impl From<PauliCode> for u128 {
+    fn from(value: PauliCode) -> Self {
+        value.enumerate()
+    }
+}
+
+impl From<u128> for PauliCode {
+    fn from(value: u128) -> Self {
+        Self::new((value as u64, (value >> 64) as u64))
     }
 }
 
