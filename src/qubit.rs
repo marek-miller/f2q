@@ -5,7 +5,11 @@ use std::{
     ops::Mul,
 };
 
-use serde::Serialize;
+use serde::{
+    de::Visitor,
+    Deserialize,
+    Serialize,
+};
 
 use crate::{
     math::{
@@ -470,6 +474,59 @@ impl Serialize for PauliCode {
         S: serde::Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+struct PauliCodeVisitor;
+
+impl<'de> Visitor<'de> for PauliCodeVisitor {
+    type Value = PauliCode;
+
+    fn expecting(
+        &self,
+        formatter: &mut std::fmt::Formatter,
+    ) -> std::fmt::Result {
+        formatter.write_str(
+            "string of 64 Pauli operators (trailing identities truncated)",
+        )
+    }
+
+    fn visit_str<E>(
+        self,
+        v: &str,
+    ) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        if v.len() > 64 || v.is_empty() {
+            return Err(E::custom("str len out of range: 1..=64".to_string()));
+        }
+
+        let mut code = PauliCode::default();
+
+        for (i, ch) in v.chars().enumerate() {
+            let pauli = match ch {
+                'I' => Ok(Pauli::I),
+                'X' => Ok(Pauli::X),
+                'Y' => Ok(Pauli::Y),
+                'Z' => Ok(Pauli::Z),
+                _ => Err(E::custom(
+                    "character must be one of: I, X, Y, Z".to_string(),
+                )),
+            }?;
+            code.set(i, pauli);
+        }
+
+        Ok(code)
+    }
+}
+
+impl<'de> Deserialize<'de> for PauliCode {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(PauliCodeVisitor)
     }
 }
 
