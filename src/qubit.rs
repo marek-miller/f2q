@@ -1,6 +1,15 @@
 //! Qubit representation
 
-use std::ops::Mul;
+use std::{
+    fmt::Display,
+    ops::Mul,
+};
+
+use serde::{
+    de::Visitor,
+    Deserialize,
+    Serialize,
+};
 
 use crate::{
     math::{
@@ -75,6 +84,27 @@ macro_rules! impl_pauli_int {
 impl_pauli_int!(u8 u16 u32 u64 u128 usize);
 impl_pauli_int!(i8 i16 i32 i64 i128 isize);
 
+impl Display for Pauli {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        let str_repr = match self {
+            Pauli::I => "I",
+            Pauli::X => "X",
+            Pauli::Y => "Y",
+            Pauli::Z => "Z",
+        };
+        write!(f, "{str_repr}")
+    }
+}
+
+impl From<Pauli> for String {
+    fn from(value: Pauli) -> Self {
+        value.to_string()
+    }
+}
+
 /// Pauli string of up to 64 qubits.
 ///
 /// # Examples
@@ -85,7 +115,7 @@ impl_pauli_int!(i8 i16 i32 i64 i128 isize);
 ///
 /// assert_eq!(code.enumerate(), 0);
 /// ```
-#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct PauliCode {
     pack: (u64, u64),
 }
@@ -151,6 +181,9 @@ impl PauliCode {
     /// This convert the code to a 128-wide integer.
     /// The code consisting of only `Pauli:I` has index zero.
     ///
+    /// You can also use implementation of [`From<PauliCode>`] for `u128`
+    /// (and vice versa).
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -158,6 +191,7 @@ impl PauliCode {
     /// let code = PauliCode::new((3, 4));
     ///
     /// assert_eq!(code.enumerate(), 3 + (4 << 64));
+    /// assert_eq!(u128::from(code), 3 + (4 << 64));
     /// ```
     #[must_use]
     pub fn enumerate(&self) -> u128 {
@@ -431,6 +465,71 @@ impl PauliCode {
     }
 }
 
+impl Serialize for PauliCode {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+struct PauliCodeVisitor;
+
+impl<'de> Visitor<'de> for PauliCodeVisitor {
+    type Value = PauliCode;
+
+    fn expecting(
+        &self,
+        formatter: &mut std::fmt::Formatter,
+    ) -> std::fmt::Result {
+        formatter.write_str(
+            "string of 64 Pauli operators (trailing identities truncated)",
+        )
+    }
+
+    fn visit_str<E>(
+        self,
+        v: &str,
+    ) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        if v.len() > 64 || v.is_empty() {
+            return Err(E::custom("str len out of range: 1..=64".to_string()));
+        }
+
+        let mut code = PauliCode::default();
+
+        for (i, ch) in v.chars().enumerate() {
+            let pauli = match ch {
+                'I' => Ok(Pauli::I),
+                'X' => Ok(Pauli::X),
+                'Y' => Ok(Pauli::Y),
+                'Z' => Ok(Pauli::Z),
+                _ => Err(E::custom(
+                    "character must be one of: I, X, Y, Z".to_string(),
+                )),
+            }?;
+            code.set(i, pauli);
+        }
+
+        Ok(code)
+    }
+}
+
+impl<'de> Deserialize<'de> for PauliCode {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(PauliCodeVisitor)
+    }
+}
+
 impl IntoIterator for PauliCode {
     type IntoIter = PauliIter;
     type Item = Pauli;
@@ -471,6 +570,43 @@ impl Iterator for PauliIter {
 }
 
 impl Code for PauliCode {}
+
+impl Display for PauliCode {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        if self.enumerate() == 0 {
+            write!(f, "I")
+        } else {
+            let mut pauli_str = String::with_capacity(64);
+            for pauli in self.into_iter() {
+                let ch = match pauli {
+                    Pauli::I => 'I',
+                    Pauli::X => 'X',
+                    Pauli::Y => 'Y',
+                    Pauli::Z => 'Z',
+                };
+                pauli_str.push(ch);
+            }
+
+            write!(f, "{}", pauli_str.trim_end_matches('I'))
+        }
+    }
+}
+
+impl From<PauliCode> for u128 {
+    fn from(value: PauliCode) -> Self {
+        value.enumerate()
+    }
+}
+
+impl From<u128> for PauliCode {
+    #[allow(clippy::cast_possible_truncation)]
+    fn from(value: u128) -> Self {
+        Self::new((value as u64, (value >> 64) as u64))
+    }
+}
 
 struct PGrp(Root4, Pauli);
 
@@ -595,21 +731,4 @@ impl Group for PauliGroup {
     fn inverse(self) -> Self {
         Self(self.0.inverse(), self.1)
     }
-}
-
-#[test]
-fn pauli_group_identity() {
-    let e = PauliGroup::identity();
-
-    let g = PauliGroup::from(PauliCode::new((0, 0)));
-    assert_eq!(e * g, g);
-    assert_eq!(g * e, g);
-
-    let g = PauliGroup::from(PauliCode::new((1, 2)));
-    assert_eq!(e * g, g);
-    assert_eq!(g * e, g);
-
-    let g = PauliGroup::from(PauliCode::new((12345, 67890)));
-    assert_eq!(e * g, g);
-    assert_eq!(g * e, g);
 }

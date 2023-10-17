@@ -1,11 +1,15 @@
 use std::ops::RangeBounds;
 
 use f2q::{
-    math::Pairs,
+    math::{
+        Group,
+        Pairs,
+    },
     prelude::JordanWigner,
     qubit::{
         Pauli,
         PauliCode,
+        PauliGroup,
     },
     secnd::{
         An,
@@ -18,6 +22,8 @@ use f2q::{
     Error,
     Terms,
 };
+
+mod serialize;
 
 #[test]
 fn test_pauli_01() {
@@ -733,4 +739,132 @@ fn jordan_wigner_two_pqrs() {
 
     check_jordan_wigner_two_pqrs(11, 32, 31, 19);
     check_jordan_wigner_two_pqrs(11, 31, 61, 29);
+}
+
+#[test]
+fn pauli_code_to_string() {
+    assert_eq!(PauliCode::default().to_string(), "I");
+    assert_eq!(PauliCode::new((1, 0)).to_string(), "X");
+    assert_eq!(PauliCode::new((2, 0)).to_string(), "Y");
+    assert_eq!(PauliCode::new((3, 0)).to_string(), "Z");
+
+    assert_eq!(
+        PauliCode::new((0, 1)).to_string(),
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIX"
+    );
+    assert_eq!(
+        PauliCode::new((0, 2)).to_string(),
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIY"
+    );
+    assert_eq!(
+        PauliCode::new((0, 3)).to_string(),
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIZ"
+    );
+
+    assert_eq!(
+        PauliCode::new((u64::MAX, u64::MAX)).to_string(),
+        "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    );
+}
+
+#[test]
+fn pauli_group_identity() {
+    let e = PauliGroup::identity();
+
+    let g = PauliGroup::from(PauliCode::new((0, 0)));
+    assert_eq!(e * g, g);
+    assert_eq!(g * e, g);
+
+    let g = PauliGroup::from(PauliCode::new((1, 2)));
+    assert_eq!(e * g, g);
+    assert_eq!(g * e, g);
+
+    let g = PauliGroup::from(PauliCode::new((12345, 67890)));
+    assert_eq!(e * g, g);
+    assert_eq!(g * e, g);
+}
+
+#[test]
+fn paulicode_from_u128() {
+    assert_eq!(PauliCode::from(0u128).enumerate(), 0u128);
+    assert_eq!(PauliCode::from(1u128).enumerate(), 1u128);
+    assert_eq!(
+        PauliCode::from(11_111_111_111_111_111_u128).enumerate(),
+        11_111_111_111_111_111_u128
+    );
+    assert_eq!(
+        PauliCode::from(1_234_567_898_765_432_112_345_678_987_654_321_u128)
+            .enumerate(),
+        1_234_567_898_765_432_112_345_678_987_654_321_u128
+    );
+    assert_eq!(PauliCode::from(u128::MAX).enumerate(), u128::MAX);
+}
+
+#[test]
+fn paulicode_serialize_01() {
+    let code = PauliCode::default();
+    let json = serde_json::to_string(&code).unwrap();
+
+    assert_eq!(json, "\"I\"");
+
+    let code = PauliCode::from_paulis([Pauli::I, Pauli::X, Pauli::Y, Pauli::Z]);
+    let json = serde_json::to_string(&code).unwrap();
+
+    assert_eq!(json, "\"IXYZ\"");
+}
+
+#[test]
+fn paulicode_deserialize_01() {
+    let data = r#"
+              "I" 
+     "#;
+    let code: PauliCode = serde_json::from_str(data).unwrap();
+    assert_eq!(code, PauliCode::default());
+
+    let data = r#"
+              "IXYZ" 
+     "#;
+    let code: PauliCode = serde_json::from_str(data).unwrap();
+    assert_eq!(
+        code,
+        PauliCode::from_paulis([Pauli::I, Pauli::X, Pauli::Y, Pauli::Z])
+    );
+}
+
+#[test]
+fn paulicode_deserialize_02() {
+    let data = r#"
+              "" 
+     "#;
+    let _ = serde_json::from_str::<PauliCode>(data).unwrap_err();
+
+    let data = r#"
+              "IP" 
+     "#;
+    let _ = serde_json::from_str::<PauliCode>(data).unwrap_err();
+
+    // this is 65 chars
+    let data = r#"
+              "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 
+     "#;
+    let _ = serde_json::from_str::<PauliCode>(data).unwrap_err();
+}
+
+fn check_serde(code: PauliCode) {
+    let json = serde_json::to_string(&code).unwrap();
+    let result: PauliCode = serde_json::from_str(&json).unwrap();
+    assert_eq!(result, code);
+}
+
+#[test]
+fn paulicode_serde_01() {
+    use Pauli::{
+        I,
+        X,
+        Y,
+        Z,
+    };
+    check_serde(PauliCode::default());
+    check_serde(PauliCode::from_paulis([I, X, Y, Z]));
+    check_serde(PauliCode::from_paulis([X, X, X]));
 }

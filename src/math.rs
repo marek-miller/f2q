@@ -44,6 +44,7 @@ impl<'a, T> Iterator for Pairs<'a, T> {
 /// Group structure.
 pub trait Group: Mul<Output = Self> + Sized {
     fn identity() -> Self;
+    #[must_use]
     fn inverse(self) -> Self;
 }
 
