@@ -23,6 +23,8 @@ use f2q::{
     Terms,
 };
 
+mod serialize;
+
 #[test]
 fn test_pauli_01() {
     assert_eq!(Pauli::try_from(0u32).unwrap(), Pauli::I);
@@ -846,4 +848,23 @@ fn paulicode_deserialize_02() {
               "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 
      "#;
     let _ = serde_json::from_str::<PauliCode>(data).unwrap_err();
+}
+
+fn check_serde(code: PauliCode) {
+    let json = serde_json::to_string(&code).unwrap();
+    let result: PauliCode = serde_json::from_str(&json).unwrap();
+    assert_eq!(result, code);
+}
+
+#[test]
+fn paulicode_serde_01() {
+    use Pauli::{
+        I,
+        X,
+        Y,
+        Z,
+    };
+    check_serde(PauliCode::default());
+    check_serde(PauliCode::from_paulis([I, X, Y, Z]));
+    check_serde(PauliCode::from_paulis([X, X, X]));
 }
