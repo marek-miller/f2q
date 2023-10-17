@@ -161,6 +161,18 @@ where
     }
 }
 
+impl<'a, T, K> IntoIterator for &'a mut SumRepr<T, K>
+where
+    K: Code,
+{
+    type IntoIter = SumIterMut<'a, T, K>;
+    type Item = (&'a mut T, &'a K);
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
 /// Iterator over terms in [`SumRepr`].
 #[derive(Debug)]
 pub struct SumIterMut<'a, T, K>

@@ -602,6 +602,7 @@ impl From<PauliCode> for u128 {
 }
 
 impl From<u128> for PauliCode {
+    #[allow(clippy::cast_possible_truncation)]
     fn from(value: u128) -> Self {
         Self::new((value as u64, (value >> 64) as u64))
     }
