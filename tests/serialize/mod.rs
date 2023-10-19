@@ -52,13 +52,14 @@ fn deserialize_paulicodes() {
 }
 
 #[test]
-fn deserialize_sumrepr() {
-    // Open the file in read-only mode with buffer.
-    let file = File::open(SUMREPR).unwrap();
-    let reader = BufReader::new(file);
+fn serialize_sumrepr() {
+    let mut repr = SumRepr::new();
+    for code in paulicodes_compare() {
+        repr.add_term(code, 0.1);
+    }
 
-    let codes: SumRepr<f64, PauliCode> =
-        serde_json::from_reader(reader).unwrap();
+    let json = serde_json::to_string(&repr).unwrap();
+    let de_repr: SumRepr<f64, PauliCode> = serde_json::from_str(&json).unwrap();
 
-    assert_eq!(codes.len(), 8);
+    assert_eq!(de_repr.len(), 8);
 }

@@ -15,10 +15,16 @@ use super::{
     Code,
     Terms,
 };
-use crate::Error;
+use crate::{
+    prelude::{
+        Fermions,
+        PauliCode,
+    },
+    Error,
+};
 
 /// Weighted sum of codes
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct SumRepr<T, K>
 where
     K: Code,
@@ -196,6 +202,27 @@ where
         (code, coeff): (K, T),
     ) {
         self.add_term(code, coeff);
+    }
+}
+
+impl<T> Serialize for SumRepr<T, PauliCode>
+where
+    T: Float + Serialize,
+{
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeMap;
+
+        let mut terms = serializer.serialize_map(Some(self.terms.len()))?;
+        for (coeff, code) in self {
+            terms.serialize_entry(code, coeff)?;
+        }
+        terms.end()
     }
 }
 
