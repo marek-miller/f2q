@@ -465,15 +465,17 @@ impl<'de> Visitor<'de> for FermionsVisitor {
             return Ok(Fermions::Offset);
         }
 
-        let mut iter = v.split_ascii_whitespace();
+        let mut iter = v.split(',');
         let idx_tup = (iter.next(), iter.next(), iter.next(), iter.next());
 
         match idx_tup {
             (Some(p_str), Some(q_str), None, None) => {
                 let p: usize = p_str
+                    .trim()
                     .parse()
                     .map_err(|_| E::custom("invalid format for index 1"))?;
                 let q: usize = q_str
+                    .trim()
                     .parse()
                     .map_err(|_| E::custom("invalid format for index 2"))?;
                 Fermions::one_electron(
@@ -484,15 +486,19 @@ impl<'de> Visitor<'de> for FermionsVisitor {
             }
             (Some(p_str), Some(q_str), Some(r_str), Some(s_str)) => {
                 let p: usize = p_str
+                    .trim()
                     .parse()
                     .map_err(|_| E::custom("invalid format for index 1"))?;
                 let q: usize = q_str
+                    .trim()
                     .parse()
                     .map_err(|_| E::custom("invalid format for index 2"))?;
                 let r: usize = r_str
+                    .trim()
                     .parse()
                     .map_err(|_| E::custom("invalid format for index 3"))?;
                 let s: usize = s_str
+                    .trim()
                     .parse()
                     .map_err(|_| E::custom("invalid format for index 4"))?;
 

@@ -927,3 +927,57 @@ fn fermions_display() {
     .unwrap();
     assert_eq!(code.to_string(), format!("1, 2, 5, 4"));
 }
+
+#[test]
+fn fermions_serialize_01() {
+    let code = Fermions::Offset;
+    let json = serde_json::to_string(&code).unwrap();
+    assert_eq!(json, "\"offset\"");
+
+    let code = Fermions::one_electron(
+        Cr(Orbital::from_index(1)),
+        An(Orbital::from_index(2)),
+    )
+    .unwrap();
+    let json = serde_json::to_string(&code).unwrap();
+    assert_eq!(json, "\"1, 2\"");
+
+    let code = Fermions::two_electron(
+        (Cr(Orbital::from_index(1)), Cr(Orbital::from_index(2))),
+        (An(Orbital::from_index(5)), An(Orbital::from_index(4))),
+    )
+    .unwrap();
+    let json = serde_json::to_string(&code).unwrap();
+    assert_eq!(json, "\"1, 2, 5, 4\"");
+}
+
+#[test]
+fn fermions_deserialize_01() {
+    let data = r#"
+                "offset" 
+    "#;
+    let code: Fermions = serde_json::from_str(data).unwrap();
+    assert_eq!(code, Fermions::Offset);
+
+    let data = r#"
+                "1, 2" 
+    "#;
+    let code: Fermions = serde_json::from_str(data).unwrap();
+    let expected = Fermions::one_electron(
+        Cr(Orbital::from_index(1)),
+        An(Orbital::from_index(2)),
+    )
+    .unwrap();
+    assert_eq!(code, expected);
+
+    let data = r#"
+                "1, 2, 5, 4" 
+    "#;
+    let code: Fermions = serde_json::from_str(data).unwrap();
+    let expected = Fermions::two_electron(
+        (Cr(Orbital::from_index(1)), Cr(Orbital::from_index(2))),
+        (An(Orbital::from_index(5)), An(Orbital::from_index(4))),
+    )
+    .unwrap();
+    assert_eq!(code, expected);
+}
