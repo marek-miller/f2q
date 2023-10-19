@@ -12,6 +12,7 @@ use std::{
 
 use serde::{
     de::Visitor,
+    ser::SerializeSeq,
     Deserialize,
     Serialize,
 };
@@ -410,17 +411,17 @@ impl Display for Fermions {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match self {
-            Fermions::Offset => write!(f, "offset"),
+            Fermions::Offset => write!(f, "[]"),
             Fermions::One {
                 cr,
                 an,
-            } => write!(f, "{}, {}", cr.index(), an.index()),
+            } => write!(f, "[{}, {}]", cr.index(), an.index()),
             Fermions::Two {
                 cr,
                 an,
             } => write!(
                 f,
-                "{}, {}, {}, {}",
+                "[{}, {}, {}, {}]",
                 cr.0.index(),
                 cr.1.index(),
                 an.0.index(),
@@ -438,7 +439,32 @@ impl Serialize for Fermions {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&self.to_string())
+        match self {
+            Fermions::Offset => {
+                let seq = serializer.serialize_seq(Some(0))?;
+                seq.end()
+            }
+            Fermions::One {
+                cr,
+                an,
+            } => {
+                let mut seq = serializer.serialize_seq(Some(2))?;
+                seq.serialize_element(&cr.index())?;
+                seq.serialize_element(&an.index())?;
+                seq.end()
+            }
+            Fermions::Two {
+                cr,
+                an,
+            } => {
+                let mut seq = serializer.serialize_seq(Some(4))?;
+                seq.serialize_element(&cr.0.index())?;
+                seq.serialize_element(&cr.1.index())?;
+                seq.serialize_element(&an.0.index())?;
+                seq.serialize_element(&an.1.index())?;
+                seq.end()
+            }
+        }
     }
 }
 
@@ -451,66 +477,44 @@ impl<'de> Visitor<'de> for FermionsVisitor {
         &self,
         formatter: &mut std::fmt::Formatter,
     ) -> std::fmt::Result {
-        formatter.write_str("string of orbital 2 or 4 indices, or \"offset\"")
+        formatter.write_str("sequence of 0, 2 or 4 orbital indices")
     }
 
-    fn visit_str<E>(
+    fn visit_seq<A>(
         self,
-        v: &str,
-    ) -> Result<Self::Value, E>
+        seq: A,
+    ) -> Result<Self::Value, A::Error>
     where
-        E: serde::de::Error,
+        A: serde::de::SeqAccess<'de>,
     {
-        if v == "offset" {
-            return Ok(Fermions::Offset);
-        }
+        use serde::de::Error;
 
-        let mut iter = v.split(',');
-        let idx_tup = (iter.next(), iter.next(), iter.next(), iter.next());
+        let mut seq = seq;
+        let idx_tup: (
+            Option<usize>,
+            Option<usize>,
+            Option<usize>,
+            Option<usize>,
+        ) = (
+            seq.next_element()?,
+            seq.next_element()?,
+            seq.next_element()?,
+            seq.next_element()?,
+        );
 
         match idx_tup {
-            (Some(p_str), Some(q_str), None, None) => {
-                let p: usize = p_str
-                    .trim()
-                    .parse()
-                    .map_err(|_| E::custom("invalid format for index 1"))?;
-                let q: usize = q_str
-                    .trim()
-                    .parse()
-                    .map_err(|_| E::custom("invalid format for index 2"))?;
-                Fermions::one_electron(
-                    Cr(Orbital::from_index(p)),
-                    An(Orbital::from_index(q)),
-                )
-                .ok_or(E::custom("cannot parse one-electron term"))
-            }
-            (Some(p_str), Some(q_str), Some(r_str), Some(s_str)) => {
-                let p: usize = p_str
-                    .trim()
-                    .parse()
-                    .map_err(|_| E::custom("invalid format for index 1"))?;
-                let q: usize = q_str
-                    .trim()
-                    .parse()
-                    .map_err(|_| E::custom("invalid format for index 2"))?;
-                let r: usize = r_str
-                    .trim()
-                    .parse()
-                    .map_err(|_| E::custom("invalid format for index 3"))?;
-                let s: usize = s_str
-                    .trim()
-                    .parse()
-                    .map_err(|_| E::custom("invalid format for index 4"))?;
-
-                Fermions::two_electron(
-                    (Cr(Orbital::from_index(p)), Cr(Orbital::from_index(q))),
-                    (An(Orbital::from_index(r)), An(Orbital::from_index(s))),
-                )
-                .ok_or(E::custom("cannot parse two-electron term"))
-            }
-            _ => {
-                Err(E::custom("there should be either 2 or 4 orbital indeces"))
-            }
+            (None, None, None, None) => Ok(Fermions::Offset),
+            (Some(p), Some(q), None, None) => Fermions::one_electron(
+                Cr(Orbital::from_index(p)),
+                An(Orbital::from_index(q)),
+            )
+            .ok_or(A::Error::custom("cannot parse one-electron term")),
+            (Some(p), Some(q), Some(r), Some(s)) => Fermions::two_electron(
+                (Cr(Orbital::from_index(p)), Cr(Orbital::from_index(q))),
+                (An(Orbital::from_index(r)), An(Orbital::from_index(s))),
+            )
+            .ok_or(A::Error::custom("cannot parse two-electron term")),
+            _ => Err(A::Error::custom("cannot parse sequence")),
         }
     }
 }
@@ -520,7 +524,7 @@ impl<'de> Deserialize<'de> for Fermions {
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_str(FermionsVisitor)
+        deserializer.deserialize_seq(FermionsVisitor)
     }
 }
 
