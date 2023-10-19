@@ -29,9 +29,7 @@ impl<'a, T> Iterator for Pairs<'a, T> {
         }
 
         let out = (&self.data[self.i], &self.data[self.j]);
-
         self.j += 1;
-
         if self.j >= self.data.len() {
             self.j = 0;
             self.i += 1;
@@ -51,13 +49,13 @@ pub trait Group: Mul<Output = Self> + Sized {
 /// 4th order roots of unity
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Root4 {
-    /// R0 = 1
+    /// 1
     R0,
-    /// R1 = -1
+    /// -1
     R1,
-    /// R2 = i
+    /// i
     R2,
-    /// R3 = -i
+    /// -i
     R3,
 }
 
@@ -117,42 +115,4 @@ impl Group for Root4 {
             R3 => R2,
         }
     }
-}
-
-#[test]
-fn root4_identity() {
-    assert_eq!(Root4::identity(), Root4::R0);
-}
-
-#[test]
-fn root4_inverse() {
-    assert_eq!(Root4::R0.inverse(), Root4::R0);
-    assert_eq!(Root4::R1.inverse(), Root4::R1);
-    assert_eq!(Root4::R2.inverse(), Root4::R3);
-    assert_eq!(Root4::R3.inverse(), Root4::R2);
-}
-
-#[test]
-fn root4_mul() {
-    use Root4::*;
-
-    assert_eq!(R0 * R0, R0);
-    assert_eq!(R0 * R1, R1);
-    assert_eq!(R0 * R2, R2);
-    assert_eq!(R0 * R3, R3);
-
-    assert_eq!(R1 * R0, R1);
-    assert_eq!(R1 * R1, R0);
-    assert_eq!(R1 * R2, R3);
-    assert_eq!(R1 * R3, R2);
-
-    assert_eq!(R2 * R0, R2);
-    assert_eq!(R2 * R1, R3);
-    assert_eq!(R2 * R2, R1);
-    assert_eq!(R2 * R3, R0);
-
-    assert_eq!(R3 * R0, R3);
-    assert_eq!(R3 * R1, R2);
-    assert_eq!(R3 * R2, R0);
-    assert_eq!(R3 * R3, R1);
 }

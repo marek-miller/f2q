@@ -11,11 +11,10 @@ pub mod qubit;
 pub mod secnd;
 pub mod terms;
 
-/// Full and flattened API  
+/// Basic flattened API  
 pub mod prelude {
     pub use crate::{
         maps::JordanWigner,
-        math::Pairs,
         qubit::{
             Pauli,
             PauliCode,
@@ -29,8 +28,6 @@ pub mod prelude {
         },
         terms::{
             Hamil,
-            HeapRepr,
-            StackRepr,
             SumRepr,
         },
         Code,

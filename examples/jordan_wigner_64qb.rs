@@ -7,7 +7,10 @@ use std::{
     time::Instant,
 };
 
-use f2q::prelude::*;
+use f2q::{
+    math::Pairs,
+    prelude::*,
+};
 use rand::Rng;
 
 const ORBITAL_MAX_IDX: usize = 64;

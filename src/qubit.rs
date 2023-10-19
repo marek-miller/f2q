@@ -1,9 +1,6 @@
 //! Qubit representation
 
-use std::{
-    fmt::Display,
-    ops::Mul,
-};
+use std::fmt::Display;
 
 use serde::{
     de::Visitor,
@@ -12,10 +9,6 @@ use serde::{
 };
 
 use crate::{
-    math::{
-        Group,
-        Root4,
-    },
     Code,
     Error,
 };
@@ -429,7 +422,11 @@ impl PauliCode {
     {
         let mut code = Self::default();
         for (i, pauli) in iter.into_iter().take(64).enumerate() {
-            code.set(i, pauli);
+            // SAFETY: we take only 64 elements, so the index must be within
+            // bounds
+            unsafe {
+                code.set_unchecked(i, pauli);
+            }
         }
         code
     }
@@ -530,15 +527,6 @@ impl<'de> Deserialize<'de> for PauliCode {
     }
 }
 
-impl IntoIterator for PauliCode {
-    type IntoIter = PauliIter;
-    type Item = Pauli;
-
-    fn into_iter(self) -> Self::IntoIter {
-        PauliIter::new(self)
-    }
-}
-
 /// Iterate over Paulis in `PauliCode`
 #[derive(Debug)]
 pub struct PauliIter {
@@ -566,6 +554,15 @@ impl Iterator for PauliIter {
         let pauli = self.code.pauli(self.index);
         self.index += 1;
         pauli
+    }
+}
+
+impl IntoIterator for PauliCode {
+    type IntoIter = PauliIter;
+    type Item = Pauli;
+
+    fn into_iter(self) -> Self::IntoIter {
+        PauliIter::new(self)
     }
 }
 
@@ -608,127 +605,143 @@ impl From<u128> for PauliCode {
     }
 }
 
-struct PGrp(Root4, Pauli);
+mod pauli_group {
+    use std::ops::Mul;
 
-impl Mul for PGrp {
-    type Output = Self;
+    use super::PauliCode;
+    use crate::{
+        math::{
+            Group,
+            Root4,
+        },
+        prelude::Pauli,
+    };
 
-    fn mul(
-        self,
-        rhs: Self,
-    ) -> Self::Output {
-        use Root4::{
-            R0,
-            R2,
-            R3,
-        };
-        let (omega, pauli) = match self.1 {
-            Pauli::I => (R0, rhs.1),
-            Pauli::X => match rhs.1 {
-                Pauli::I => (R0, Pauli::X),
-                Pauli::X => (R0, Pauli::I),
-                Pauli::Y => (R2, Pauli::Z),
-                Pauli::Z => (R2, Pauli::Y),
-            },
-            Pauli::Y => match rhs.1 {
-                Pauli::I => (R0, Pauli::Y),
-                Pauli::X => (R3, Pauli::Z),
-                Pauli::Y => (R0, Pauli::I),
-                Pauli::Z => (R2, Pauli::X),
-            },
-            Pauli::Z => match rhs.1 {
-                Pauli::I => (R0, Pauli::Z),
-                Pauli::X => (R3, Pauli::Y),
-                Pauli::Y => (R3, Pauli::X),
-                Pauli::Z => (R0, Pauli::I),
-            },
-        };
+    struct PGrp(Root4, Pauli);
 
-        PGrp(self.0 * rhs.0 * omega, pauli)
+    impl Mul for PGrp {
+        type Output = Self;
+
+        fn mul(
+            self,
+            rhs: Self,
+        ) -> Self::Output {
+            use Root4::{
+                R0,
+                R2,
+                R3,
+            };
+            let (omega, pauli) = match self.1 {
+                Pauli::I => (R0, rhs.1),
+                Pauli::X => match rhs.1 {
+                    Pauli::I => (R0, Pauli::X),
+                    Pauli::X => (R0, Pauli::I),
+                    Pauli::Y => (R2, Pauli::Z),
+                    Pauli::Z => (R2, Pauli::Y),
+                },
+                Pauli::Y => match rhs.1 {
+                    Pauli::I => (R0, Pauli::Y),
+                    Pauli::X => (R3, Pauli::Z),
+                    Pauli::Y => (R0, Pauli::I),
+                    Pauli::Z => (R2, Pauli::X),
+                },
+                Pauli::Z => match rhs.1 {
+                    Pauli::I => (R0, Pauli::Z),
+                    Pauli::X => (R3, Pauli::Y),
+                    Pauli::Y => (R3, Pauli::X),
+                    Pauli::Z => (R0, Pauli::I),
+                },
+            };
+
+            PGrp(self.0 * rhs.0 * omega, pauli)
+        }
+    }
+
+    impl Group for PGrp {
+        fn identity() -> Self {
+            Self(Root4::R0, Pauli::I)
+        }
+
+        fn inverse(self) -> Self {
+            Self(self.0.inverse(), self.1)
+        }
+    }
+
+    /// Cross-product Root4 x `PauliCode`
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub struct PauliGroup(Root4, PauliCode);
+
+    impl PauliGroup {
+        #[must_use]
+        pub fn new(
+            omega: Root4,
+            code: PauliCode,
+        ) -> Self {
+            Self(omega, code)
+        }
+
+        #[must_use]
+        pub fn is_hermitian(&self) -> bool {
+            self.0 == Root4::R0 || self.0 == Root4::R1
+        }
+    }
+
+    impl From<PauliCode> for PauliGroup {
+        fn from(value: PauliCode) -> Self {
+            Self::new(Root4::identity(), value)
+        }
+    }
+
+    impl From<Root4> for PauliGroup {
+        fn from(value: Root4) -> Self {
+            Self::new(value, PauliCode::default())
+        }
+    }
+
+    impl From<PauliGroup> for (Root4, PauliCode) {
+        fn from(value: PauliGroup) -> Self {
+            (value.0, value.1)
+        }
+    }
+
+    impl Mul for PauliGroup {
+        type Output = Self;
+
+        fn mul(
+            self,
+            rhs: Self,
+        ) -> Self::Output {
+            self.1.into_iter().enumerate().fold(
+                PauliGroup::identity(),
+                |acc, (i, pauli_lhs)| {
+                    let mut code = acc.1;
+                    let lhs = PGrp(Root4::R0, pauli_lhs);
+                    // SAFETY: index i is within bound
+                    // since it enumerates a valid PauliCode
+                    let rhs =
+                        PGrp(Root4::R0, unsafe { rhs.1.pauli_unchecked(i) });
+
+                    let prod = lhs * rhs;
+                    // SAFETY: index i is within bound
+                    // since it enumerates a valid PauliCode
+                    unsafe {
+                        code.set_unchecked(i, prod.1);
+                    }
+                    PauliGroup(acc.0 * prod.0, code)
+                },
+            )
+        }
+    }
+
+    impl Group for PauliGroup {
+        fn identity() -> Self {
+            Self(Root4::identity(), PauliCode::default())
+        }
+
+        fn inverse(self) -> Self {
+            Self(self.0.inverse(), self.1)
+        }
     }
 }
 
-impl Group for PGrp {
-    fn identity() -> Self {
-        Self(Root4::R0, Pauli::I)
-    }
-
-    fn inverse(self) -> Self {
-        Self(self.0.inverse(), self.1)
-    }
-}
-
-/// Cross-product Root4 x `PauliCode`
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct PauliGroup(Root4, PauliCode);
-
-impl PauliGroup {
-    #[must_use]
-    pub fn new(
-        omega: Root4,
-        code: PauliCode,
-    ) -> Self {
-        Self(omega, code)
-    }
-
-    #[must_use]
-    pub fn is_hermitian(&self) -> bool {
-        self.0 == Root4::R0 || self.0 == Root4::R1
-    }
-}
-
-impl From<PauliCode> for PauliGroup {
-    fn from(value: PauliCode) -> Self {
-        Self::new(Root4::identity(), value)
-    }
-}
-
-impl From<Root4> for PauliGroup {
-    fn from(value: Root4) -> Self {
-        Self::new(value, PauliCode::default())
-    }
-}
-
-impl From<PauliGroup> for (Root4, PauliCode) {
-    fn from(value: PauliGroup) -> Self {
-        (value.0, value.1)
-    }
-}
-
-impl Mul for PauliGroup {
-    type Output = Self;
-
-    fn mul(
-        self,
-        rhs: Self,
-    ) -> Self::Output {
-        self.1.into_iter().enumerate().fold(
-            PauliGroup::identity(),
-            |acc, (i, pauli_lhs)| {
-                let mut code = acc.1;
-                let lhs = PGrp(Root4::R0, pauli_lhs);
-                // SAFETY: index i is within bound
-                // since it enumerates a valid PauliCode
-                let rhs = PGrp(Root4::R0, unsafe { rhs.1.pauli_unchecked(i) });
-
-                let prod = lhs * rhs;
-                // SAFETY: index i is within bound
-                // since it enumerates a valid PauliCode
-                unsafe {
-                    code.set_unchecked(i, prod.1);
-                }
-                PauliGroup(acc.0 * prod.0, code)
-            },
-        )
-    }
-}
-
-impl Group for PauliGroup {
-    fn identity() -> Self {
-        Self(Root4::identity(), PauliCode::default())
-    }
-
-    fn inverse(self) -> Self {
-        Self(self.0.inverse(), self.1)
-    }
-}
+pub use pauli_group::PauliGroup;

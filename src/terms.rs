@@ -117,93 +117,6 @@ where
     }
 }
 
-/// Iterator over terms in [`SumRepr`].
-#[derive(Debug)]
-pub struct SumIter<'a, T, K>
-where
-    K: Code,
-{
-    iter: std::collections::hash_map::Iter<'a, K, T>,
-}
-
-impl<'a, T, K> SumIter<'a, T, K>
-where
-    K: Code,
-{
-    #[must_use]
-    pub fn new(repr: &'a SumRepr<T, K>) -> Self {
-        Self {
-            iter: repr.terms.iter(),
-        }
-    }
-}
-
-impl<'a, T, K> Iterator for SumIter<'a, T, K>
-where
-    K: Code,
-{
-    type Item = (&'a T, &'a K);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(code, coeff)| (coeff, code))
-    }
-}
-
-impl<'a, T, K> IntoIterator for &'a SumRepr<T, K>
-where
-    K: Code,
-{
-    type IntoIter = SumIter<'a, T, K>;
-    type Item = (&'a T, &'a K);
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-impl<'a, T, K> IntoIterator for &'a mut SumRepr<T, K>
-where
-    K: Code,
-{
-    type IntoIter = SumIterMut<'a, T, K>;
-    type Item = (&'a mut T, &'a K);
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter_mut()
-    }
-}
-
-/// Iterator over terms in [`SumRepr`].
-#[derive(Debug)]
-pub struct SumIterMut<'a, T, K>
-where
-    K: Code,
-{
-    iter: std::collections::hash_map::IterMut<'a, K, T>,
-}
-
-impl<'a, T, K> SumIterMut<'a, T, K>
-where
-    K: Code,
-{
-    pub fn new(repr: &'a mut SumRepr<T, K>) -> Self {
-        Self {
-            iter: repr.terms.iter_mut(),
-        }
-    }
-}
-
-impl<'a, T, K> Iterator for SumIterMut<'a, T, K>
-where
-    K: Code,
-{
-    type Item = (&'a mut T, &'a K);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(code, coeff)| (coeff, code))
-    }
-}
-
 impl<T, K> SumRepr<T, K>
 where
     T: Float,
@@ -286,6 +199,93 @@ where
     }
 }
 
+/// Iterator over terms in [`SumRepr`].
+#[derive(Debug)]
+pub struct SumIter<'a, T, K>
+where
+    K: Code,
+{
+    iter: std::collections::hash_map::Iter<'a, K, T>,
+}
+
+impl<'a, T, K> SumIter<'a, T, K>
+where
+    K: Code,
+{
+    #[must_use]
+    pub fn new(repr: &'a SumRepr<T, K>) -> Self {
+        Self {
+            iter: repr.terms.iter(),
+        }
+    }
+}
+
+impl<'a, T, K> Iterator for SumIter<'a, T, K>
+where
+    K: Code,
+{
+    type Item = (&'a T, &'a K);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(code, coeff)| (coeff, code))
+    }
+}
+
+/// Iterator over terms in [`SumRepr`].
+#[derive(Debug)]
+pub struct SumIterMut<'a, T, K>
+where
+    K: Code,
+{
+    iter: std::collections::hash_map::IterMut<'a, K, T>,
+}
+
+impl<'a, T, K> SumIterMut<'a, T, K>
+where
+    K: Code,
+{
+    pub fn new(repr: &'a mut SumRepr<T, K>) -> Self {
+        Self {
+            iter: repr.terms.iter_mut(),
+        }
+    }
+}
+
+impl<'a, T, K> Iterator for SumIterMut<'a, T, K>
+where
+    K: Code,
+{
+    type Item = (&'a mut T, &'a K);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(code, coeff)| (coeff, code))
+    }
+}
+
+impl<'a, T, K> IntoIterator for &'a SumRepr<T, K>
+where
+    K: Code,
+{
+    type IntoIter = SumIter<'a, T, K>;
+    type Item = (&'a T, &'a K);
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, T, K> IntoIterator for &'a mut SumRepr<T, K>
+where
+    K: Code,
+{
+    type IntoIter = SumIterMut<'a, T, K>;
+    type Item = (&'a mut T, &'a K);
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
 impl<T, K> Terms<T, K> for SumRepr<T, K>
 where
     T: Float,
@@ -297,10 +297,10 @@ where
         &mut self,
         repr: &mut SumRepr<T, K>,
     ) -> Result<(), Self::Error> {
-        for (&coeff, &code) in self.iter() {
+        self.iter().try_for_each(|(&coeff, &code)| {
             repr.add_term(code, coeff);
-        }
-        Ok(())
+            Ok(())
+        })
     }
 }
 
@@ -423,9 +423,7 @@ where
     fn try_from(value: Hamil<T, K>) -> Result<Self, Self::Error> {
         let mut hamil = value;
         let mut repr = SumRepr::new();
-        hamil.add_to(&mut repr)?;
-
-        Ok(repr)
+        hamil.add_to(&mut repr).map(|()| repr)
     }
 }
 
