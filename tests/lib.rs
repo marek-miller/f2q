@@ -907,3 +907,23 @@ fn root4_mul() {
     assert_eq!(R3 * R2, R0);
     assert_eq!(R3 * R3, R1);
 }
+
+#[test]
+fn fermions_display() {
+    let code = Fermions::Offset;
+    assert_eq!(code.to_string(), format!("offset"));
+
+    let code = Fermions::one_electron(
+        Cr(Orbital::from_index(1)),
+        An(Orbital::from_index(2)),
+    )
+    .unwrap();
+    assert_eq!(code.to_string(), format!("1, 2"));
+
+    let code = Fermions::two_electron(
+        (Cr(Orbital::from_index(1)), Cr(Orbital::from_index(2))),
+        (An(Orbital::from_index(5)), An(Orbital::from_index(4))),
+    )
+    .unwrap();
+    assert_eq!(code.to_string(), format!("1, 2, 5, 4"));
+}

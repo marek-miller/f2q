@@ -2,9 +2,18 @@
 
 // Describe canonical ordering of indices in Hamiltonian
 
-use std::ops::{
-    Bound,
-    RangeBounds,
+use std::{
+    fmt::Display,
+    ops::{
+        Bound,
+        RangeBounds,
+    },
+};
+
+use serde::{
+    de::Visitor,
+    Deserialize,
+    Serialize,
 };
 
 use crate::Code;
@@ -394,6 +403,120 @@ impl Fermions {
 }
 
 impl Code for Fermions {}
+
+impl Display for Fermions {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        match self {
+            Fermions::Offset => write!(f, "offset"),
+            Fermions::One {
+                cr,
+                an,
+            } => write!(f, "{}, {}", cr.index(), an.index()),
+            Fermions::Two {
+                cr,
+                an,
+            } => write!(
+                f,
+                "{}, {}, {}, {}",
+                cr.0.index(),
+                cr.1.index(),
+                an.0.index(),
+                an.1.index()
+            ),
+        }
+    }
+}
+
+impl Serialize for Fermions {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+struct FermionsVisitor;
+
+impl<'de> Visitor<'de> for FermionsVisitor {
+    type Value = Fermions;
+
+    fn expecting(
+        &self,
+        formatter: &mut std::fmt::Formatter,
+    ) -> std::fmt::Result {
+        formatter.write_str("string of orbital 2 or 4 indices, or \"offset\"")
+    }
+
+    fn visit_str<E>(
+        self,
+        v: &str,
+    ) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        if v == "offset" {
+            return Ok(Fermions::Offset);
+        }
+
+        let mut iter = v.split_ascii_whitespace();
+        let idx_tup = (iter.next(), iter.next(), iter.next(), iter.next());
+
+        match idx_tup {
+            (Some(p_str), Some(q_str), None, None) => {
+                let p: usize = p_str
+                    .parse()
+                    .map_err(|_| E::custom("invalid format for index 1"))?;
+                let q: usize = q_str
+                    .parse()
+                    .map_err(|_| E::custom("invalid format for index 2"))?;
+                Fermions::one_electron(
+                    Cr(Orbital::from_index(p)),
+                    An(Orbital::from_index(q)),
+                )
+                .ok_or(E::custom("cannot parse one-electron term"))
+            }
+            (Some(p_str), Some(q_str), Some(r_str), Some(s_str)) => {
+                let p: usize = p_str
+                    .parse()
+                    .map_err(|_| E::custom("invalid format for index 1"))?;
+                let q: usize = q_str
+                    .parse()
+                    .map_err(|_| E::custom("invalid format for index 2"))?;
+                let r: usize = r_str
+                    .parse()
+                    .map_err(|_| E::custom("invalid format for index 3"))?;
+                let s: usize = s_str
+                    .parse()
+                    .map_err(|_| E::custom("invalid format for index 4"))?;
+
+                Fermions::two_electron(
+                    (Cr(Orbital::from_index(p)), Cr(Orbital::from_index(q))),
+                    (An(Orbital::from_index(r)), An(Orbital::from_index(s))),
+                )
+                .ok_or(E::custom("cannot parse two-electron term"))
+            }
+            _ => {
+                Err(E::custom("there should be either 2 or 4 orbital indeces"))
+            }
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Fermions {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(FermionsVisitor)
+    }
+}
 
 /// Creation operator
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
