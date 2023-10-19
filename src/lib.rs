@@ -8,7 +8,7 @@ use terms::SumRepr;
 pub mod maps;
 pub mod math;
 pub mod qubit;
-pub mod secnd;
+pub mod secq;
 pub mod terms;
 
 /// Basic flattened API  
@@ -19,7 +19,7 @@ pub mod prelude {
             Pauli,
             PauliCode,
         },
-        secnd::{
+        secq::{
             An,
             Cr,
             Fermions,

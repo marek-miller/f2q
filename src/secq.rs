@@ -23,7 +23,7 @@ impl Spin {
     /// # Example
     ///
     /// ```rust
-    /// # use f2q::secnd::Spin;
+    /// # use f2q::secq::Spin;
     ///
     /// let spin = Spin::Up;
     /// assert!(spin.is_up());
@@ -44,7 +44,7 @@ impl Spin {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::secnd::Spin;
+    /// # use f2q::secq::Spin;
     ///
     /// let spin = Spin::Down;
     /// assert_eq!(spin.flip(), Spin::Up);
@@ -62,7 +62,7 @@ impl Spin {
     /// # Example
     ///
     /// ```rust
-    /// # use f2q::secnd::Spin;
+    /// # use f2q::secq::Spin;
     ///
     /// let spins: Vec<_> = Spin::both().collect();
     ///
@@ -114,7 +114,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::secnd::{Orbital, Spin};
+    /// # use f2q::secq::{Orbital, Spin};
     ///
     /// let orb = Orbital::new(0, Spin::Down);
     /// assert_eq!(orb.index(), 0);
@@ -143,7 +143,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::secnd::{Orbital, Spin};
+    /// # use f2q::secq::{Orbital, Spin};
     ///
     /// let orb = Orbital::new(0, Spin::Down);
     /// assert_eq!(orb.index(), 0);
@@ -165,7 +165,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::secnd::{Orbital, Spin};
+    /// # use f2q::secq::{Orbital, Spin};
     ///
     /// let orbital = Orbital::from_index(3);
     ///
@@ -185,7 +185,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::secnd::{Orbital, Spin};
+    /// # use f2q::secq::{Orbital, Spin};
     ///
     /// let orbitals: Vec<_> = Orbital::gen_range((1..=3)).collect();
     ///
@@ -298,7 +298,7 @@ impl Fermions {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::secnd::Fermions;
+    /// # use f2q::secq::Fermions;
     ///
     /// let integral = Fermions::new();
     ///
@@ -315,7 +315,7 @@ impl Fermions {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use f2q::secnd::{Fermions, Orbital, Spin, Cr, An};
+    /// # use f2q::secq::{Fermions, Orbital, Spin, Cr, An};
     ///
     /// let integral = Fermions::one_electron(
     ///     Cr(Orbital::new(0, Spin::Down)),
@@ -352,7 +352,7 @@ impl Fermions {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use f2q::secnd::{Fermions, Orbital, Spin, Cr, An};
+    /// # use f2q::secq::{Fermions, Orbital, Spin, Cr, An};
     ///
     /// let integral = Fermions::two_electron(
     ///     (

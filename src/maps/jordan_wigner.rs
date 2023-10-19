@@ -5,7 +5,7 @@ use crate::{
         Pauli,
         PauliCode,
     },
-    secnd::Fermions,
+    secq::Fermions,
     Code,
     Error,
 };
