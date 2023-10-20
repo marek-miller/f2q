@@ -13,7 +13,7 @@ use f2q::{
 };
 use rand::Rng;
 
-const ORBITAL_MAX_IDX: usize = 64;
+const ORBITAL_MAX_IDX: u32 = 64;
 
 fn main() -> Result<(), f2q::Error> {
     let mut rng = rand::thread_rng();

@@ -42,7 +42,7 @@ pub mod prelude {
 /// Sum terms of a Hamiltonian
 pub trait Code: Copy + Clone + Eq + Hash + Default {}
 
-impl Code for usize {}
+impl Code for u64 {}
 impl Code for PauliCode {}
 impl Code for Fermions {}
 

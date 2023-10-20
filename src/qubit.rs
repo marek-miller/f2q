@@ -208,7 +208,7 @@ impl PauliCode {
     #[allow(clippy::missing_panics_doc)]
     pub unsafe fn pauli_unchecked(
         &self,
-        index: usize,
+        index: u16,
     ) -> Pauli {
         let pauli_int = if index < 32 {
             (self.pack.0 >> (index * 2)) & PAULI_MASK
@@ -239,7 +239,7 @@ impl PauliCode {
     #[must_use]
     pub fn pauli(
         &self,
-        index: usize,
+        index: u16,
     ) -> Option<Pauli> {
         if index >= 64 {
             None
@@ -273,7 +273,7 @@ impl PauliCode {
     /// ```
     pub unsafe fn pauli_mut_unchecked<OP>(
         &mut self,
-        index: usize,
+        index: u16,
         f: OP,
     ) where
         OP: FnOnce(&mut Pauli),
@@ -311,7 +311,7 @@ impl PauliCode {
     /// ```
     pub unsafe fn set_unchecked(
         &mut self,
-        index: usize,
+        index: u16,
         pauli: Pauli,
     ) {
         self.pauli_mut_unchecked(index, |p| {
@@ -349,7 +349,7 @@ impl PauliCode {
     /// ```
     pub fn pauli_mut<OP>(
         &mut self,
-        index: usize,
+        index: u16,
         f: OP,
     ) where
         OP: FnOnce(Option<&mut Pauli>),
@@ -383,7 +383,7 @@ impl PauliCode {
     /// ```
     pub fn set(
         &mut self,
-        index: usize,
+        index: u16,
         pauli: Pauli,
     ) {
         self.pauli_mut(index, |x| {
@@ -413,6 +413,7 @@ impl PauliCode {
     /// assert_eq!(code.pauli(1), Some(Y));
     /// assert_eq!(code.pauli(2), Some(Z));
     /// ```
+    #[allow(clippy::missing_panics_doc)]
     pub fn from_paulis<I>(iter: I) -> Self
     where
         I: IntoIterator<Item = Pauli>,
@@ -421,6 +422,8 @@ impl PauliCode {
         for (i, pauli) in iter.into_iter().take(64).enumerate() {
             // SAFETY: we take only 64 elements, so the index must be within
             // bounds
+            let i = u16::try_from(i)
+                .expect("index out of bounds for type u16. This is a bug");
             unsafe {
                 code.set_unchecked(i, pauli);
             }
@@ -452,7 +455,7 @@ impl PauliCode {
     /// assert_eq!(PauliCode::parity_op(0), PauliCode::default());
     /// ```
     #[must_use]
-    pub fn parity_op(num_qubits: usize) -> Self {
+    pub fn parity_op(num_qubits: u16) -> Self {
         assert!(num_qubits <= 64, "number of qubits must be within 1..64");
 
         PauliCode::from_paulis((0..num_qubits).map(|_| Pauli::Z))
@@ -508,7 +511,9 @@ impl<'de> Visitor<'de> for PauliCodeVisitor {
                     "character must be one of: I, X, Y, Z".to_string(),
                 )),
             }?;
-            code.set(i, pauli);
+            let idx = u16::try_from(i)
+                .expect("index out of range for u16. This is a bug.");
+            code.set(idx, pauli);
         }
 
         Ok(code)
@@ -528,7 +533,7 @@ impl<'de> Deserialize<'de> for PauliCode {
 #[derive(Debug)]
 pub struct PauliIter {
     code:  PauliCode,
-    index: usize,
+    index: u16,
 }
 
 impl PauliIter {
@@ -711,6 +716,9 @@ mod pauli_group {
                 |acc, (i, pauli_lhs)| {
                     let mut code = acc.1;
                     let lhs = PGrp(Root4::R0, pauli_lhs);
+                    let i = u16::try_from(i).expect(
+                        "index out of bounds for type u16. This is a bug",
+                    );
                     // SAFETY: index i is within bound
                     // since it enumerates a valid PauliCode
                     let rhs =

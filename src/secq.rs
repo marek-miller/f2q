@@ -112,7 +112,7 @@ impl_spin_int!(i8 i16 i32 i64 i128 isize);
 /// Electronic orbital consisting of a principal quantum number and a spin 1/2.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Default)]
 pub struct Orbital {
-    pub n: usize,
+    pub n: u32,
     pub s: Spin,
 }
 
@@ -129,7 +129,7 @@ impl Orbital {
     /// ```
     #[must_use]
     pub fn new(
-        n: usize,
+        n: u32,
         s: Spin,
     ) -> Self {
         Self {
@@ -160,12 +160,12 @@ impl Orbital {
     /// assert_eq!(orb.index(), 7);
     /// ```
     #[must_use]
-    pub fn index(&self) -> usize {
+    pub fn index(&self) -> u32 {
         assert!(
-            self.n <= usize::MAX / 2 - usize::from(self.s),
+            self.n <= u32::MAX / 2 - u32::from(self.s),
             "orbital index out of bound"
         );
-        self.n * 2 + usize::from(self.s)
+        self.n * 2 + u32::from(self.s)
     }
 
     /// Return orbital corresponding to the given index.
@@ -180,7 +180,7 @@ impl Orbital {
     /// assert_eq!(orbital, Orbital::new(1, Spin::Up));
     /// ```
     #[must_use]
-    pub fn from_index(index: usize) -> Self {
+    pub fn from_index(index: u32) -> Self {
         Self::new(index / 2, Spin::from(index & 1 != 0))
     }
 
@@ -208,25 +208,25 @@ impl Orbital {
     /// ```
     pub fn gen_range<R>(range: R) -> impl Iterator<Item = Orbital>
     where
-        R: RangeBounds<usize>,
+        R: RangeBounds<u32>,
     {
         OrbitalRange::new(range)
     }
 }
 
 struct OrbitalRange {
-    end:   Option<usize>,
-    index: Option<usize>,
+    end:   Option<u32>,
+    index: Option<u32>,
 }
 
 impl OrbitalRange {
     fn new<R>(range: R) -> Self
     where
-        R: RangeBounds<usize>,
+        R: RangeBounds<u32>,
     {
         let index = match range.start_bound() {
             Bound::Included(&x) => Some(x),
-            Bound::Excluded(&x) if x < usize::MAX => Some(x + 1),
+            Bound::Excluded(&x) if x < u32::MAX => Some(x + 1),
             Bound::Excluded(_) => None,
             Bound::Unbounded => Some(0),
         };
@@ -235,7 +235,7 @@ impl OrbitalRange {
             Bound::Included(&y) => Some(y),
             Bound::Excluded(&y) if y > 0 => Some(y - 1),
             Bound::Excluded(_) => None,
-            Bound::Unbounded => Some(usize::MAX),
+            Bound::Unbounded => Some(u32::MAX),
         };
 
         Self {
@@ -486,12 +486,7 @@ impl<'de> Visitor<'de> for FermionsVisitor {
         use serde::de::Error;
 
         let mut seq = seq;
-        let idx_tup: (
-            Option<usize>,
-            Option<usize>,
-            Option<usize>,
-            Option<usize>,
-        ) = (
+        let idx_tup: (Option<u32>, Option<u32>, Option<u32>, Option<u32>) = (
             seq.next_element()?,
             seq.next_element()?,
             seq.next_element()?,
@@ -530,7 +525,7 @@ pub struct Cr(pub Orbital);
 
 impl Cr {
     #[must_use]
-    pub fn index(&self) -> usize {
+    pub fn index(&self) -> u32 {
         self.0.index()
     }
 }
@@ -541,7 +536,7 @@ pub struct An(pub Orbital);
 
 impl An {
     #[must_use]
-    pub fn index(&self) -> usize {
+    pub fn index(&self) -> u32 {
         self.0.index()
     }
 }
