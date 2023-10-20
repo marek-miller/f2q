@@ -2,16 +2,7 @@
 
 use std::fmt::Display;
 
-use serde::{
-    de::Visitor,
-    Deserialize,
-    Serialize,
-};
-
-use crate::{
-    Code,
-    Error,
-};
+use crate::Error;
 
 const PAULI_MASK: u64 = 0b11;
 
@@ -20,7 +11,7 @@ const PAULI_MASK: u64 = 0b11;
 /// # Examples
 ///
 /// ```rust
-/// # use f2q::qubit::Pauli;
+/// # use f2q::qubits::Pauli;
 /// use f2q::Error::PauliIndex;
 ///
 /// let paulis: Vec<_> = (0..=4).map(|i| Pauli::try_from(i)).collect();
@@ -103,7 +94,7 @@ impl From<Pauli> for String {
 /// # Examples
 ///
 /// ```rust
-/// # use f2q::qubit::PauliCode;
+/// # use f2q::qubits::PauliCode;
 /// let code = PauliCode::default();
 ///
 /// assert_eq!(code.enumerate(), 0);
@@ -153,7 +144,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// # use f2q::qubits::{Pauli, PauliCode};
     ///
     /// let code = PauliCode::new((0b0100, 0b1110));
     ///
@@ -169,6 +160,26 @@ impl PauliCode {
         }
     }
 
+    /// Tensor product of identity operators.
+    ///
+    /// This is the same as `PauliCode::default()` or `PauliCode::new((0,0))`.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use f2q::qubits::{Pauli, PauliCode};
+    ///
+    /// let code = PauliCode::identity();
+    ///
+    /// assert_eq!(code, PauliCode::new((0, 0)));
+    /// assert_eq!(code, PauliCode::default());
+    /// assert_eq!(code, PauliCode::from_paulis([Pauli::I]));
+    /// ```
+    #[must_use]
+    pub fn identity() -> Self {
+        Self::default()
+    }
+
     /// Enumerate Pauli code.
     ///
     /// This convert the code to a 128-wide integer.
@@ -180,7 +191,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::qubit::PauliCode;
+    /// # use f2q::qubits::PauliCode;
     /// let code = PauliCode::new((3, 4));
     ///
     /// assert_eq!(code.enumerate(), 3 + (4 << 64));
@@ -201,7 +212,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::qubit::{PauliCode, Pauli};
+    /// # use f2q::qubits::{PauliCode, Pauli};
     /// let code = PauliCode::new((0b1000, 0));
     /// let pauli = unsafe { code.pauli_unchecked(1) };
     ///
@@ -211,7 +222,7 @@ impl PauliCode {
     #[allow(clippy::missing_panics_doc)]
     pub unsafe fn pauli_unchecked(
         &self,
-        index: usize,
+        index: u16,
     ) -> Pauli {
         let pauli_int = if index < 32 {
             (self.pack.0 >> (index * 2)) & PAULI_MASK
@@ -230,7 +241,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::qubit::{PauliCode, Pauli};
+    /// # use f2q::qubits::{PauliCode, Pauli};
     /// let code = PauliCode::new((0b1000, 0));
     ///
     /// let pauli = code.pauli(1);
@@ -242,7 +253,7 @@ impl PauliCode {
     #[must_use]
     pub fn pauli(
         &self,
-        index: usize,
+        index: u16,
     ) -> Option<Pauli> {
         if index >= 64 {
             None
@@ -264,7 +275,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// # use f2q::qubits::{Pauli, PauliCode};
     /// let mut code = PauliCode::new((0, 0b01));
     /// assert_eq!(code.pauli(32), Some(Pauli::X));
     ///
@@ -276,7 +287,7 @@ impl PauliCode {
     /// ```
     pub unsafe fn pauli_mut_unchecked<OP>(
         &mut self,
-        index: usize,
+        index: u16,
         f: OP,
     ) where
         OP: FnOnce(&mut Pauli),
@@ -302,7 +313,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// # use f2q::qubits::{Pauli, PauliCode};
     /// let mut code = PauliCode::default();
     /// assert_eq!(code.pauli(17), Some(Pauli::I));
     ///
@@ -314,7 +325,7 @@ impl PauliCode {
     /// ```
     pub unsafe fn set_unchecked(
         &mut self,
-        index: usize,
+        index: u16,
         pauli: Pauli,
     ) {
         self.pauli_mut_unchecked(index, |p| {
@@ -331,7 +342,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// # use f2q::qubits::{Pauli, PauliCode};
     /// let mut code = PauliCode::new((0, 0b01));
     /// assert_eq!(code.pauli(32), Some(Pauli::X));
     ///
@@ -352,7 +363,7 @@ impl PauliCode {
     /// ```
     pub fn pauli_mut<OP>(
         &mut self,
-        index: usize,
+        index: u16,
         f: OP,
     ) where
         OP: FnOnce(Option<&mut Pauli>),
@@ -376,7 +387,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// # use f2q::qubits::{Pauli, PauliCode};
     /// let mut code = PauliCode::default();
     /// assert_eq!(code.pauli(17), Some(Pauli::I));
     ///
@@ -386,7 +397,7 @@ impl PauliCode {
     /// ```
     pub fn set(
         &mut self,
-        index: usize,
+        index: u16,
         pauli: Pauli,
     ) {
         self.pauli_mut(index, |x| {
@@ -403,8 +414,8 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::qubit::{Pauli, PauliCode};
-    /// use f2q::qubit::Pauli::{
+    /// # use f2q::qubits::{Pauli, PauliCode};
+    /// use f2q::qubits::Pauli::{
     ///     X,
     ///     Y,
     ///     Z,
@@ -416,6 +427,7 @@ impl PauliCode {
     /// assert_eq!(code.pauli(1), Some(Y));
     /// assert_eq!(code.pauli(2), Some(Z));
     /// ```
+    #[allow(clippy::missing_panics_doc)]
     pub fn from_paulis<I>(iter: I) -> Self
     where
         I: IntoIterator<Item = Pauli>,
@@ -424,6 +436,8 @@ impl PauliCode {
         for (i, pauli) in iter.into_iter().take(64).enumerate() {
             // SAFETY: we take only 64 elements, so the index must be within
             // bounds
+            let i = u16::try_from(i)
+                .expect("index out of bounds for type u16. This is a bug");
             unsafe {
                 code.set_unchecked(i, pauli);
             }
@@ -444,7 +458,7 @@ impl PauliCode {
     ///
     ///
     /// ```rust
-    /// # use f2q::qubit::{Pauli, PauliCode};
+    /// # use f2q::qubits::{Pauli, PauliCode};
     ///
     /// let par_op = PauliCode::parity_op(2);
     ///
@@ -455,75 +469,10 @@ impl PauliCode {
     /// assert_eq!(PauliCode::parity_op(0), PauliCode::default());
     /// ```
     #[must_use]
-    pub fn parity_op(num_qubits: usize) -> Self {
+    pub fn parity_op(num_qubits: u16) -> Self {
         assert!(num_qubits <= 64, "number of qubits must be within 1..64");
 
         PauliCode::from_paulis((0..num_qubits).map(|_| Pauli::Z))
-    }
-}
-
-impl Serialize for PauliCode {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-struct PauliCodeVisitor;
-
-impl<'de> Visitor<'de> for PauliCodeVisitor {
-    type Value = PauliCode;
-
-    fn expecting(
-        &self,
-        formatter: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
-        formatter.write_str(
-            "string of 64 Pauli operators (trailing identities truncated)",
-        )
-    }
-
-    fn visit_str<E>(
-        self,
-        v: &str,
-    ) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        if v.len() > 64 || v.is_empty() {
-            return Err(E::custom("str len out of range: 1..=64".to_string()));
-        }
-
-        let mut code = PauliCode::default();
-
-        for (i, ch) in v.chars().enumerate() {
-            let pauli = match ch {
-                'I' => Ok(Pauli::I),
-                'X' => Ok(Pauli::X),
-                'Y' => Ok(Pauli::Y),
-                'Z' => Ok(Pauli::Z),
-                _ => Err(E::custom(
-                    "character must be one of: I, X, Y, Z".to_string(),
-                )),
-            }?;
-            code.set(i, pauli);
-        }
-
-        Ok(code)
-    }
-}
-
-impl<'de> Deserialize<'de> for PauliCode {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_str(PauliCodeVisitor)
     }
 }
 
@@ -531,7 +480,7 @@ impl<'de> Deserialize<'de> for PauliCode {
 #[derive(Debug)]
 pub struct PauliIter {
     code:  PauliCode,
-    index: usize,
+    index: u16,
 }
 
 impl PauliIter {
@@ -565,8 +514,6 @@ impl IntoIterator for PauliCode {
         PauliIter::new(self)
     }
 }
-
-impl Code for PauliCode {}
 
 impl Display for PauliCode {
     fn fmt(
@@ -716,6 +663,9 @@ mod pauli_group {
                 |acc, (i, pauli_lhs)| {
                     let mut code = acc.1;
                     let lhs = PGrp(Root4::R0, pauli_lhs);
+                    let i = u16::try_from(i).expect(
+                        "index out of bounds for type u16. This is a bug",
+                    );
                     // SAFETY: index i is within bound
                     // since it enumerates a valid PauliCode
                     let rhs =

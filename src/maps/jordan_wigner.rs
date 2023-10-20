@@ -1,11 +1,11 @@
 use num::Float;
 
 use crate::{
-    qubit::{
+    qubits::{
         Pauli,
         PauliCode,
     },
-    secnd::Fermions,
+    fermions::Fermions,
     Code,
     Error,
 };
@@ -20,7 +20,7 @@ impl Map<Fermions> {
     where
         T: Float,
     {
-        Iter::new(coeff, self.0)
+        PauliIter::new(coeff, self.0)
     }
 }
 
@@ -63,13 +63,13 @@ impl TryFrom<Fermions> for Map<Fermions> {
 }
 
 #[derive(Debug)]
-pub struct Iter<T, K> {
+pub struct PauliIter<T, K> {
     coeff: T,
     code:  K,
-    index: usize,
+    index: u8,
 }
 
-impl<T, K> Iter<T, K> {
+impl<T, K> PauliIter<T, K> {
     pub fn new(
         coeff: T,
         code: K,
@@ -82,7 +82,7 @@ impl<T, K> Iter<T, K> {
     }
 }
 
-impl<T> Iterator for Iter<T, Fermions>
+impl<T> Iterator for PauliIter<T, Fermions>
 where
     T: Float,
 {
@@ -102,8 +102,10 @@ where
                 cr: p,
                 an: q,
             } => {
-                let p = p.index();
-                let q = q.index();
+                let p = u16::try_from(p.index())
+                    .expect("orbital index out of bounds for type u16");
+                let q = u16::try_from(q.index())
+                    .expect("orbital index out of bounds for type u16");
                 let item = if p == q {
                     next_item_one_pp(self.index, self.coeff, p)
                 } else {
@@ -116,10 +118,14 @@ where
                 cr: (p, q),
                 an: (r, s),
             } => {
-                let p = p.index();
-                let q = q.index();
-                let r = r.index();
-                let s = s.index();
+                let p = u16::try_from(p.index())
+                    .expect("orbital index out of bounds for type u16");
+                let q = u16::try_from(q.index())
+                    .expect("orbital index out of bounds for type u16");
+                let r = u16::try_from(r.index())
+                    .expect("orbital index out of bounds for type u16");
+                let s = u16::try_from(s.index())
+                    .expect("orbital index out of bounds for type u16");
 
                 let item = if p == s && q == r {
                     next_item_two_pq(self.index, self.coeff, p, q)
@@ -136,9 +142,9 @@ where
 }
 
 fn next_item_one_pp<T: Float>(
-    index: usize,
+    index: u8,
     coeff: T,
-    p: usize,
+    p: u16,
 ) -> Option<(PauliCode, T)> {
     let one_half = T::from(0.5).expect("cannot convert 0.5");
 
@@ -154,10 +160,10 @@ fn next_item_one_pp<T: Float>(
 }
 
 fn next_item_one_pq<T: Float>(
-    index: usize,
+    index: u8,
     coeff: T,
-    p: usize,
-    q: usize,
+    p: u16,
+    q: u16,
 ) -> Option<(PauliCode, T)> {
     let one_half = T::from(0.5).expect("cannot convert 0.5");
 
@@ -187,10 +193,10 @@ fn next_item_one_pq<T: Float>(
 }
 
 fn next_item_two_pq<T: Float>(
-    index: usize,
+    index: u8,
     coeff: T,
-    p: usize,
-    q: usize,
+    p: u16,
+    q: u16,
 ) -> Option<(PauliCode, T)> {
     let term = coeff
         * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
@@ -221,11 +227,11 @@ fn next_item_two_pq<T: Float>(
 }
 
 fn next_item_two_pqs<T: Float>(
-    index: usize,
+    index: u8,
     coeff: T,
-    p: usize,
-    q: usize,
-    s: usize,
+    p: u16,
+    q: u16,
+    s: u16,
 ) -> Option<(PauliCode, T)> {
     let term = coeff
         * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
@@ -270,12 +276,12 @@ fn next_item_two_pqs<T: Float>(
 }
 
 fn next_item_two_pqrs<T: Float>(
-    index: usize,
+    index: u8,
     coeff: T,
-    p: usize,
-    q: usize,
-    r: usize,
-    s: usize,
+    p: u16,
+    q: u16,
+    r: u16,
+    s: u16,
 ) -> Option<(PauliCode, T)> {
     let term = coeff
         * T::from(0.125).expect("cannot obtain floating point fraction: 0.125");

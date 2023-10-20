@@ -3,16 +3,12 @@ use std::{
     io::BufReader,
 };
 
-use f2q::{
-    qubit::{
-        Pauli,
-        PauliCode,
-    },
-    terms::SumRepr,
+use f2q::qubits::{
+    Pauli,
+    PauliCode,
 };
 
 const PAULICODES: &str = "./tests/serialize/paulicodes.json";
-const SUMREPR: &str = "./tests/serialize/sumrepr.json";
 
 fn paulicodes_compare() -> [PauliCode; 8] {
     use Pauli::*;
@@ -49,16 +45,4 @@ fn deserialize_paulicodes() {
 
     let codes: Vec<PauliCode> = serde_json::from_reader(reader).unwrap();
     assert_eq!(codes, paulicodes_compare());
-}
-
-#[test]
-fn deserialize_sumrepr() {
-    // Open the file in read-only mode with buffer.
-    let file = File::open(SUMREPR).unwrap();
-    let reader = BufReader::new(file);
-
-    let codes: SumRepr<f64, PauliCode> =
-        serde_json::from_reader(reader).unwrap();
-
-    assert_eq!(codes.len(), 8);
 }

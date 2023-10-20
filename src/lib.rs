@@ -3,28 +3,30 @@ use std::{
     hash::Hash,
 };
 
+use fermions::Fermions;
+use qubits::PauliCode;
 use terms::SumRepr;
 
+pub mod fermions;
 pub mod maps;
 pub mod math;
-pub mod qubit;
-pub mod secnd;
+pub mod qubits;
 pub mod terms;
 
 /// Basic flattened API  
 pub mod prelude {
     pub use crate::{
-        maps::JordanWigner,
-        qubit::{
-            Pauli,
-            PauliCode,
-        },
-        secnd::{
+        fermions::{
             An,
             Cr,
             Fermions,
             Orbital,
             Spin,
+        },
+        maps::JordanWigner,
+        qubits::{
+            Pauli,
+            PauliCode,
         },
         terms::{
             Hamil,
@@ -35,10 +37,12 @@ pub mod prelude {
     };
 }
 
-/// Representation of Hermitian operators
+/// Sum terms of a Hamiltonian
 pub trait Code: Copy + Clone + Eq + Hash + Default {}
 
-impl Code for usize {}
+impl Code for u64 {}
+impl Code for PauliCode {}
+impl Code for Fermions {}
 
 /// Convert and serialize sum of terms in various encodings
 pub trait Terms<T, K>
@@ -78,3 +82,5 @@ impl Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+mod serialize;

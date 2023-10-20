@@ -3,8 +3,8 @@
 use num::Float;
 
 use crate::{
-    qubit::PauliCode,
-    secnd::Fermions,
+    qubits::PauliCode,
+    fermions::Fermions,
     terms::SumRepr,
     Error,
     Terms,
@@ -41,7 +41,7 @@ mod jordan_wigner;
 /// let code_i0 = PauliCode::default();
 /// let code_z0 = {
 ///     let mut code = PauliCode::default();
-///     code.set(idx, Pauli::Z);
+///     code.set(idx.try_into().unwrap(), Pauli::Z);
 ///     code
 /// };
 ///
