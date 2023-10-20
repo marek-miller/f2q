@@ -166,6 +166,26 @@ impl PauliCode {
         }
     }
 
+    /// Tensor product of identity operators.
+    ///
+    /// This is the same as `PauliCode::default()` or `PauliCode::new((0,0))`.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use f2q::qubit::{Pauli, PauliCode};
+    ///
+    /// let code = PauliCode::identity();
+    ///
+    /// assert_eq!(code, PauliCode::new((0, 0)));
+    /// assert_eq!(code, PauliCode::default());
+    /// assert_eq!(code, PauliCode::from_paulis([Pauli::I]));
+    /// ```
+    #[must_use]
+    pub fn identity() -> Self {
+        Self::default()
+    }
+
     /// Enumerate Pauli code.
     ///
     /// This convert the code to a 128-wide integer.

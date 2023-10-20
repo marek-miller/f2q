@@ -981,3 +981,59 @@ fn fermions_deserialize_01() {
     .unwrap();
     assert_eq!(code, expected);
 }
+
+#[test]
+fn pauli_sumrepr_serialize_01() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(PauliCode::identity(), 0.4);
+    let json_str = serde_json::to_string(&repr).unwrap();
+
+    assert_eq!(json_str, "{\"I\":0.4}");
+}
+
+#[test]
+fn pauli_sumrepr_serialize_02() {
+    use Pauli::X;
+    let mut repr = SumRepr::new();
+
+    repr.add_term(PauliCode::from_paulis([X, X, X]), 0.2);
+    let json_str = serde_json::to_string(&repr).unwrap();
+
+    assert_eq!(json_str, "{\"XXX\":0.2}");
+}
+
+#[test]
+fn pauli_sumrepr_deserialize_01() {
+    use Pauli::{
+        I,
+        X,
+        Y,
+        Z,
+    };
+
+    let json_str = r#"
+        { 
+            "Z":    0.1,
+            "YZ":   0.2,
+            "XYZ":  0.3,
+            "IXYZ": 0.4
+        }
+    "#;
+
+    let repr: SumRepr<f64, PauliCode> = serde_json::from_str(json_str).unwrap();
+
+    assert_eq!(repr.len(), 4);
+
+    let code = PauliCode::from_paulis([Z]);
+    assert_eq!(repr.coeff(code), 0.1);
+
+    let code = PauliCode::from_paulis([Y, Z]);
+    assert_eq!(repr.coeff(code), 0.2);
+
+    let code = PauliCode::from_paulis([X, Y, Z]);
+    assert_eq!(repr.coeff(code), 0.3);
+
+    let code = PauliCode::from_paulis([I, X, Y, Z]);
+    assert_eq!(repr.coeff(code), 0.4);
+}
