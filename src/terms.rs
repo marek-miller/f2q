@@ -16,10 +16,7 @@ use super::{
     Terms,
 };
 use crate::{
-    prelude::{
-        Fermions,
-        PauliCode,
-    },
+    prelude::PauliCode,
     Error,
 };
 

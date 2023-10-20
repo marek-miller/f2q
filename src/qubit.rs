@@ -8,10 +8,7 @@ use serde::{
     Serialize,
 };
 
-use crate::{
-    Code,
-    Error,
-};
+use crate::Error;
 
 const PAULI_MASK: u64 = 0b11;
 
@@ -565,8 +562,6 @@ impl IntoIterator for PauliCode {
         PauliIter::new(self)
     }
 }
-
-impl Code for PauliCode {}
 
 impl Display for PauliCode {
     fn fmt(

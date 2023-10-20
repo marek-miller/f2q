@@ -3,6 +3,10 @@ use std::{
     hash::Hash,
 };
 
+use prelude::{
+    Fermions,
+    PauliCode,
+};
 use terms::SumRepr;
 
 pub mod maps;
@@ -35,10 +39,12 @@ pub mod prelude {
     };
 }
 
-/// Representation of Hermitian operators
+/// Sum terms of a Hamiltonian
 pub trait Code: Copy + Clone + Eq + Hash + Default {}
 
 impl Code for usize {}
+impl Code for PauliCode {}
+impl Code for Fermions {}
 
 /// Convert and serialize sum of terms in various encodings
 pub trait Terms<T, K>

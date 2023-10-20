@@ -12,7 +12,6 @@ use f2q::{
 };
 
 const PAULICODES: &str = "./tests/serialize/paulicodes.json";
-const SUMREPR: &str = "./tests/serialize/sumrepr.json";
 
 fn paulicodes_compare() -> [PauliCode; 8] {
     use Pauli::*;

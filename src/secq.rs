@@ -17,8 +17,6 @@ use serde::{
     Serialize,
 };
 
-use crate::Code;
-
 /// Spin one-half
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum Spin {
@@ -402,8 +400,6 @@ impl Fermions {
         })
     }
 }
-
-impl Code for Fermions {}
 
 impl Display for Fermions {
     fn fmt(
