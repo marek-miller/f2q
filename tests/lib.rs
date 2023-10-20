@@ -1,3 +1,4 @@
+use core::panic;
 use std::ops::RangeBounds;
 
 use f2q::{
@@ -21,8 +22,10 @@ use f2q::{
     },
     terms::SumRepr,
     Error,
+    FermiSum,
     Terms,
 };
+use serde_json::Value;
 
 mod serialize;
 
@@ -46,6 +49,37 @@ fn test_pauli_03() {
     assert_eq!(u8::from(Pauli::X), 1);
     assert_eq!(u8::from(Pauli::Y), 2);
     assert_eq!(u8::from(Pauli::Z), 3);
+}
+
+#[test]
+fn pauli_serialize_01() {
+    assert_eq!(
+        serde_json::to_value(Pauli::I).unwrap().as_str().unwrap(),
+        "I"
+    );
+
+    assert_eq!(
+        serde_json::to_value(Pauli::X).unwrap().as_str().unwrap(),
+        "X"
+    );
+
+    assert_eq!(
+        serde_json::to_value(Pauli::Y).unwrap().as_str().unwrap(),
+        "Y"
+    );
+
+    assert_eq!(
+        serde_json::to_value(Pauli::Z).unwrap().as_str().unwrap(),
+        "Z"
+    );
+}
+
+#[test]
+fn pauli_deserialize_01() {
+    assert_eq!(serde_json::from_str::<Pauli>("\"I\"").unwrap(), Pauli::I);
+    assert_eq!(serde_json::from_str::<Pauli>("\"X\"").unwrap(), Pauli::X);
+    assert_eq!(serde_json::from_str::<Pauli>("\"Y\"").unwrap(), Pauli::Y);
+    assert_eq!(serde_json::from_str::<Pauli>("\"Z\"").unwrap(), Pauli::Z);
 }
 
 #[test]
@@ -993,6 +1027,7 @@ fn pauli_sumrepr_serialize_01() {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn pauli_sumrepr_serialize_02() {
     use Pauli::X;
     let mut repr = SumRepr::new();
@@ -1004,6 +1039,7 @@ fn pauli_sumrepr_serialize_02() {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn pauli_sumrepr_deserialize_01() {
     use Pauli::{
         I,
@@ -1052,4 +1088,243 @@ fn root4_conj() {
     assert_eq!(Root4::R1.conj(), Root4::R1);
     assert_eq!(Root4::R2.conj(), Root4::R3);
     assert_eq!(Root4::R3.conj(), Root4::R2);
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn fermions_sumrepr_serialize_01() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(Fermions::Offset, 0.1);
+
+    let json = serde_json::to_value(&repr).unwrap();
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+        {
+            "encoding": "fermions",
+            "terms":  [
+                {
+                    "code": [],
+                    "value": 0.1
+                }
+            ]
+        }
+        "#,
+    )
+    .unwrap();
+
+    assert_eq!(json, expected);
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn fermions_sumrepr_serialize_02() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(
+        Fermions::one_electron(
+            Cr(Orbital::from_index(1)),
+            An(Orbital::from_index(2)),
+        )
+        .unwrap(),
+        0.2,
+    );
+    let json = serde_json::to_value(&repr).unwrap();
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+        {
+            "encoding": "fermions",
+            "terms":  [
+                {
+                    "code": [1, 2],
+                    "value": 0.2
+                }
+            ]
+        }
+        "#,
+    )
+    .unwrap();
+
+    assert_eq!(json, expected);
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn fermions_sumrepr_serialize_03() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(
+        Fermions::two_electron(
+            (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
+            (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+        )
+        .unwrap(),
+        0.3,
+    );
+    let json = serde_json::to_value(&repr).unwrap();
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+        {
+            "encoding": "fermions",
+            "terms":  [
+                {
+                    "code": [0, 1, 1, 0],
+                    "value": 0.3
+                }
+            ]
+        }
+        "#,
+    )
+    .unwrap();
+
+    assert_eq!(json, expected);
+}
+
+#[test]
+fn fermions_sumrepr_serialize_04() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(Fermions::Offset, 0.1);
+    repr.add_term(
+        Fermions::one_electron(
+            Cr(Orbital::from_index(1)),
+            An(Orbital::from_index(2)),
+        )
+        .unwrap(),
+        0.2,
+    );
+    repr.add_term(
+        Fermions::two_electron(
+            (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
+            (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+        )
+        .unwrap(),
+        0.3,
+    );
+    let json = serde_json::to_value(&repr).unwrap();
+
+    let map = json.as_object().unwrap();
+
+    assert_eq!(
+        map.get("encoding").unwrap(),
+        &Value::String("fermions".to_string())
+    );
+
+    let Value::Array(arr) = map.get("terms").unwrap() else {
+        panic!()
+    };
+
+    assert_eq!(arr.len(), 3);
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn fermisum_deserialize_01() {
+    let data = r#"
+        {
+            "type": "sumrepr",
+            "encoding": "fermions",
+            "terms": [
+                {
+                    "code": [],
+                    "value": 0.1
+                }
+            ]
+        }
+    "#;
+
+    let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
+
+    assert_eq!(repr.len(), 1);
+    assert_eq!(repr.coeff(Fermions::Offset), 0.1);
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn fermisum_deserialize_02() {
+    let data = r#"
+        {
+            "type": "sumrepr",
+            "encoding": "fermions",
+            "terms": [
+                {
+                    "code": [],
+                    "value": 0.1
+                },
+                {
+                    "code": [1, 2],
+                    "value": 0.2
+                }
+            ]
+        }
+    "#;
+
+    let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
+
+    assert_eq!(repr.len(), 2);
+    assert_eq!(repr.coeff(Fermions::Offset), 0.1);
+    assert_eq!(
+        repr.coeff(
+            Fermions::one_electron(
+                Cr(Orbital::from_index(1)),
+                An(Orbital::from_index(2))
+            )
+            .unwrap()
+        ),
+        0.2
+    );
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn fermisum_deserialize_03() {
+    let data = r#"
+        {
+            "type": "sumrepr",
+            "encoding": "fermions",
+            "terms": [
+                {
+                    "code": [],
+                    "value": 0.1
+                },
+                {
+                    "value": 0.09,
+                    "code": []
+                },
+                {
+                    "code": [1, 2],
+                    "value": 0.2
+                }, 
+                {
+                    "code": [0,1,1,0],
+                    "value": 0.3
+                }
+            ]
+        }
+    "#;
+
+    let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
+
+    assert_eq!(repr.len(), 3);
+    assert_eq!(repr.coeff(Fermions::Offset), 0.19);
+    assert_eq!(
+        repr.coeff(
+            Fermions::one_electron(
+                Cr(Orbital::from_index(1)),
+                An(Orbital::from_index(2))
+            )
+            .unwrap()
+        ),
+        0.2
+    );
+    assert_eq!(
+        repr.coeff(
+            Fermions::two_electron(
+                (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
+                (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+            )
+            .unwrap(),
+        ),
+        0.3
+    );
 }

@@ -7,6 +7,9 @@ use fermions::Fermions;
 use qubits::PauliCode;
 use terms::SumRepr;
 
+pub type PauliSum<T> = SumRepr<T, PauliCode>;
+pub type FermiSum<T> = SumRepr<T, Fermions>;
+
 pub mod fermions;
 pub mod maps;
 pub mod math;
@@ -84,3 +87,4 @@ impl Display for Error {
 impl std::error::Error for Error {}
 
 mod serialize;
+pub use serialize::Encoding;
