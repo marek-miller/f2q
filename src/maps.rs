@@ -24,6 +24,11 @@ mod jordan_wigner;
 ///
 /// ```rust
 /// use f2q::prelude::*;
+/// use fermions::{
+///     An,
+///     Cr,
+///     Orbital,
+/// };
 /// # fn main() -> Result<(), f2q::Error> {
 ///
 /// let idx = 11;

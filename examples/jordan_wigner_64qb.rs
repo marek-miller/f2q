@@ -11,6 +11,11 @@ use f2q::{
     math::Pairs,
     prelude::*,
 };
+use fermions::{
+    An,
+    Cr,
+    Orbital,
+};
 use rand::Rng;
 
 const ORBITAL_MAX_IDX: u32 = 64;

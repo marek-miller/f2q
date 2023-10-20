@@ -1,14 +1,25 @@
 [package]
 name = "f2q"
 version = "0.1.0"
+description = "Fermion to qubit mappings"
+authors = ["Marek Miller", "⧉⧉⧉"]
+keywords = ["quantum", "qubit", "fermion", "Jordan-Wigner", "Bravyi-Kitaev"]
+license = "MIT"
 edition = "2021"
+resolver = "2"
+default-run = "f2q"
+readme = "README.md"
+homepage = "https://github.com/Quantum-for-Life/f2q"
+repository = "https://github.com/Quantum-for-Life/f2q.git"
 
 [dependencies]
 num = "0.4.1"
-rand = "0.8.5"
 rayon = "1.8.0"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
+
+[dev-dependencies]
+rand = "0.8.5"
 
 [profile.release]
 lto = "fat"

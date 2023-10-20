@@ -9,6 +9,7 @@ use terms::SumRepr;
 
 pub type PauliSum<T> = SumRepr<T, PauliCode>;
 pub type FermiSum<T> = SumRepr<T, FermiCode>;
+pub type IndexedSum<T> = SumRepr<T, u64>;
 
 pub mod maps;
 pub mod math;
@@ -16,16 +17,15 @@ pub mod terms;
 
 /// Basic flattened API  
 pub mod prelude {
+    #[doc(inline)]
     pub use crate::{
         codes::{
             fermions::{
-                An,
-                Cr,
+                self,
                 FermiCode,
-                Orbital,
-                Spin,
             },
             qubits::{
+                self,
                 Pauli,
                 PauliCode,
             },
@@ -36,6 +36,9 @@ pub mod prelude {
             Hamil,
             SumRepr,
         },
+        FermiSum,
+        IndexedSum,
+        PauliSum,
         Terms,
     };
 }
