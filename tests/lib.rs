@@ -1027,6 +1027,7 @@ fn pauli_sumrepr_serialize_01() {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn pauli_sumrepr_serialize_02() {
     use Pauli::X;
     let mut repr = SumRepr::new();
@@ -1038,6 +1039,7 @@ fn pauli_sumrepr_serialize_02() {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn pauli_sumrepr_deserialize_01() {
     use Pauli::{
         I,
@@ -1089,6 +1091,7 @@ fn root4_conj() {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn fermions_sumrepr_serialize_01() {
     let mut repr = SumRepr::new();
 
@@ -1114,6 +1117,7 @@ fn fermions_sumrepr_serialize_01() {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn fermions_sumrepr_serialize_02() {
     let mut repr = SumRepr::new();
 
@@ -1145,6 +1149,7 @@ fn fermions_sumrepr_serialize_02() {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn fermions_sumrepr_serialize_03() {
     let mut repr = SumRepr::new();
 
@@ -1213,6 +1218,7 @@ fn fermions_sumrepr_serialize_04() {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn fermisum_deserialize_01() {
     let data = r#"
         {
@@ -1234,6 +1240,7 @@ fn fermisum_deserialize_01() {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn fermisum_deserialize_02() {
     let data = r#"
         {
@@ -1269,6 +1276,7 @@ fn fermisum_deserialize_02() {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn fermisum_deserialize_03() {
     let data = r#"
         {

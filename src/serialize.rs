@@ -501,7 +501,7 @@ where
             value,
         }) = seq.next_element()?
         {
-            repr.add_term(code, value)
+            repr.add_term(code, value);
         }
 
         Ok(FermiSumDeSequence(repr))
