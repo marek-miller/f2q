@@ -1,51 +1,46 @@
-use std::{
-    fmt::Display,
-    hash::Hash,
-};
+use std::fmt::Display;
 
-use fermions::Fermions;
-use qubits::PauliCode;
+use codes::{
+    fermions::Fermions,
+    qubits::PauliCode,
+    Code,
+};
 use terms::SumRepr;
 
 pub type PauliSum<T> = SumRepr<T, PauliCode>;
 pub type FermiSum<T> = SumRepr<T, Fermions>;
 
-pub mod fermions;
 pub mod maps;
 pub mod math;
-pub mod qubits;
 pub mod terms;
 
 /// Basic flattened API  
 pub mod prelude {
     pub use crate::{
-        fermions::{
-            An,
-            Cr,
-            Fermions,
-            Orbital,
-            Spin,
+        codes::{
+            fermions::{
+                An,
+                Cr,
+                Fermions,
+                Orbital,
+                Spin,
+            },
+            qubits::{
+                Pauli,
+                PauliCode,
+            },
+            Code,
         },
         maps::JordanWigner,
-        qubits::{
-            Pauli,
-            PauliCode,
-        },
         terms::{
             Hamil,
             SumRepr,
         },
-        Code,
         Terms,
     };
 }
 
-/// Sum terms of a Hamiltonian
-pub trait Code: Copy + Clone + Eq + Hash + Default {}
-
-impl Code for u64 {}
-impl Code for PauliCode {}
-impl Code for Fermions {}
+pub mod codes;
 
 /// Convert and serialize sum of terms in various encodings
 pub trait Terms<T, K>

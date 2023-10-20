@@ -3,8 +3,10 @@
 use num::Float;
 
 use crate::{
-    fermions::Fermions,
-    qubits::PauliCode,
+    codes::{
+        fermions::Fermions,
+        qubits::PauliCode,
+    },
     terms::SumRepr,
     Error,
     Terms,

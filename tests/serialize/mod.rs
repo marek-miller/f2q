@@ -3,7 +3,7 @@ use std::{
     io::BufReader,
 };
 
-use f2q::qubits::{
+use f2q::codes::qubits::{
     Pauli,
     PauliCode,
 };

@@ -2,23 +2,25 @@ use core::panic;
 use std::ops::RangeBounds;
 
 use f2q::{
-    fermions::{
-        An,
-        Cr,
-        Fermions,
-        Orbital,
-        Spin,
+    codes::{
+        fermions::{
+            An,
+            Cr,
+            Fermions,
+            Orbital,
+            Spin,
+        },
+        qubits::{
+            Pauli,
+            PauliCode,
+            PauliGroup,
+        },
     },
     maps::JordanWigner,
     math::{
         Group,
         Pairs,
         Root4,
-    },
-    qubits::{
-        Pauli,
-        PauliCode,
-        PauliGroup,
     },
     terms::SumRepr,
     Error,

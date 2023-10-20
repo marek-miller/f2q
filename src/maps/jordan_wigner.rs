@@ -1,10 +1,12 @@
 use num::Float;
 
 use crate::{
-    fermions::Fermions,
-    qubits::{
-        Pauli,
-        PauliCode,
+    codes::{
+        fermions::Fermions,
+        qubits::{
+            Pauli,
+            PauliCode,
+        },
     },
     Code,
     Error,

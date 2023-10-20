@@ -8,11 +8,11 @@ use serde::{
 };
 
 use crate::{
-    prelude::SumRepr,
-    qubits::{
+    codes::qubits::{
         Pauli,
         PauliCode,
     },
+    prelude::SumRepr,
 };
 
 impl Serialize for Pauli {
