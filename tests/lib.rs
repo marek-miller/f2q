@@ -1,3 +1,4 @@
+use core::panic;
 use std::ops::RangeBounds;
 
 use f2q::{
@@ -23,6 +24,7 @@ use f2q::{
     Error,
     Terms,
 };
+use serde_json::Value;
 
 mod serialize;
 
@@ -1052,4 +1054,128 @@ fn root4_conj() {
     assert_eq!(Root4::R1.conj(), Root4::R1);
     assert_eq!(Root4::R2.conj(), Root4::R3);
     assert_eq!(Root4::R3.conj(), Root4::R2);
+}
+
+#[test]
+fn fermions_sumrepr_serialize_01() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(Fermions::Offset, 0.1);
+
+    let json = serde_json::to_value(&repr).unwrap();
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+        {
+            "encoding": "fermions",
+            "terms":  [
+                {
+                    "code": [],
+                    "value": 0.1
+                }
+            ]
+        }
+        "#,
+    )
+    .unwrap();
+
+    assert_eq!(json, expected);
+}
+
+#[test]
+fn fermions_sumrepr_serialize_02() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(
+        Fermions::one_electron(
+            Cr(Orbital::from_index(1)),
+            An(Orbital::from_index(2)),
+        )
+        .unwrap(),
+        0.2,
+    );
+    let json = serde_json::to_value(&repr).unwrap();
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+        {
+            "encoding": "fermions",
+            "terms":  [
+                {
+                    "code": [1, 2],
+                    "value": 0.2
+                }
+            ]
+        }
+        "#,
+    )
+    .unwrap();
+
+    assert_eq!(json, expected);
+}
+
+#[test]
+fn fermions_sumrepr_serialize_03() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(
+        Fermions::two_electron(
+            (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
+            (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+        )
+        .unwrap(),
+        0.3,
+    );
+    let json = serde_json::to_value(&repr).unwrap();
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+        {
+            "encoding": "fermions",
+            "terms":  [
+                {
+                    "code": [0, 1, 1, 0],
+                    "value": 0.3
+                }
+            ]
+        }
+        "#,
+    )
+    .unwrap();
+
+    assert_eq!(json, expected);
+}
+
+#[test]
+fn fermions_sumrepr_serialize_04() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(Fermions::Offset, 0.1);
+    repr.add_term(
+        Fermions::one_electron(
+            Cr(Orbital::from_index(1)),
+            An(Orbital::from_index(2)),
+        )
+        .unwrap(),
+        0.2,
+    );
+    repr.add_term(
+        Fermions::two_electron(
+            (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
+            (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+        )
+        .unwrap(),
+        0.3,
+    );
+    let json = serde_json::to_value(&repr).unwrap();
+
+    let map = json.as_object().unwrap();
+
+    assert_eq!(
+        map.get("encoding").unwrap(),
+        &Value::String("fermions".to_string())
+    );
+
+    let Value::Array(arr) = map.get("terms").unwrap() else {
+        panic!()
+    };
+
+    assert_eq!(arr.len(), 3);
 }

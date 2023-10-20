@@ -3,7 +3,10 @@ use std::marker::PhantomData;
 use num::Float;
 use serde::{
     de::Visitor,
-    ser::SerializeSeq,
+    ser::{
+        SerializeSeq,
+        SerializeStruct,
+    },
     Deserialize,
     Serialize,
 };
@@ -20,6 +23,7 @@ use crate::{
         Pauli,
         PauliCode,
     },
+    FermiSum,
 };
 
 impl Serialize for PauliCode {
@@ -254,5 +258,55 @@ where
         D: serde::Deserializer<'de>,
     {
         deserializer.deserialize_map(PauliSumVisitor::new())
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct FermionsSumTerm<T> {
+    code:  Fermions,
+    value: T,
+}
+
+struct FermionsSumRepr<'a, T>(&'a SumRepr<T, Fermions>);
+
+impl<'a, T> Serialize for FermionsSumRepr<'a, T>
+where
+    T: Float + Serialize,
+{
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
+        for (&coeff, &code) in self.0 {
+            seq.serialize_element(&FermionsSumTerm {
+                code,
+                value: coeff,
+            })?;
+        }
+
+        seq.end()
+    }
+}
+
+impl<T> Serialize for FermiSum<T>
+where
+    T: Float + Serialize,
+{
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut s = serializer.serialize_struct("FermiSum", 2)?;
+        s.serialize_field("encoding", "fermions")?;
+        s.serialize_field("terms", &FermionsSumRepr(self))?;
+
+        s.end()
     }
 }
