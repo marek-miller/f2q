@@ -10,13 +10,6 @@ use std::{
     },
 };
 
-use serde::{
-    de::Visitor,
-    ser::SerializeSeq,
-    Deserialize,
-    Serialize,
-};
-
 /// Spin one-half
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum Spin {
@@ -424,98 +417,6 @@ impl Display for Fermions {
                 an.1.index()
             ),
         }
-    }
-}
-
-impl Serialize for Fermions {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            Fermions::Offset => {
-                let seq = serializer.serialize_seq(Some(0))?;
-                seq.end()
-            }
-            Fermions::One {
-                cr,
-                an,
-            } => {
-                let mut seq = serializer.serialize_seq(Some(2))?;
-                seq.serialize_element(&cr.index())?;
-                seq.serialize_element(&an.index())?;
-                seq.end()
-            }
-            Fermions::Two {
-                cr,
-                an,
-            } => {
-                let mut seq = serializer.serialize_seq(Some(4))?;
-                seq.serialize_element(&cr.0.index())?;
-                seq.serialize_element(&cr.1.index())?;
-                seq.serialize_element(&an.0.index())?;
-                seq.serialize_element(&an.1.index())?;
-                seq.end()
-            }
-        }
-    }
-}
-
-struct FermionsVisitor;
-
-impl<'de> Visitor<'de> for FermionsVisitor {
-    type Value = Fermions;
-
-    fn expecting(
-        &self,
-        formatter: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
-        formatter.write_str("sequence of 0, 2 or 4 orbital indices")
-    }
-
-    fn visit_seq<A>(
-        self,
-        seq: A,
-    ) -> Result<Self::Value, A::Error>
-    where
-        A: serde::de::SeqAccess<'de>,
-    {
-        use serde::de::Error;
-
-        let mut seq = seq;
-        let idx_tup: (Option<u32>, Option<u32>, Option<u32>, Option<u32>) = (
-            seq.next_element()?,
-            seq.next_element()?,
-            seq.next_element()?,
-            seq.next_element()?,
-        );
-
-        match idx_tup {
-            (None, None, None, None) => Ok(Fermions::Offset),
-            (Some(p), Some(q), None, None) => Fermions::one_electron(
-                Cr(Orbital::from_index(p)),
-                An(Orbital::from_index(q)),
-            )
-            .ok_or(A::Error::custom("cannot parse one-electron term")),
-            (Some(p), Some(q), Some(r), Some(s)) => Fermions::two_electron(
-                (Cr(Orbital::from_index(p)), Cr(Orbital::from_index(q))),
-                (An(Orbital::from_index(r)), An(Orbital::from_index(s))),
-            )
-            .ok_or(A::Error::custom("cannot parse two-electron term")),
-            _ => Err(A::Error::custom("cannot parse sequence")),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Fermions {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_seq(FermionsVisitor)
     }
 }
 

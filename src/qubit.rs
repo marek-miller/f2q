@@ -2,12 +2,6 @@
 
 use std::fmt::Display;
 
-use serde::{
-    de::Visitor,
-    Deserialize,
-    Serialize,
-};
-
 use crate::Error;
 
 const PAULI_MASK: u64 = 0b11;
@@ -479,73 +473,6 @@ impl PauliCode {
         assert!(num_qubits <= 64, "number of qubits must be within 1..64");
 
         PauliCode::from_paulis((0..num_qubits).map(|_| Pauli::Z))
-    }
-}
-
-impl Serialize for PauliCode {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-struct PauliCodeVisitor;
-
-impl<'de> Visitor<'de> for PauliCodeVisitor {
-    type Value = PauliCode;
-
-    fn expecting(
-        &self,
-        formatter: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
-        formatter.write_str(
-            "string of 64 Pauli operators (trailing identities truncated)",
-        )
-    }
-
-    fn visit_str<E>(
-        self,
-        v: &str,
-    ) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        if v.len() > 64 || v.is_empty() {
-            return Err(E::custom("str len out of range: 1..=64".to_string()));
-        }
-
-        let mut code = PauliCode::default();
-
-        for (i, ch) in v.chars().enumerate() {
-            let pauli = match ch {
-                'I' => Ok(Pauli::I),
-                'X' => Ok(Pauli::X),
-                'Y' => Ok(Pauli::Y),
-                'Z' => Ok(Pauli::Z),
-                _ => Err(E::custom(
-                    "character must be one of: I, X, Y, Z".to_string(),
-                )),
-            }?;
-            let idx = u16::try_from(i)
-                .expect("index out of range for u16. This is a bug.");
-            code.set(idx, pauli);
-        }
-
-        Ok(code)
-    }
-}
-
-impl<'de> Deserialize<'de> for PauliCode {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_str(PauliCodeVisitor)
     }
 }
 

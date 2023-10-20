@@ -15,6 +15,8 @@ pub mod qubit;
 pub mod secq;
 pub mod terms;
 
+mod serialize;
+
 /// Basic flattened API  
 pub mod prelude {
     pub use crate::{

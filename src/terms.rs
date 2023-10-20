@@ -2,25 +2,16 @@
 
 use std::{
     collections::HashMap,
-    marker::PhantomData,
     ops::Add,
 };
 
 use num::Float;
-use serde::{
-    de::Visitor,
-    Deserialize,
-    Serialize,
-};
 
 use super::{
     Code,
     Terms,
 };
-use crate::{
-    prelude::PauliCode,
-    Error,
-};
+use crate::Error;
 
 /// Weighted sum of codes
 #[derive(Debug)]
@@ -201,82 +192,6 @@ where
         (code, coeff): (K, T),
     ) {
         self.add_term(code, coeff);
-    }
-}
-
-impl<T> Serialize for SumRepr<T, PauliCode>
-where
-    T: Float + Serialize,
-{
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeMap;
-
-        let mut terms = serializer.serialize_map(Some(self.terms.len()))?;
-        for (coeff, code) in self {
-            terms.serialize_entry(code, coeff)?;
-        }
-        terms.end()
-    }
-}
-
-struct PauliSumVisitor<T> {
-    _marker: PhantomData<T>,
-}
-
-impl<T> PauliSumVisitor<T> {
-    fn new() -> Self {
-        Self {
-            _marker: PhantomData,
-        }
-    }
-}
-
-impl<'de, T> Visitor<'de> for PauliSumVisitor<T>
-where
-    T: Float + Deserialize<'de>,
-{
-    type Value = SumRepr<T, PauliCode>;
-
-    fn expecting(
-        &self,
-        formatter: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
-        formatter
-            .write_str("object with Pauli string as key and float as value")
-    }
-
-    fn visit_map<A>(
-        self,
-        map: A,
-    ) -> Result<Self::Value, A::Error>
-    where
-        A: serde::de::MapAccess<'de>,
-    {
-        let mut map = map;
-        let mut repr = SumRepr::new();
-        while let Some((code, coeff)) = map.next_entry()? {
-            repr.add_term(code, coeff);
-        }
-
-        Ok(repr)
-    }
-}
-
-impl<'de, T> Deserialize<'de> for SumRepr<T, PauliCode>
-where
-    T: Float + Deserialize<'de>,
-{
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_map(PauliSumVisitor::new())
     }
 }
 
