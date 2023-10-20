@@ -3,10 +3,8 @@ use std::{
     hash::Hash,
 };
 
-use prelude::{
-    Fermions,
-    PauliCode,
-};
+use qubit::PauliCode;
+use secq::Fermions;
 use terms::SumRepr;
 
 pub mod maps;
@@ -14,8 +12,6 @@ pub mod math;
 pub mod qubit;
 pub mod secq;
 pub mod terms;
-
-mod serialize;
 
 /// Basic flattened API  
 pub mod prelude {
@@ -86,3 +82,5 @@ impl Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+mod serialize;

@@ -1,12 +1,12 @@
 use std::ops::RangeBounds;
 
 use f2q::{
+    maps::JordanWigner,
     math::{
         Group,
         Pairs,
         Root4,
     },
-    prelude::JordanWigner,
     qubit::{
         Pauli,
         PauliCode,
@@ -1036,4 +1036,20 @@ fn pauli_sumrepr_deserialize_01() {
 
     let code = PauliCode::from_paulis([I, X, Y, Z]);
     assert_eq!(repr.coeff(code), 0.4);
+}
+
+#[test]
+fn root4_neg() {
+    assert_eq!(-Root4::R0, Root4::R1);
+    assert_eq!(-Root4::R1, Root4::R0);
+    assert_eq!(-Root4::R2, Root4::R3);
+    assert_eq!(-Root4::R3, Root4::R2);
+}
+
+#[test]
+fn root4_conj() {
+    assert_eq!(Root4::R0.conj(), Root4::R0);
+    assert_eq!(Root4::R1.conj(), Root4::R1);
+    assert_eq!(Root4::R2.conj(), Root4::R3);
+    assert_eq!(Root4::R3.conj(), Root4::R2);
 }
