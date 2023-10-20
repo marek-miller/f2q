@@ -1216,6 +1216,7 @@ fn fermions_sumrepr_serialize_04() {
 fn fermisum_deserialize_01() {
     let data = r#"
         {
+            "type": "sumrepr",
             "encoding": "fermions",
             "terms": [
                 {
@@ -1236,6 +1237,7 @@ fn fermisum_deserialize_01() {
 fn fermisum_deserialize_02() {
     let data = r#"
         {
+            "type": "sumrepr",
             "encoding": "fermions",
             "terms": [
                 {
@@ -1270,11 +1272,16 @@ fn fermisum_deserialize_02() {
 fn fermisum_deserialize_03() {
     let data = r#"
         {
+            "type": "sumrepr",
             "encoding": "fermions",
             "terms": [
                 {
                     "code": [],
                     "value": 0.1
+                },
+                {
+                    "value": 0.09,
+                    "code": []
                 },
                 {
                     "code": [1, 2],
@@ -1291,7 +1298,7 @@ fn fermisum_deserialize_03() {
     let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 3);
-    assert_eq!(repr.coeff(Fermions::Offset), 0.1);
+    assert_eq!(repr.coeff(Fermions::Offset), 0.19);
     assert_eq!(
         repr.coeff(
             Fermions::one_electron(

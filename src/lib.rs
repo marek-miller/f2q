@@ -87,3 +87,4 @@ impl Display for Error {
 impl std::error::Error for Error {}
 
 mod serialize;
+pub use serialize::Encoding;

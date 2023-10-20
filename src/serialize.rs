@@ -1,4 +1,7 @@
-use std::marker::PhantomData;
+use std::{
+    fmt::Display,
+    marker::PhantomData,
+};
 
 use num::Float;
 use serde::{
@@ -22,6 +25,79 @@ use crate::{
     },
     FermiSum,
 };
+
+/// Possible encodings of Hamiltonian terms
+#[derive(Debug, PartialEq)]
+pub enum Encoding {
+    /// Second quantization fermion interaction
+    Fermions,
+    /// Pauli strings (codes)
+    Qubits,
+    /// Indexed
+    U64,
+}
+
+impl Display for Encoding {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        match self {
+            Encoding::Fermions => write!(f, "fermions"),
+            Encoding::Qubits => write!(f, "qubits"),
+            Encoding::U64 => write!(f, "u64"),
+        }
+    }
+}
+
+impl Serialize for Encoding {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+struct EncodingVisitor;
+
+impl<'de> Visitor<'de> for EncodingVisitor {
+    type Value = Encoding;
+
+    fn expecting(
+        &self,
+        formatter: &mut std::fmt::Formatter,
+    ) -> std::fmt::Result {
+        write!(formatter, "string denoting correct encoding")
+    }
+
+    fn visit_str<E>(
+        self,
+        v: &str,
+    ) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        match v {
+            "fermions" => Ok(Encoding::Fermions),
+            "qubits" => Ok(Encoding::Qubits),
+            "u64" => Ok(Encoding::U64),
+            _ => Err(E::custom("wrong encoding")),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Encoding {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(EncodingVisitor)
+    }
+}
 
 impl Serialize for Pauli {
     fn serialize<S>(
@@ -360,7 +436,7 @@ struct FermiSumSer<'a, T>
 where
     T: Float,
 {
-    encoding: &'a str,
+    encoding: Encoding,
     terms:    FermiSumSerSequence<'a, T>,
 }
 
@@ -376,14 +452,14 @@ where
         S: serde::Serializer,
     {
         (FermiSumSer {
-            encoding: "fermions",
+            encoding: Encoding::Fermions,
             terms:    FermiSumSerSequence(self),
         })
         .serialize(serializer)
     }
 }
 
-struct FermiSumSequence<T>(FermiSum<T>);
+struct FermiSumDeSequence<T>(FermiSum<T>);
 
 struct FermiSumVisitor<T> {
     _marker: PhantomData<T>,
@@ -401,7 +477,7 @@ impl<'de, T> Visitor<'de> for FermiSumVisitor<T>
 where
     T: Float + Deserialize<'de>,
 {
-    type Value = FermiSumSequence<T>;
+    type Value = FermiSumDeSequence<T>;
 
     fn expecting(
         &self,
@@ -428,11 +504,11 @@ where
             repr.add_term(code, value)
         }
 
-        Ok(FermiSumSequence(repr))
+        Ok(FermiSumDeSequence(repr))
     }
 }
 
-impl<'de, T> Deserialize<'de> for FermiSumSequence<T>
+impl<'de, T> Deserialize<'de> for FermiSumDeSequence<T>
 where
     T: Float + Deserialize<'de>,
 {
@@ -449,8 +525,9 @@ struct FermiSumDe<T>
 where
     T: Float,
 {
-    encoding: String,
-    terms:    FermiSumSequence<T>,
+    r#type:   String,
+    encoding: Encoding,
+    terms:    FermiSumDeSequence<T>,
 }
 
 impl<'de, T> Deserialize<'de> for FermiSum<T>
@@ -463,12 +540,16 @@ where
     {
         use serde::de::Error;
 
-        let fermisumde = FermiSumDe::deserialize(deserializer)?;
+        let sumde = FermiSumDe::deserialize(deserializer)?;
 
-        if fermisumde.encoding == "fermions" {
-            Ok(fermisumde.terms.0)
-        } else {
-            Err(D::Error::custom("wrong encoding"))
+        if sumde.r#type != "sumrepr" {
+            return Err(D::Error::custom("type should be: 'sumrepr'"));
         }
+
+        if sumde.encoding != Encoding::Fermions {
+            return Err(D::Error::custom("encoding should be: 'fermions'"));
+        }
+
+        Ok(sumde.terms.0)
     }
 }
