@@ -9,16 +9,16 @@ use serde::{
 };
 
 use crate::{
-    prelude::SumRepr,
-    qubits::{
-        Pauli,
-        PauliCode,
-    },
     fermions::{
         An,
         Cr,
         Fermions,
         Orbital,
+    },
+    prelude::SumRepr,
+    qubits::{
+        Pauli,
+        PauliCode,
     },
 };
 

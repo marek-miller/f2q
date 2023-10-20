@@ -1,11 +1,11 @@
 use num::Float;
 
 use crate::{
+    fermions::Fermions,
     qubits::{
         Pauli,
         PauliCode,
     },
-    fermions::Fermions,
     Code,
     Error,
 };

@@ -1,6 +1,13 @@
 use std::ops::RangeBounds;
 
 use f2q::{
+    fermions::{
+        An,
+        Cr,
+        Fermions,
+        Orbital,
+        Spin,
+    },
     maps::JordanWigner,
     math::{
         Group,
@@ -11,13 +18,6 @@ use f2q::{
         Pauli,
         PauliCode,
         PauliGroup,
-    },
-    fermions::{
-        An,
-        Cr,
-        Fermions,
-        Orbital,
-        Spin,
     },
     terms::SumRepr,
     Error,
