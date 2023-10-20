@@ -1,7 +1,7 @@
 use num::Float;
 
 use crate::{
-    qubit::{
+    qubits::{
         Pauli,
         PauliCode,
     },

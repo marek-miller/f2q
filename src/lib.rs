@@ -3,13 +3,13 @@ use std::{
     hash::Hash,
 };
 
-use qubit::PauliCode;
+use qubits::PauliCode;
 use secq::Fermions;
 use terms::SumRepr;
 
 pub mod maps;
 pub mod math;
-pub mod qubit;
+pub mod qubits;
 pub mod secq;
 pub mod terms;
 
@@ -17,7 +17,7 @@ pub mod terms;
 pub mod prelude {
     pub use crate::{
         maps::JordanWigner,
-        qubit::{
+        qubits::{
             Pauli,
             PauliCode,
         },

@@ -40,7 +40,7 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{terms::SumRepr, qubit::PauliCode};
+    /// # use f2q::{terms::SumRepr, qubits::PauliCode};
     /// let repr = SumRepr::<f64, PauliCode>::new();
     ///
     /// assert!(repr.is_empty());
@@ -71,7 +71,7 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{qubit::PauliCode, terms::SumRepr};
+    /// # use f2q::{qubits::PauliCode, terms::SumRepr};
     ///
     /// let mut repr = SumRepr::new();
     ///
@@ -95,7 +95,7 @@ where
     ///  /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{qubit::PauliCode, terms::SumRepr};
+    /// # use f2q::{qubits::PauliCode, terms::SumRepr};
     ///
     /// let mut repr = SumRepr::new();
     ///

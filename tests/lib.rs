@@ -7,7 +7,7 @@ use f2q::{
         Pairs,
         Root4,
     },
-    qubit::{
+    qubits::{
         Pauli,
         PauliCode,
         PauliGroup,

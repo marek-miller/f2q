@@ -10,7 +10,7 @@ use serde::{
 
 use crate::{
     prelude::SumRepr,
-    qubit::{
+    qubits::{
         Pauli,
         PauliCode,
     },
