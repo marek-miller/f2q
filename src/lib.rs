@@ -3,30 +3,30 @@ use std::{
     hash::Hash,
 };
 
+use fermions::Fermions;
 use qubits::PauliCode;
-use secq::Fermions;
 use terms::SumRepr;
 
+pub mod fermions;
 pub mod maps;
 pub mod math;
 pub mod qubits;
-pub mod secq;
 pub mod terms;
 
 /// Basic flattened API  
 pub mod prelude {
     pub use crate::{
-        maps::JordanWigner,
-        qubits::{
-            Pauli,
-            PauliCode,
-        },
-        secq::{
+        fermions::{
             An,
             Cr,
             Fermions,
             Orbital,
             Spin,
+        },
+        maps::JordanWigner,
+        qubits::{
+            Pauli,
+            PauliCode,
         },
         terms::{
             Hamil,

@@ -4,7 +4,7 @@ use num::Float;
 
 use crate::{
     qubits::PauliCode,
-    secq::Fermions,
+    fermions::Fermions,
     terms::SumRepr,
     Error,
     Terms,

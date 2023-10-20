@@ -14,7 +14,7 @@ use crate::{
         Pauli,
         PauliCode,
     },
-    secq::{
+    fermions::{
         An,
         Cr,
         Fermions,

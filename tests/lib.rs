@@ -12,7 +12,7 @@ use f2q::{
         PauliCode,
         PauliGroup,
     },
-    secq::{
+    fermions::{
         An,
         Cr,
         Fermions,
