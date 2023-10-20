@@ -26,6 +26,72 @@ use crate::{
     FermiSum,
 };
 
+impl Serialize for Pauli {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+struct PauliVisitor;
+
+impl<'de> Visitor<'de> for PauliVisitor {
+    type Value = Pauli;
+
+    fn expecting(
+        &self,
+        formatter: &mut std::fmt::Formatter,
+    ) -> std::fmt::Result {
+        write!(formatter, "one-character string: I, X, Y, or Z")
+    }
+
+    fn visit_char<E>(
+        self,
+        v: char,
+    ) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        match v {
+            'I' => Ok(Pauli::I),
+            'X' => Ok(Pauli::X),
+            'Y' => Ok(Pauli::Y),
+            'Z' => Ok(Pauli::Z),
+            _ => Err(E::custom("unknown symbol")),
+        }
+    }
+
+    fn visit_str<E>(
+        self,
+        v: &str,
+    ) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        match v {
+            "I" => Ok(Pauli::I),
+            "X" => Ok(Pauli::X),
+            "Y" => Ok(Pauli::Y),
+            "Z" => Ok(Pauli::Z),
+            _ => Err(E::custom("unknown symbol")),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Pauli {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(PauliVisitor)
+    }
+}
+
 impl Serialize for PauliCode {
     fn serialize<S>(
         &self,
