@@ -4,7 +4,7 @@ use num::Float;
 
 use crate::{
     codes::{
-        fermions::Fermions,
+        fermions::FermiCode,
         qubits::PauliCode,
     },
     terms::SumRepr,
@@ -16,7 +16,7 @@ mod jordan_wigner;
 
 /// Jordan-Wigner mapping.
 ///
-/// This mapping is initialized with [`SumRepr<T,Fermions>`],
+/// This mapping is initialized with [`SumRepr<T,FermiCode>`],
 /// but implements [`Terms<T, PauliCode>`].  The standard way
 /// of using it is presented in the following example.
 ///
@@ -33,7 +33,7 @@ mod jordan_wigner;
 /// let p = Orbital::from_index(idx);
 ///
 /// // Add it as one-electron interaction term to the sum with coefficient: 1.0
-/// fermi_repr.add_term(Fermions::one_electron(Cr(p), An(p)).unwrap(), 1.0);
+/// fermi_repr.add_term(FermiCode::one_electron(Cr(p), An(p)).unwrap(), 1.0);
 ///
 /// // Map fermionic hamiltonian to a sum of Pauli strings
 /// let mut pauli_repr = SumRepr::new();
@@ -53,12 +53,12 @@ mod jordan_wigner;
 /// # }
 /// ```
 pub struct JordanWigner<'a, T> {
-    repr: &'a SumRepr<T, Fermions>,
+    repr: &'a SumRepr<T, FermiCode>,
 }
 
 impl<'a, T> JordanWigner<'a, T> {
     #[must_use]
-    pub fn new(repr: &'a SumRepr<T, Fermions>) -> Self {
+    pub fn new(repr: &'a SumRepr<T, FermiCode>) -> Self {
         Self {
             repr,
         }

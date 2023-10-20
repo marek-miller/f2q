@@ -24,16 +24,16 @@ fn main() -> Result<(), f2q::Error> {
     let now = Instant::now();
     let mut fermi_sum = SumRepr::new();
 
-    fermi_sum.add_term(Fermions::Offset, 1.0);
+    fermi_sum.add_term(FermiCode::Offset, 1.0);
     for code in orbital_pairs
         .iter()
-        .filter_map(|(&p, &q)| Fermions::one_electron(Cr(p), An(q)))
+        .filter_map(|(&p, &q)| FermiCode::one_electron(Cr(p), An(q)))
     {
         // the coefficient is completely arbitrary
         fermi_sum.add_term(code, rng.gen_range(-1.0..1.0));
     }
     for code in Pairs::new(&orbital_pairs).filter_map(|((&p, &q), (&r, &s))| {
-        Fermions::two_electron((Cr(p), Cr(q)), (An(r), An(s)))
+        FermiCode::two_electron((Cr(p), Cr(q)), (An(r), An(s)))
     }) {
         // the coefficient is completely arbitrary
         fermi_sum.add_term(code, rng.gen_range(-1.0..1.0));

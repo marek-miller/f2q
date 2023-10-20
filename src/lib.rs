@@ -1,14 +1,14 @@
 use std::fmt::Display;
 
 use codes::{
-    fermions::Fermions,
+    fermions::FermiCode,
     qubits::PauliCode,
     Code,
 };
 use terms::SumRepr;
 
 pub type PauliSum<T> = SumRepr<T, PauliCode>;
-pub type FermiSum<T> = SumRepr<T, Fermions>;
+pub type FermiSum<T> = SumRepr<T, FermiCode>;
 
 pub mod maps;
 pub mod math;
@@ -21,7 +21,7 @@ pub mod prelude {
             fermions::{
                 An,
                 Cr,
-                Fermions,
+                FermiCode,
                 Orbital,
                 Spin,
             },

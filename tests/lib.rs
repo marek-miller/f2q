@@ -6,7 +6,7 @@ use f2q::{
         fermions::{
             An,
             Cr,
-            Fermions,
+            FermiCode,
             Orbital,
             Spin,
         },
@@ -377,7 +377,7 @@ const MOCK_COEFF: f64 = 0.12345;
 #[test]
 fn jordan_wigner_01() {
     let mut fermi_sum = SumRepr::new();
-    fermi_sum.add_term(Fermions::Offset, MOCK_COEFF);
+    fermi_sum.add_term(FermiCode::Offset, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
     JordanWigner::new(&fermi_sum)
@@ -395,7 +395,7 @@ fn check_jordan_wigner_one_pp(index: u32) {
     let mut fermi_sum = SumRepr::new();
 
     let p = Orbital::from_index(index);
-    let integral = Fermions::one_electron(Cr(p), An(p)).unwrap();
+    let integral = FermiCode::one_electron(Cr(p), An(p)).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
@@ -441,7 +441,7 @@ fn check_jordan_wigner_one_pq(
     assert!(index1 < index2);
     let p = Orbital::from_index(u32::from(index1));
     let q = Orbital::from_index(u32::from(index2));
-    let integral = Fermions::one_electron(Cr(p), An(q)).unwrap();
+    let integral = FermiCode::one_electron(Cr(p), An(q)).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
@@ -492,7 +492,7 @@ fn check_jordan_wigner_two_pq(
     let p = Orbital::from_index(u32::from(index1));
     let q = Orbital::from_index(u32::from(index2));
     let integral =
-        Fermions::two_electron((Cr(p), Cr(q)), (An(q), An(p))).unwrap();
+        FermiCode::two_electron((Cr(p), Cr(q)), (An(q), An(p))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
@@ -562,7 +562,7 @@ fn check_jordan_wigner_two_pqs(
     let q = Orbital::from_index(u32::from(index2));
     let s = Orbital::from_index(u32::from(index3));
     let integral =
-        Fermions::two_electron((Cr(p), Cr(q)), (An(q), An(s))).unwrap();
+        FermiCode::two_electron((Cr(p), Cr(q)), (An(q), An(s))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
@@ -652,7 +652,7 @@ fn check_jordan_wigner_two_pqrs(
     let r = Orbital::from_index(u32::from(index3));
     let s = Orbital::from_index(u32::from(index4));
     let integral =
-        Fermions::two_electron((Cr(p), Cr(q)), (An(r), An(s))).unwrap();
+        FermiCode::two_electron((Cr(p), Cr(q)), (An(r), An(s))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = SumRepr::new();
@@ -946,17 +946,17 @@ fn root4_mul() {
 
 #[test]
 fn fermions_display() {
-    let code = Fermions::Offset;
+    let code = FermiCode::Offset;
     assert_eq!(code.to_string(), format!("[]"));
 
-    let code = Fermions::one_electron(
+    let code = FermiCode::one_electron(
         Cr(Orbital::from_index(1)),
         An(Orbital::from_index(2)),
     )
     .unwrap();
     assert_eq!(code.to_string(), format!("[1, 2]"));
 
-    let code = Fermions::two_electron(
+    let code = FermiCode::two_electron(
         (Cr(Orbital::from_index(1)), Cr(Orbital::from_index(2))),
         (An(Orbital::from_index(5)), An(Orbital::from_index(4))),
     )
@@ -966,11 +966,11 @@ fn fermions_display() {
 
 #[test]
 fn fermions_serialize_01() {
-    let code = Fermions::Offset;
+    let code = FermiCode::Offset;
     let json = serde_json::to_string(&code).unwrap();
     assert_eq!(json, "[]");
 
-    let code = Fermions::one_electron(
+    let code = FermiCode::one_electron(
         Cr(Orbital::from_index(1)),
         An(Orbital::from_index(2)),
     )
@@ -978,7 +978,7 @@ fn fermions_serialize_01() {
     let json = serde_json::to_string(&code).unwrap();
     assert_eq!(json, "[1,2]");
 
-    let code = Fermions::two_electron(
+    let code = FermiCode::two_electron(
         (Cr(Orbital::from_index(1)), Cr(Orbital::from_index(2))),
         (An(Orbital::from_index(5)), An(Orbital::from_index(4))),
     )
@@ -992,14 +992,14 @@ fn fermions_deserialize_01() {
     let data = r"
                 []
     ";
-    let code: Fermions = serde_json::from_str(data).unwrap();
-    assert_eq!(code, Fermions::Offset);
+    let code: FermiCode = serde_json::from_str(data).unwrap();
+    assert_eq!(code, FermiCode::Offset);
 
     let data = r"
                 [1, 2]
     ";
-    let code: Fermions = serde_json::from_str(data).unwrap();
-    let expected = Fermions::one_electron(
+    let code: FermiCode = serde_json::from_str(data).unwrap();
+    let expected = FermiCode::one_electron(
         Cr(Orbital::from_index(1)),
         An(Orbital::from_index(2)),
     )
@@ -1009,8 +1009,8 @@ fn fermions_deserialize_01() {
     let data = r"
                 [1, 2, 5, 4]
     ";
-    let code: Fermions = serde_json::from_str(data).unwrap();
-    let expected = Fermions::two_electron(
+    let code: FermiCode = serde_json::from_str(data).unwrap();
+    let expected = FermiCode::two_electron(
         (Cr(Orbital::from_index(1)), Cr(Orbital::from_index(2))),
         (An(Orbital::from_index(5)), An(Orbital::from_index(4))),
     )
@@ -1097,7 +1097,7 @@ fn root4_conj() {
 fn fermions_sumrepr_serialize_01() {
     let mut repr = SumRepr::new();
 
-    repr.add_term(Fermions::Offset, 0.1);
+    repr.add_term(FermiCode::Offset, 0.1);
 
     let json = serde_json::to_value(&repr).unwrap();
     let expected: serde_json::Value = serde_json::from_str(
@@ -1124,7 +1124,7 @@ fn fermions_sumrepr_serialize_02() {
     let mut repr = SumRepr::new();
 
     repr.add_term(
-        Fermions::one_electron(
+        FermiCode::one_electron(
             Cr(Orbital::from_index(1)),
             An(Orbital::from_index(2)),
         )
@@ -1156,7 +1156,7 @@ fn fermions_sumrepr_serialize_03() {
     let mut repr = SumRepr::new();
 
     repr.add_term(
-        Fermions::two_electron(
+        FermiCode::two_electron(
             (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
             (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
         )
@@ -1186,9 +1186,9 @@ fn fermions_sumrepr_serialize_03() {
 fn fermions_sumrepr_serialize_04() {
     let mut repr = SumRepr::new();
 
-    repr.add_term(Fermions::Offset, 0.1);
+    repr.add_term(FermiCode::Offset, 0.1);
     repr.add_term(
-        Fermions::one_electron(
+        FermiCode::one_electron(
             Cr(Orbital::from_index(1)),
             An(Orbital::from_index(2)),
         )
@@ -1196,7 +1196,7 @@ fn fermions_sumrepr_serialize_04() {
         0.2,
     );
     repr.add_term(
-        Fermions::two_electron(
+        FermiCode::two_electron(
             (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
             (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
         )
@@ -1238,7 +1238,7 @@ fn fermisum_deserialize_01() {
     let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 1);
-    assert_eq!(repr.coeff(Fermions::Offset), 0.1);
+    assert_eq!(repr.coeff(FermiCode::Offset), 0.1);
 }
 
 #[test]
@@ -1264,10 +1264,10 @@ fn fermisum_deserialize_02() {
     let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 2);
-    assert_eq!(repr.coeff(Fermions::Offset), 0.1);
+    assert_eq!(repr.coeff(FermiCode::Offset), 0.1);
     assert_eq!(
         repr.coeff(
-            Fermions::one_electron(
+            FermiCode::one_electron(
                 Cr(Orbital::from_index(1)),
                 An(Orbital::from_index(2))
             )
@@ -1308,10 +1308,10 @@ fn fermisum_deserialize_03() {
     let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 3);
-    assert_eq!(repr.coeff(Fermions::Offset), 0.19);
+    assert_eq!(repr.coeff(FermiCode::Offset), 0.19);
     assert_eq!(
         repr.coeff(
-            Fermions::one_electron(
+            FermiCode::one_electron(
                 Cr(Orbital::from_index(1)),
                 An(Orbital::from_index(2))
             )
@@ -1321,7 +1321,7 @@ fn fermisum_deserialize_03() {
     );
     assert_eq!(
         repr.coeff(
-            Fermions::two_electron(
+            FermiCode::two_electron(
                 (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
                 (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
             )

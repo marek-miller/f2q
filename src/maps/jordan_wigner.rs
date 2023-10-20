@@ -2,7 +2,7 @@ use num::Float;
 
 use crate::{
     codes::{
-        fermions::Fermions,
+        fermions::FermiCode,
         qubits::{
             Pauli,
             PauliCode,
@@ -14,7 +14,7 @@ use crate::{
 
 pub struct Map<K: Code>(K);
 
-impl Map<Fermions> {
+impl Map<FermiCode> {
     pub fn map<T>(
         &self,
         coeff: T,
@@ -26,13 +26,13 @@ impl Map<Fermions> {
     }
 }
 
-impl TryFrom<Fermions> for Map<Fermions> {
+impl TryFrom<FermiCode> for Map<FermiCode> {
     type Error = Error;
 
-    fn try_from(value: Fermions) -> Result<Self, Self::Error> {
+    fn try_from(value: FermiCode) -> Result<Self, Self::Error> {
         match value {
-            Fermions::Offset => Ok(Self(value)),
-            Fermions::One {
+            FermiCode::Offset => Ok(Self(value)),
+            FermiCode::One {
                 cr,
                 an,
             } => {
@@ -44,7 +44,7 @@ impl TryFrom<Fermions> for Map<Fermions> {
                     })
                 }
             }
-            Fermions::Two {
+            FermiCode::Two {
                 cr,
                 an,
             } => {
@@ -84,7 +84,7 @@ impl<T, K> PauliIter<T, K> {
     }
 }
 
-impl<T> Iterator for PauliIter<T, Fermions>
+impl<T> Iterator for PauliIter<T, FermiCode>
 where
     T: Float,
 {
@@ -92,7 +92,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.code {
-            Fermions::Offset => {
+            FermiCode::Offset => {
                 if self.index == 0 {
                     self.index += 1;
                     Some((PauliCode::default(), self.coeff))
@@ -100,7 +100,7 @@ where
                     None
                 }
             }
-            Fermions::One {
+            FermiCode::One {
                 cr: p,
                 an: q,
             } => {
@@ -116,7 +116,7 @@ where
                 self.index = (self.index + 1).min(2);
                 item
             }
-            Fermions::Two {
+            FermiCode::Two {
                 cr: (p, q),
                 an: (r, s),
             } => {

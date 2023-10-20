@@ -12,14 +12,14 @@ use crate::{
     codes::fermions::{
         An,
         Cr,
-        Fermions,
+        FermiCode,
         Orbital,
     },
     Encoding,
     FermiSum,
 };
 
-impl Serialize for Fermions {
+impl Serialize for FermiCode {
     fn serialize<S>(
         &self,
         serializer: S,
@@ -28,11 +28,11 @@ impl Serialize for Fermions {
         S: serde::Serializer,
     {
         match self {
-            Fermions::Offset => {
+            FermiCode::Offset => {
                 let seq = serializer.serialize_seq(Some(0))?;
                 seq.end()
             }
-            Fermions::One {
+            FermiCode::One {
                 cr,
                 an,
             } => {
@@ -41,7 +41,7 @@ impl Serialize for Fermions {
                 seq.serialize_element(&an.index())?;
                 seq.end()
             }
-            Fermions::Two {
+            FermiCode::Two {
                 cr,
                 an,
             } => {
@@ -56,10 +56,10 @@ impl Serialize for Fermions {
     }
 }
 
-struct FermionsVisitor;
+struct FermiCodeVisitor;
 
-impl<'de> Visitor<'de> for FermionsVisitor {
-    type Value = Fermions;
+impl<'de> Visitor<'de> for FermiCodeVisitor {
+    type Value = FermiCode;
 
     fn expecting(
         &self,
@@ -86,13 +86,13 @@ impl<'de> Visitor<'de> for FermionsVisitor {
         );
 
         match idx_tup {
-            (None, None, None, None) => Ok(Fermions::Offset),
-            (Some(p), Some(q), None, None) => Fermions::one_electron(
+            (None, None, None, None) => Ok(FermiCode::Offset),
+            (Some(p), Some(q), None, None) => FermiCode::one_electron(
                 Cr(Orbital::from_index(p)),
                 An(Orbital::from_index(q)),
             )
             .ok_or(A::Error::custom("cannot parse one-electron term")),
-            (Some(p), Some(q), Some(r), Some(s)) => Fermions::two_electron(
+            (Some(p), Some(q), Some(r), Some(s)) => FermiCode::two_electron(
                 (Cr(Orbital::from_index(p)), Cr(Orbital::from_index(q))),
                 (An(Orbital::from_index(r)), An(Orbital::from_index(s))),
             )
@@ -102,18 +102,18 @@ impl<'de> Visitor<'de> for FermionsVisitor {
     }
 }
 
-impl<'de> Deserialize<'de> for Fermions {
+impl<'de> Deserialize<'de> for FermiCode {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_seq(FermionsVisitor)
+        deserializer.deserialize_seq(FermiCodeVisitor)
     }
 }
 
 #[derive(Serialize, Deserialize)]
 struct FermiSumTerm<T> {
-    code:  Fermions,
+    code:  FermiCode,
     value: T,
 }
 
@@ -163,7 +163,7 @@ where
         S: serde::Serializer,
     {
         (FermiSumSer {
-            encoding: Encoding::Fermions,
+            encoding: Encoding::FermiCode,
             terms:    FermiSumSerSequence(self),
         })
         .serialize(serializer)
@@ -257,7 +257,7 @@ where
             return Err(D::Error::custom("type should be: 'sumrepr'"));
         }
 
-        if sumde.encoding != Encoding::Fermions {
+        if sumde.encoding != Encoding::FermiCode {
             return Err(D::Error::custom("encoding should be: 'fermions'"));
         }
 

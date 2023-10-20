@@ -1,12 +1,12 @@
 use std::hash::Hash;
 
-use fermions::Fermions;
+use fermions::FermiCode;
 use qubits::PauliCode;
 
 /// Sum terms of a Hamiltonian
 pub trait Code: Copy + Clone + Eq + Hash + Default {}
 
-impl Code for Fermions {}
+impl Code for FermiCode {}
 impl Code for PauliCode {}
 impl Code for u64 {}
 
