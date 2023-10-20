@@ -3,10 +3,7 @@ use std::marker::PhantomData;
 use num::Float;
 use serde::{
     de::Visitor,
-    ser::{
-        SerializeSeq,
-        SerializeStruct,
-    },
+    ser::SerializeSeq,
     Deserialize,
     Serialize,
 };
@@ -328,14 +325,14 @@ where
 }
 
 #[derive(Serialize, Deserialize)]
-struct FermionsSumTerm<T> {
+struct FermiSumTerm<T> {
     code:  Fermions,
     value: T,
 }
 
-struct FermionsSumRepr<'a, T>(&'a SumRepr<T, Fermions>);
+struct FermiSumSerSequence<'a, T>(&'a FermiSum<T>);
 
-impl<'a, T> Serialize for FermionsSumRepr<'a, T>
+impl<'a, T> Serialize for FermiSumSerSequence<'a, T>
 where
     T: Float + Serialize,
 {
@@ -348,7 +345,7 @@ where
     {
         let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
         for (&coeff, &code) in self.0 {
-            seq.serialize_element(&FermionsSumTerm {
+            seq.serialize_element(&FermiSumTerm {
                 code,
                 value: coeff,
             })?;
@@ -356,6 +353,15 @@ where
 
         seq.end()
     }
+}
+
+#[derive(Serialize)]
+struct FermiSumSer<'a, T>
+where
+    T: Float,
+{
+    encoding: &'a str,
+    terms:    FermiSumSerSequence<'a, T>,
 }
 
 impl<T> Serialize for FermiSum<T>
@@ -369,10 +375,100 @@ where
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("FermiSum", 2)?;
-        s.serialize_field("encoding", "fermions")?;
-        s.serialize_field("terms", &FermionsSumRepr(self))?;
+        (FermiSumSer {
+            encoding: "fermions",
+            terms:    FermiSumSerSequence(self),
+        })
+        .serialize(serializer)
+    }
+}
 
-        s.end()
+struct FermiSumSequence<T>(FermiSum<T>);
+
+struct FermiSumVisitor<T> {
+    _marker: PhantomData<T>,
+}
+
+impl<T> FermiSumVisitor<T> {
+    fn new() -> Self {
+        Self {
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'de, T> Visitor<'de> for FermiSumVisitor<T>
+where
+    T: Float + Deserialize<'de>,
+{
+    type Value = FermiSumSequence<T>;
+
+    fn expecting(
+        &self,
+        formatter: &mut std::fmt::Formatter,
+    ) -> std::fmt::Result {
+        write!(formatter, "sequence of objects with keys: 'code', 'value'")
+    }
+
+    fn visit_seq<A>(
+        self,
+        seq: A,
+    ) -> Result<Self::Value, A::Error>
+    where
+        A: serde::de::SeqAccess<'de>,
+    {
+        let mut seq = seq;
+        let mut repr = FermiSum::new();
+
+        while let Some(FermiSumTerm {
+            code,
+            value,
+        }) = seq.next_element()?
+        {
+            repr.add_term(code, value)
+        }
+
+        Ok(FermiSumSequence(repr))
+    }
+}
+
+impl<'de, T> Deserialize<'de> for FermiSumSequence<T>
+where
+    T: Float + Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_seq(FermiSumVisitor::new())
+    }
+}
+
+#[derive(Deserialize)]
+struct FermiSumDe<T>
+where
+    T: Float,
+{
+    encoding: String,
+    terms:    FermiSumSequence<T>,
+}
+
+impl<'de, T> Deserialize<'de> for FermiSum<T>
+where
+    T: Float + Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        let fermisumde = FermiSumDe::deserialize(deserializer)?;
+
+        if fermisumde.encoding == "fermions" {
+            Ok(fermisumde.terms.0)
+        } else {
+            Err(D::Error::custom("wrong encoding"))
+        }
     }
 }

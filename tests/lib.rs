@@ -22,6 +22,7 @@ use f2q::{
     },
     terms::SumRepr,
     Error,
+    FermiSum,
     Terms,
 };
 use serde_json::Value;
@@ -48,6 +49,37 @@ fn test_pauli_03() {
     assert_eq!(u8::from(Pauli::X), 1);
     assert_eq!(u8::from(Pauli::Y), 2);
     assert_eq!(u8::from(Pauli::Z), 3);
+}
+
+#[test]
+fn pauli_serialize_01() {
+    assert_eq!(
+        serde_json::to_value(Pauli::I).unwrap().as_str().unwrap(),
+        "I"
+    );
+
+    assert_eq!(
+        serde_json::to_value(Pauli::X).unwrap().as_str().unwrap(),
+        "X"
+    );
+
+    assert_eq!(
+        serde_json::to_value(Pauli::Y).unwrap().as_str().unwrap(),
+        "Y"
+    );
+
+    assert_eq!(
+        serde_json::to_value(Pauli::Z).unwrap().as_str().unwrap(),
+        "Z"
+    );
+}
+
+#[test]
+fn pauli_deserialize_01() {
+    assert_eq!(serde_json::from_str::<Pauli>("\"I\"").unwrap(), Pauli::I);
+    assert_eq!(serde_json::from_str::<Pauli>("\"X\"").unwrap(), Pauli::X);
+    assert_eq!(serde_json::from_str::<Pauli>("\"Y\"").unwrap(), Pauli::Y);
+    assert_eq!(serde_json::from_str::<Pauli>("\"Z\"").unwrap(), Pauli::Z);
 }
 
 #[test]
@@ -1181,32 +1213,103 @@ fn fermions_sumrepr_serialize_04() {
 }
 
 #[test]
-fn pauli_serialize_01() {
-    assert_eq!(
-        serde_json::to_value(Pauli::I).unwrap().as_str().unwrap(),
-        "I"
-    );
+fn fermisum_deserialize_01() {
+    let data = r#"
+        {
+            "encoding": "fermions",
+            "terms": [
+                {
+                    "code": [],
+                    "value": 0.1
+                }
+            ]
+        }
+    "#;
 
-    assert_eq!(
-        serde_json::to_value(Pauli::X).unwrap().as_str().unwrap(),
-        "X"
-    );
+    let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
 
-    assert_eq!(
-        serde_json::to_value(Pauli::Y).unwrap().as_str().unwrap(),
-        "Y"
-    );
+    assert_eq!(repr.len(), 1);
+    assert_eq!(repr.coeff(Fermions::Offset), 0.1);
+}
 
+#[test]
+fn fermisum_deserialize_02() {
+    let data = r#"
+        {
+            "encoding": "fermions",
+            "terms": [
+                {
+                    "code": [],
+                    "value": 0.1
+                },
+                {
+                    "code": [1, 2],
+                    "value": 0.2
+                }
+            ]
+        }
+    "#;
+
+    let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
+
+    assert_eq!(repr.len(), 2);
+    assert_eq!(repr.coeff(Fermions::Offset), 0.1);
     assert_eq!(
-        serde_json::to_value(Pauli::Z).unwrap().as_str().unwrap(),
-        "Z"
+        repr.coeff(
+            Fermions::one_electron(
+                Cr(Orbital::from_index(1)),
+                An(Orbital::from_index(2))
+            )
+            .unwrap()
+        ),
+        0.2
     );
 }
 
 #[test]
-fn pauli_deserialize_01() {
-    assert_eq!(serde_json::from_str::<Pauli>("\"I\"").unwrap(), Pauli::I);
-    assert_eq!(serde_json::from_str::<Pauli>("\"X\"").unwrap(), Pauli::X);
-    assert_eq!(serde_json::from_str::<Pauli>("\"Y\"").unwrap(), Pauli::Y);
-    assert_eq!(serde_json::from_str::<Pauli>("\"Z\"").unwrap(), Pauli::Z);
+fn fermisum_deserialize_03() {
+    let data = r#"
+        {
+            "encoding": "fermions",
+            "terms": [
+                {
+                    "code": [],
+                    "value": 0.1
+                },
+                {
+                    "code": [1, 2],
+                    "value": 0.2
+                }, 
+                {
+                    "code": [0,1,1,0],
+                    "value": 0.3
+                }
+            ]
+        }
+    "#;
+
+    let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
+
+    assert_eq!(repr.len(), 3);
+    assert_eq!(repr.coeff(Fermions::Offset), 0.1);
+    assert_eq!(
+        repr.coeff(
+            Fermions::one_electron(
+                Cr(Orbital::from_index(1)),
+                An(Orbital::from_index(2))
+            )
+            .unwrap()
+        ),
+        0.2
+    );
+    assert_eq!(
+        repr.coeff(
+            Fermions::two_electron(
+                (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
+                (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+            )
+            .unwrap(),
+        ),
+        0.3
+    );
 }
