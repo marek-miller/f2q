@@ -1,1 +1,2 @@
+mod pauli;
 mod paulicode;

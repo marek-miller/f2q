@@ -1,3 +1,3 @@
 mod pauli;
-mod paulicodes;
+mod paulicode;
 mod pauligroup;
