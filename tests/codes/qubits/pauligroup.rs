@@ -1,11 +1,13 @@
 use f2q::{
-    codes::qubits::PauliGroup,
+    codes::qubits::{
+        PauliCode,
+        PauliGroup,
+    },
     math::Group,
-    prelude::PauliCode,
 };
 
 #[test]
-fn dentity() {
+fn identity() {
     let e = PauliGroup::identity();
 
     let g = PauliGroup::from(PauliCode::new((0, 0)));

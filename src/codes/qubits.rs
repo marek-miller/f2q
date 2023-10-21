@@ -2,7 +2,12 @@
 
 use std::fmt::Display;
 
-use crate::Error;
+use crate::{
+    terms::SumRepr,
+    Error,
+};
+
+pub type PauliSum<T> = SumRepr<T, PauliCode>;
 
 const PAULI_MASK: u64 = 0b11;
 
@@ -555,13 +560,15 @@ impl From<u128> for PauliCode {
 mod pauli_group {
     use std::ops::Mul;
 
-    use super::PauliCode;
     use crate::{
+        codes::qubits::{
+            Pauli,
+            PauliCode,
+        },
         math::{
             Group,
             Root4,
         },
-        prelude::Pauli,
     };
 
     struct PGrp(Root4, Pauli);

@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use num::Float;
 use serde::{
     de::Visitor,
+    ser::SerializeSeq,
     Deserialize,
     Serialize,
 };
@@ -11,8 +12,9 @@ use crate::{
     codes::qubits::{
         Pauli,
         PauliCode,
+        PauliSum,
     },
-    prelude::SumRepr,
+    serialize::Encoding,
 };
 
 impl Serialize for Pauli {
@@ -148,7 +150,15 @@ impl<'de> Deserialize<'de> for PauliCode {
     }
 }
 
-impl<T> Serialize for SumRepr<T, PauliCode>
+#[derive(Serialize, Deserialize)]
+struct PauliSumTerm<T> {
+    code:  PauliCode,
+    value: T,
+}
+
+struct PauliSumSerSequence<'a, T>(&'a PauliSum<T>);
+
+impl<'a, T> Serialize for PauliSumSerSequence<'a, T>
 where
     T: Float + Serialize,
 {
@@ -159,15 +169,49 @@ where
     where
         S: serde::Serializer,
     {
-        use serde::ser::SerializeMap;
-
-        let mut terms = serializer.serialize_map(Some(self.len()))?;
-        for (coeff, code) in self {
-            terms.serialize_entry(code, coeff)?;
+        let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
+        for (&coeff, &code) in self.0 {
+            seq.serialize_element(&PauliSumTerm {
+                code,
+                value: coeff,
+            })?;
         }
-        terms.end()
+
+        seq.end()
     }
 }
+
+#[derive(Serialize)]
+struct PauliSumSer<'a, T>
+where
+    T: Float,
+{
+    r#type:   &'a str,
+    encoding: Encoding,
+    terms:    PauliSumSerSequence<'a, T>,
+}
+
+impl<T> Serialize for PauliSum<T>
+where
+    T: Float + Serialize,
+{
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        (PauliSumSer {
+            r#type:   "sumrepr",
+            encoding: Encoding::Qubits,
+            terms:    PauliSumSerSequence(self),
+        })
+        .serialize(serializer)
+    }
+}
+
+struct PauliSumDeSequence<T>(PauliSum<T>);
 
 struct PauliSumVisitor<T> {
     _marker: PhantomData<T>,
@@ -185,34 +229,38 @@ impl<'de, T> Visitor<'de> for PauliSumVisitor<T>
 where
     T: Float + Deserialize<'de>,
 {
-    type Value = SumRepr<T, PauliCode>;
+    type Value = PauliSumDeSequence<T>;
 
     fn expecting(
         &self,
         formatter: &mut std::fmt::Formatter,
     ) -> std::fmt::Result {
-        formatter
-            .write_str("object with Pauli string as key and float as value")
+        write!(formatter, "sequence of objects with keys: 'code', 'value'")
     }
 
-    fn visit_map<A>(
+    fn visit_seq<A>(
         self,
-        map: A,
+        seq: A,
     ) -> Result<Self::Value, A::Error>
     where
-        A: serde::de::MapAccess<'de>,
+        A: serde::de::SeqAccess<'de>,
     {
-        let mut map = map;
-        let mut repr = SumRepr::new();
-        while let Some((code, coeff)) = map.next_entry()? {
-            repr.add_term(code, coeff);
+        let mut seq = seq;
+        let mut repr = PauliSum::new();
+
+        while let Some(PauliSumTerm {
+            code,
+            value,
+        }) = seq.next_element()?
+        {
+            repr.add_term(code, value);
         }
 
-        Ok(repr)
+        Ok(PauliSumDeSequence(repr))
     }
 }
 
-impl<'de, T> Deserialize<'de> for SumRepr<T, PauliCode>
+impl<'de, T> Deserialize<'de> for PauliSumDeSequence<T>
 where
     T: Float + Deserialize<'de>,
 {
@@ -220,6 +268,40 @@ where
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_map(PauliSumVisitor::new())
+        deserializer.deserialize_seq(PauliSumVisitor::new())
+    }
+}
+
+#[derive(Deserialize)]
+struct PauliSumDe<'a, T>
+where
+    T: Float,
+{
+    r#type:   &'a str,
+    encoding: Encoding,
+    terms:    PauliSumDeSequence<T>,
+}
+
+impl<'de, T> Deserialize<'de> for PauliSum<T>
+where
+    T: Float + Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        let sumde = PauliSumDe::deserialize(deserializer)?;
+
+        if sumde.r#type != "sumrepr" {
+            return Err(D::Error::custom("type should be: 'sumrepr'"));
+        }
+
+        if sumde.encoding != Encoding::Qubits {
+            return Err(D::Error::custom("encoding should be: 'qubits'"));
+        }
+
+        Ok(sumde.terms.0)
     }
 }
