@@ -12,9 +12,9 @@ use crate::{
     codes::qubits::{
         Pauli,
         PauliCode,
+        PauliSum,
     },
     serialize::Encoding,
-    PauliSum,
 };
 
 impl Serialize for Pauli {

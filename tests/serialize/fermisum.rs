@@ -3,10 +3,10 @@ use f2q::{
         An,
         Cr,
         FermiCode,
+        FermiSum,
         Orbital,
     },
     terms::SumRepr,
-    FermiSum,
 };
 use serde_json::Value;
 

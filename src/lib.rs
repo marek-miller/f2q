@@ -1,20 +1,16 @@
 use std::fmt::Display;
 
-use codes::{
-    fermions::FermiCode,
-    qubits::PauliCode,
-    Code,
-};
+use codes::Code;
 use terms::SumRepr;
 
-pub type PauliSum<T> = SumRepr<T, PauliCode>;
-pub type FermiSum<T> = SumRepr<T, FermiCode>;
 pub type IndexedSum<T> = SumRepr<T, u64>;
 
 pub mod codes;
 pub mod maps;
 pub mod math;
 pub mod terms;
+
+mod serialize;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
@@ -36,5 +32,3 @@ impl Display for Error {
 }
 
 impl std::error::Error for Error {}
-
-mod serialize;

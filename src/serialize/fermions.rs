@@ -13,10 +13,10 @@ use crate::{
         An,
         Cr,
         FermiCode,
+        FermiSum,
         Orbital,
     },
     serialize::Encoding,
-    FermiSum,
 };
 
 impl Serialize for FermiCode {
