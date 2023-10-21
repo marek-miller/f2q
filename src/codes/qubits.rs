@@ -555,13 +555,15 @@ impl From<u128> for PauliCode {
 mod pauli_group {
     use std::ops::Mul;
 
-    use super::PauliCode;
     use crate::{
+        codes::qubits::{
+            Pauli,
+            PauliCode,
+        },
         math::{
             Group,
             Root4,
         },
-        prelude::Pauli,
     };
 
     struct PGrp(Root4, Pauli);

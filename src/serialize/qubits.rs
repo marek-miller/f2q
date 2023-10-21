@@ -13,7 +13,7 @@ use crate::{
         Pauli,
         PauliCode,
     },
-    Encoding,
+    serialize::Encoding,
     PauliSum,
 };
 

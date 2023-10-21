@@ -7,9 +7,11 @@ use crate::{
         fermions::FermiCode,
         qubits::PauliCode,
     },
-    terms::SumRepr,
+    terms::{
+        SumRepr,
+        Terms,
+    },
     Error,
-    Terms,
 };
 
 mod jordan_wigner;
@@ -23,11 +25,24 @@ mod jordan_wigner;
 /// # Examples
 ///
 /// ```rust
-/// use f2q::prelude::*;
-/// use fermions::{
-///     An,
-///     Cr,
-///     Orbital,
+/// use f2q::{
+///     codes::{
+///         fermions::{
+///             An,
+///             Cr,
+///             FermiCode,
+///             Orbital,
+///         },
+///         qubits::{
+///             Pauli,
+///             PauliCode,
+///         },
+///     },
+///     maps::JordanWigner,
+///     terms::{
+///         SumRepr,
+///         Terms,
+///     },
 /// };
 /// # fn main() -> Result<(), f2q::Error> {
 ///

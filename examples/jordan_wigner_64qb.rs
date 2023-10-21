@@ -8,13 +8,18 @@ use std::{
 };
 
 use f2q::{
+    codes::fermions::{
+        An,
+        Cr,
+        FermiCode,
+        Orbital,
+    },
+    maps::JordanWigner,
     math::Pairs,
-    prelude::*,
-};
-use fermions::{
-    An,
-    Cr,
-    Orbital,
+    terms::{
+        SumRepr,
+        Terms,
+    },
 };
 use rand::Rng;
 

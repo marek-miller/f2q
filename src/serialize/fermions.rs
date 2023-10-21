@@ -15,7 +15,7 @@ use crate::{
         FermiCode,
         Orbital,
     },
-    Encoding,
+    serialize::Encoding,
     FermiSum,
 };
 

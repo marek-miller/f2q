@@ -1,5 +1,5 @@
 use f2q::{
-    prelude::Pauli,
+    codes::qubits::Pauli,
     Error,
 };
 

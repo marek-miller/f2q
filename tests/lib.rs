@@ -20,8 +20,10 @@ use f2q::{
         Pairs,
         Root4,
     },
-    terms::SumRepr,
-    Terms,
+    terms::{
+        SumRepr,
+        Terms,
+    },
 };
 
 mod codes;

@@ -1,4 +1,4 @@
-use f2q::prelude::Pauli;
+use f2q::codes::qubits::Pauli;
 
 #[test]
 fn display() {

@@ -7,11 +7,26 @@ use std::{
 
 use num::Float;
 
-use super::{
-    Code,
-    Terms,
-};
+use super::Code;
 use crate::Error;
+
+/// Convert and serialize sum of terms in various encodings
+pub trait Terms<T, K>
+where
+    K: Code,
+{
+    type Error;
+
+    /// Add terms to the supplied [`SumRepr`].
+    ///
+    /// # Errors
+    ///
+    /// Return error on failure.
+    fn add_to(
+        &mut self,
+        repr: &mut SumRepr<T, K>,
+    ) -> Result<(), Error>;
+}
 
 /// Weighted sum of codes
 #[derive(Debug)]
