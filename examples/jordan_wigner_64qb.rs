@@ -8,11 +8,15 @@ use std::{
 };
 
 use f2q::{
-    codes::fermions::{
-        An,
-        Cr,
-        FermiCode,
-        Orbital,
+    codes::{
+        fermions::{
+            An,
+            Cr,
+            FermiCode,
+            FermiSum,
+            Orbital,
+        },
+        qubits::PauliSum,
     },
     maps::JordanWigner,
     math::Pairs,
@@ -34,7 +38,7 @@ fn main() -> Result<(), f2q::Error> {
     let now = Instant::now();
     let mut fermi_sum = SumRepr::new();
 
-    fermi_sum.add_term(FermiCode::Offset, 1.0);
+    fermi_sum.add_term(FermiCode::Offset, 1.0_f64);
     for code in orbital_pairs
         .iter()
         .filter_map(|(&p, &q)| FermiCode::one_electron(Cr(p), An(q)))
@@ -55,6 +59,22 @@ fn main() -> Result<(), f2q::Error> {
         now.elapsed().as_millis()
     );
 
+    let now = Instant::now();
+    let json = serde_json::to_string(&fermi_sum).unwrap();
+    println!(
+        "Serialized to JSON string of length {} in {} ms.",
+        json.len(),
+        now.elapsed().as_millis()
+    );
+
+    let now = Instant::now();
+    let fermi_sum_de: FermiSum<f64> = serde_json::from_str(&json).unwrap();
+    println!(
+        "Deserialized to sumrepr with {} terms in {} ms.",
+        fermi_sum_de.len(),
+        now.elapsed().as_millis()
+    );
+
     print!("Converting (Jordan-Wigner)... ");
     let _ = std::io::stdout().flush();
 
@@ -67,6 +87,22 @@ fn main() -> Result<(), f2q::Error> {
     println!(
         "Obtained {} terms in {} ms.",
         pauli_sum.len(),
+        now.elapsed().as_millis()
+    );
+
+    let now = Instant::now();
+    let json = serde_json::to_string(&pauli_sum).unwrap();
+    println!(
+        "Serialized to JSON string of length {} in {} ms.",
+        json.len(),
+        now.elapsed().as_millis()
+    );
+
+    let now = Instant::now();
+    let pauli_sum_de: PauliSum<f64> = serde_json::from_str(&json).unwrap();
+    println!(
+        "Deserialized to sumrepr with {} terms in {} ms.",
+        pauli_sum_de.len(),
         now.elapsed().as_millis()
     );
 
