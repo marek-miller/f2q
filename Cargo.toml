@@ -13,6 +13,7 @@ homepage = "https://github.com/Quantum-for-Life/f2q"
 repository = "https://github.com/Quantum-for-Life/f2q.git"
 
 [dependencies]
+clap = { version = "4.4.6", features = ["derive"] }
 num = "0.4.1"
 rayon = "1.8.0"
 serde = { version = "1.0.188", features = ["derive"] }
