@@ -24,7 +24,7 @@ pub fn jordan_wigner(args: &Convert) -> Result<(), Error> {
     }
 
     let in_repr = jordan_wigner::parse_input(args)?;
-    let mut out_repr = PauliSum::new();
+    let mut out_repr = PauliSum::with_capacity(in_repr.len() * 4);
     JordanWigner::new(&in_repr).add_to(&mut out_repr)?;
     jordan_wigner::gen_ouput(&out_repr, args)
 }
@@ -56,10 +56,13 @@ mod jordan_wigner {
 
     pub fn parse_input(args: &Convert) -> Result<FermiSum<f64>, Error> {
         if let Some(path) = &args.input_file {
-            let reader = BufReader::new(File::open(path)?);
+            let file = File::open(path)?;
+            let reader = BufReader::new(file);
             parse_input_reader(reader, args)
         } else {
-            parse_input_reader(std::io::stdin().lock(), args)
+            let stdin = std::io::stdin().lock();
+            let reader = BufReader::new(stdin);
+            parse_input_reader(reader, args)
         }
     }
 
@@ -72,7 +75,7 @@ mod jordan_wigner {
             Format::Toml => {
                 let mut reader = reader;
                 let mut buf = String::new();
-                reader.read_to_string(&mut buf).unwrap();
+                reader.read_to_string(&mut buf)?;
                 toml::from_str(&buf)?
             }
             Format::Yaml => serde_yaml::from_reader(reader)?,
@@ -84,18 +87,13 @@ mod jordan_wigner {
         args: &Convert,
     ) -> Result<(), Error> {
         if let Some(path) = &args.output_file {
-            let writer = BufWriter::new(File::create(path).map_err(|e| {
-                Error::File {
-                    msg: format!("{e}"),
-                }
-            })?);
+            let file = File::create(path)?;
+            let writer = BufWriter::new(file);
             parse_gen_output_writer(out_repr, writer, args)
         } else {
-            parse_gen_output_writer(
-                out_repr,
-                BufWriter::new(std::io::stdout().lock()),
-                args,
-            )
+            let stdout = std::io::stdout().lock();
+            let writer = BufWriter::new(stdout);
+            parse_gen_output_writer(out_repr, writer, args)
         }
     }
 
@@ -105,26 +103,24 @@ mod jordan_wigner {
         args: &Convert,
     ) -> Result<(), Error> {
         match args.input_format {
-            Format::Json => if args.pretty_print {
-                serde_json::to_writer_pretty(writer, &out_repr)
-            } else {
-                serde_json::to_writer(writer, &out_repr)
+            Format::Json => {
+                if args.pretty_print {
+                    serde_json::to_writer_pretty(writer, &out_repr)?;
+                } else {
+                    serde_json::to_writer(writer, &out_repr)?;
+                }
             }
-            .map_err(Error::from),
             Format::Toml => {
                 let mut writer = writer;
                 let repr = if args.pretty_print {
                     toml::to_string_pretty(&out_repr)
                 } else {
                     toml::to_string(&out_repr)
-                }
-                .map_err(Error::from)?;
-
-                write!(writer, "{repr}").map_err(Error::from)
+                }?;
+                write!(writer, "{repr}")?;
             }
-            Format::Yaml => {
-                serde_yaml::to_writer(writer, &out_repr).map_err(Error::from)
-            }
-        }
+            Format::Yaml => serde_yaml::to_writer(writer, &out_repr)?,
+        };
+        Ok(())
     }
 }

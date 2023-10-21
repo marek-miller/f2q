@@ -39,6 +39,9 @@ pub struct Generate {
     pub num_terms:         u64,
     #[arg(long, default_value = "63")]
     pub max_orbital_index: u32,
+    /// STDOUT, if not specified
+    #[arg(long, short)]
+    pub output_file:       Option<String>,
 }
 
 #[derive(Debug, Args)]

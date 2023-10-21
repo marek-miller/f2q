@@ -1,3 +1,11 @@
+use std::{
+    fs::File,
+    io::{
+        BufWriter,
+        Write,
+    },
+};
+
 use f2q::{
     codes::{
         fermions::{
@@ -33,7 +41,12 @@ pub fn fermions(args: &Generate) -> Result<(), Error> {
 
 fn fermions_random(args: &Generate) -> Result<(), Error> {
     let mut rng = rand::thread_rng();
-    let mut repr = SumRepr::new();
+    let capacity = if let Ok(cap) = usize::try_from(args.num_terms) {
+        cap
+    } else {
+        usize::MAX
+    };
+    let mut repr = SumRepr::with_capacity(capacity);
     let mut count = 0;
     while count < args.num_terms {
         let category = rng.gen_range(0..=2);
@@ -74,13 +87,11 @@ fn fermions_random(args: &Generate) -> Result<(), Error> {
                     rng.gen_range(-1.0..1.0),
                 );
             }
-            _ => (),
+            _ => unimplemented!(),
         }
         count += 1;
     }
-
-    let repr_str = serialize_sumrepr_to_string(repr, args)?;
-    println!("{repr_str}");
+    serialize_sumrepr(repr, args)?;
 
     Ok(())
 }
@@ -95,45 +106,74 @@ pub fn qubits(args: &Generate) -> Result<(), Error> {
 
 fn qubits_random(args: &Generate) -> Result<(), Error> {
     let mut rng = rand::thread_rng();
-    let mut repr = SumRepr::new();
+    let capacity = if let Ok(cap) = usize::try_from(args.num_terms) {
+        cap
+    } else {
+        usize::MAX
+    };
+    let mut repr = SumRepr::with_capacity(capacity);
     for _ in 0..args.num_terms {
         repr.add_term(
             PauliCode::new((rng.gen(), rng.gen())),
             rng.gen_range(-1.0..1.0),
         );
     }
-
-    let repr_str = serialize_sumrepr_to_string(repr, args)?;
-
-    println!("{repr_str}");
+    serialize_sumrepr(repr, args)?;
 
     Ok(())
 }
 
-fn serialize_sumrepr_to_string<T, K>(
+fn serialize_sumrepr<T, K>(
     repr: SumRepr<T, K>,
     args: &Generate,
-) -> Result<String, Error>
+) -> Result<(), Error>
 where
     T: Float,
     K: Code,
     SumRepr<T, K>: Serialize,
 {
-    Ok(match args.format {
+    if let Some(path) = &args.output_file {
+        let file = File::create(path)?;
+        let writer = BufWriter::new(file);
+        serialize_sumrepr_to_writer(&repr, writer, args)?;
+    } else {
+        let stdout = std::io::stdout().lock();
+        let writer = BufWriter::new(stdout);
+        serialize_sumrepr_to_writer(&repr, writer, args)?;
+    };
+    Ok(())
+}
+
+fn serialize_sumrepr_to_writer<T, K, W>(
+    repr: &SumRepr<T, K>,
+    writer: BufWriter<W>,
+    args: &Generate,
+) -> Result<(), Error>
+where
+    T: Float,
+    K: Code,
+    SumRepr<T, K>: Serialize,
+    W: Write,
+{
+    match args.format {
         Format::Json => {
             if args.pretty_print {
-                serde_json::to_string_pretty(&repr)
+                serde_json::to_writer_pretty(writer, repr)?;
             } else {
-                serde_json::to_string(&repr)
-            }?
+                serde_json::to_writer(writer, repr)?;
+            }
         }
-        Format::Yaml => serde_yaml::to_string(&repr)?,
+        Format::Yaml => serde_yaml::to_writer(writer, repr)?,
         Format::Toml => {
-            if args.pretty_print {
-                toml::to_string_pretty(&repr)
+            let mut writer = writer;
+            let buf = if args.pretty_print {
+                toml::to_string_pretty(&repr)?
             } else {
-                toml::to_string(&repr)
-            }?
+                toml::to_string(&repr)?
+            };
+            write!(writer, "{buf}")?;
         }
-    })
+    };
+
+    Ok(())
 }
