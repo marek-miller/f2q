@@ -17,8 +17,16 @@ WIP 🚧
 - Interface easily extendible to other mappings by implementing `Terms` trait.
 - Implement time evolution / dump to QASM file
 
-See documentation:
+To use the command line tool:
+
+```sh
+cargo install f2q
+```
+
+To see documentation:
 
 ```sh
 cargo doc --open
 ```
+
+or [online](https://docs.rs/f2q/0.1.0/f2q/).
