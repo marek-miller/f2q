@@ -147,6 +147,7 @@ struct FermiSumSer<'a, T>
 where
     T: Float,
 {
+    r#type:   &'a str,
     encoding: Encoding,
     terms:    FermiSumSerSequence<'a, T>,
 }
@@ -163,6 +164,7 @@ where
         S: serde::Serializer,
     {
         (FermiSumSer {
+            r#type:   "sumrepr",
             encoding: Encoding::FermiCode,
             terms:    FermiSumSerSequence(self),
         })
@@ -232,11 +234,11 @@ where
 }
 
 #[derive(Deserialize)]
-struct FermiSumDe<T>
+struct FermiSumDe<'a, T>
 where
     T: Float,
 {
-    r#type:   String,
+    r#type:   &'a str,
     encoding: Encoding,
     terms:    FermiSumDeSequence<T>,
 }

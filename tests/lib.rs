@@ -743,6 +743,7 @@ fn fermisum_serialize_01() {
     let expected: serde_json::Value = serde_json::from_str(
         r#"
         {
+            "type": "sumrepr",
             "encoding": "fermions",
             "terms":  [
                 {
@@ -775,6 +776,7 @@ fn fermisum_serialize_02() {
     let expected: serde_json::Value = serde_json::from_str(
         r#"
         {
+            "type": "sumrepr",
             "encoding": "fermions",
             "terms":  [
                 {
@@ -807,6 +809,7 @@ fn fermisum_serialize_03() {
     let expected: serde_json::Value = serde_json::from_str(
         r#"
         {
+            "type": "sumrepr",
             "encoding": "fermions",
             "terms":  [
                 {
