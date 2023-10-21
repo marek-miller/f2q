@@ -24,7 +24,6 @@ use rand::Rng;
 
 #[derive(Debug)]
 enum CliError {
-    CmdLineArg { msg: String },
     Unsupported { msg: String },
 }
 
@@ -34,9 +33,6 @@ impl Display for CliError {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match self {
-            CliError::CmdLineArg {
-                msg,
-            } => write!(f, "error: {}", msg),
             CliError::Unsupported {
                 msg,
             } => write!(f, "error: unsupported {}", msg),
@@ -47,12 +43,9 @@ impl Display for CliError {
 impl From<CliError> for ExitCode {
     fn from(value: CliError) -> Self {
         ExitCode::from(match value {
-            CliError::CmdLineArg {
-                ..
-            } => 1,
             CliError::Unsupported {
                 ..
-            } => 2,
+            } => 255,
         })
     }
 }
@@ -80,6 +73,7 @@ enum Commands {
         encoding:  Encoding,
         num_terms: u64,
     },
+    Convert,
 }
 
 #[derive(ValueEnum, Copy, Clone, Debug, PartialEq, Eq)]
@@ -128,6 +122,7 @@ fn main_exec(command: Commands) -> Result<(), CliError> {
             }
             generate_hamiltonian(command)
         }
+        Commands::Convert => todo!(),
     }
 }
 
@@ -146,7 +141,6 @@ fn generate_hamiltonian(command: Commands) -> Result<(), CliError> {
             generate_hamiltonian_fermions(command)?;
         }
         Encoding::Qubits => generate_hamiltonian_qubits(command)?,
-        _ => panic!("no encoding"),
     }
     Ok(())
 }
