@@ -1,6 +1,5 @@
 use crate::{
     args::{
-        Cli,
         Convert,
         Encoding,
         Generate,
@@ -12,25 +11,20 @@ use crate::{
 mod convert;
 mod generate;
 
-pub fn generate(
-    args: &Generate,
-    _cli: &Cli,
-) -> Result<(), Error> {
+pub fn generate(args: &Generate) -> Result<(), Error> {
     match args.encoding {
         Encoding::Fermions => {
             generate::fermions(args)?;
         }
         Encoding::Qubits => generate::qubits(args)?,
     }
+
     Ok(())
 }
 
-pub fn convert(
-    args: &Convert,
-    cli: &Cli,
-) -> Result<(), Error> {
+pub fn convert(args: &Convert) -> Result<(), Error> {
     match args.mapping {
-        Mapping::JordanWigner => convert::jordan_wigner(args, cli)?,
+        Mapping::JordanWigner => convert::jordan_wigner(args)?,
     }
 
     Ok(())

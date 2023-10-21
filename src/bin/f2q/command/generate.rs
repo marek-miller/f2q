@@ -31,7 +31,7 @@ pub fn fermions(args: &Generate) -> Result<(), Error> {
     }
 }
 
-pub fn fermions_random(args: &Generate) -> Result<(), Error> {
+fn fermions_random(args: &Generate) -> Result<(), Error> {
     let mut rng = rand::thread_rng();
     let mut repr = SumRepr::new();
     let mut count = 0;
@@ -93,7 +93,7 @@ pub fn qubits(args: &Generate) -> Result<(), Error> {
     }
 }
 
-pub fn qubits_random(args: &Generate) -> Result<(), Error> {
+fn qubits_random(args: &Generate) -> Result<(), Error> {
     let mut rng = rand::thread_rng();
     let mut repr = SumRepr::new();
     for _ in 0..args.num_terms {
