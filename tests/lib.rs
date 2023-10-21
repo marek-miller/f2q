@@ -23,6 +23,7 @@ use f2q::{
     },
     terms::SumRepr,
     FermiSum,
+    PauliSum,
     Terms,
 };
 use serde_json::Value;
@@ -716,64 +717,6 @@ fn fermions_deserialize_01() {
 }
 
 #[test]
-fn pauli_sumrepr_serialize_01() {
-    let mut repr = SumRepr::new();
-
-    repr.add_term(PauliCode::identity(), 0.4);
-    let json_str = serde_json::to_string(&repr).unwrap();
-
-    assert_eq!(json_str, "{\"I\":0.4}");
-}
-
-#[test]
-#[allow(clippy::float_cmp)]
-fn pauli_sumrepr_serialize_02() {
-    use Pauli::X;
-    let mut repr = SumRepr::new();
-
-    repr.add_term(PauliCode::from_paulis([X, X, X]), 0.2);
-    let json_str = serde_json::to_string(&repr).unwrap();
-
-    assert_eq!(json_str, "{\"XXX\":0.2}");
-}
-
-#[test]
-#[allow(clippy::float_cmp)]
-fn pauli_sumrepr_deserialize_01() {
-    use Pauli::{
-        I,
-        X,
-        Y,
-        Z,
-    };
-
-    let json_str = r#"
-        { 
-            "Z":    0.1,
-            "YZ":   0.2,
-            "XYZ":  0.3,
-            "IXYZ": 0.4
-        }
-    "#;
-
-    let repr: SumRepr<f64, PauliCode> = serde_json::from_str(json_str).unwrap();
-
-    assert_eq!(repr.len(), 4);
-
-    let code = PauliCode::from_paulis([Z]);
-    assert_eq!(repr.coeff(code), 0.1);
-
-    let code = PauliCode::from_paulis([Y, Z]);
-    assert_eq!(repr.coeff(code), 0.2);
-
-    let code = PauliCode::from_paulis([X, Y, Z]);
-    assert_eq!(repr.coeff(code), 0.3);
-
-    let code = PauliCode::from_paulis([I, X, Y, Z]);
-    assert_eq!(repr.coeff(code), 0.4);
-}
-
-#[test]
 fn root4_neg() {
     assert_eq!(-Root4::R0, Root4::R1);
     assert_eq!(-Root4::R1, Root4::R0);
@@ -791,7 +734,7 @@ fn root4_conj() {
 
 #[test]
 #[allow(clippy::float_cmp)]
-fn fermions_sumrepr_serialize_01() {
+fn fermisum_serialize_01() {
     let mut repr = SumRepr::new();
 
     repr.add_term(FermiCode::Offset, 0.1);
@@ -817,7 +760,7 @@ fn fermions_sumrepr_serialize_01() {
 
 #[test]
 #[allow(clippy::float_cmp)]
-fn fermions_sumrepr_serialize_02() {
+fn fermisum_serialize_02() {
     let mut repr = SumRepr::new();
 
     repr.add_term(
@@ -849,7 +792,7 @@ fn fermions_sumrepr_serialize_02() {
 
 #[test]
 #[allow(clippy::float_cmp)]
-fn fermions_sumrepr_serialize_03() {
+fn fermisum_serialize_03() {
     let mut repr = SumRepr::new();
 
     repr.add_term(
@@ -880,7 +823,7 @@ fn fermions_sumrepr_serialize_03() {
 }
 
 #[test]
-fn fermions_sumrepr_serialize_04() {
+fn fermisum_serialize_04() {
     let mut repr = SumRepr::new();
 
     repr.add_term(FermiCode::Offset, 0.1);
@@ -1024,6 +967,213 @@ fn fermisum_deserialize_03() {
             )
             .unwrap(),
         ),
+        0.3
+    );
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn paulisum_serialize_01() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(PauliCode::identity(), 0.1);
+
+    let json = serde_json::to_value(&repr).unwrap();
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+        {
+            "type": "sumrepr",
+            "encoding": "qubits",
+            "terms":  [
+                {
+                    "code": "I",
+                    "value": 0.1
+                }
+            ]
+        }
+        "#,
+    )
+    .unwrap();
+
+    assert_eq!(json, expected);
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn pauliisum_serialize_02() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(PauliCode::from_paulis([Pauli::X, Pauli::Y]), 0.2);
+    let json = serde_json::to_value(&repr).unwrap();
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+        {
+            "type": "sumrepr",
+            "encoding": "qubits",
+            "terms":  [
+                {
+                    "code": "XY",
+                    "value": 0.2
+                }
+            ]
+        }
+        "#,
+    )
+    .unwrap();
+
+    assert_eq!(json, expected);
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn paulisum_serialize_03() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(
+        PauliCode::from_paulis([Pauli::I, Pauli::X, Pauli::Y, Pauli::Z]),
+        0.3,
+    );
+    let json = serde_json::to_value(&repr).unwrap();
+    let expected: serde_json::Value = serde_json::from_str(
+        r#"
+        {
+            "type": "sumrepr",
+            "encoding": "qubits",
+            "terms":  [
+                {
+                    "code": "IXYZ",
+                    "value": 0.3
+                }
+            ]
+        }
+        "#,
+    )
+    .unwrap();
+
+    assert_eq!(json, expected);
+}
+
+#[test]
+fn paulisum_serialize_04() {
+    let mut repr = SumRepr::new();
+
+    repr.add_term(PauliCode::identity(), 0.1);
+    repr.add_term(PauliCode::from_paulis([Pauli::X, Pauli::Y]), 0.2);
+    repr.add_term(
+        PauliCode::from_paulis([Pauli::I, Pauli::X, Pauli::Y, Pauli::Z]),
+        0.3,
+    );
+    let json = serde_json::to_value(&repr).unwrap();
+
+    let map = json.as_object().unwrap();
+
+    assert_eq!(
+        map.get("encoding").unwrap(),
+        &Value::String("qubits".to_string())
+    );
+
+    let Value::Array(arr) = map.get("terms").unwrap() else {
+        panic!()
+    };
+
+    assert_eq!(arr.len(), 3);
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn paulisum_deserialize_01() {
+    let data = r#"
+        {
+            "type": "sumrepr",
+            "encoding": "qubits",
+            "terms": [
+                {
+                    "code": "I",
+                    "value": 0.1
+                }
+            ]
+        }
+    "#;
+
+    let repr: PauliSum<f64> = serde_json::from_str(data).unwrap();
+
+    assert_eq!(repr.len(), 1);
+    assert_eq!(repr.coeff(PauliCode::identity()), 0.1);
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn paulisum_deserialize_02() {
+    let data = r#"
+        {
+            "type": "sumrepr",
+            "encoding": "qubits",
+            "terms": [
+                {
+                    "code": "I",
+                    "value": 0.1
+                },
+                {
+                    "code": "XY",
+                    "value": 0.2
+                }
+            ]
+        }
+    "#;
+
+    let repr: PauliSum<f64> = serde_json::from_str(data).unwrap();
+
+    assert_eq!(repr.len(), 2);
+    assert_eq!(repr.coeff(PauliCode::identity()), 0.1);
+    assert_eq!(
+        repr.coeff(PauliCode::from_paulis([Pauli::X, Pauli::Y])),
+        0.2
+    );
+}
+
+#[test]
+#[allow(clippy::float_cmp)]
+fn pauliisum_deserialize_03() {
+    let data = r#"
+        {
+            "type": "sumrepr",
+            "encoding": "qubits",
+            "terms": [
+                {
+                    "code": "I",
+                    "value": 0.1
+                },
+                {
+                    "value": 0.09,
+                    "code": "I"
+                },
+                {
+                    "code": "XY",
+                    "value": 0.2
+                }, 
+                {
+                    "code": "IXYZ",
+                    "value": 0.3
+                }
+            ]
+        }
+    "#;
+
+    let repr: PauliSum<f64> = serde_json::from_str(data).unwrap();
+
+    assert_eq!(repr.len(), 3);
+    assert_eq!(repr.coeff(PauliCode::identity()), 0.19);
+    assert_eq!(
+        repr.coeff(PauliCode::from_paulis([Pauli::X, Pauli::Y])),
+        0.2
+    );
+    assert_eq!(
+        repr.coeff(PauliCode::from_paulis([
+            Pauli::I,
+            Pauli::X,
+            Pauli::Y,
+            Pauli::Z
+        ]),),
         0.3
     );
 }
