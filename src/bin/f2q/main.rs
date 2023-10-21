@@ -4,6 +4,7 @@ use std::{
 };
 
 use clap::{
+    Args,
     Parser,
     Subcommand,
     ValueEnum,
@@ -17,14 +18,17 @@ use f2q::{
             Orbital,
         },
         qubits::PauliCode,
+        Code,
     },
     terms::SumRepr,
 };
+use num::Float;
 use rand::Rng;
+use serde::Serialize;
 
 #[derive(Debug)]
 enum CliError {
-    Unsupported { msg: String },
+    Serde { msg: String },
 }
 
 impl Display for CliError {
@@ -33,29 +37,28 @@ impl Display for CliError {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match self {
-            CliError::Unsupported {
+            CliError::Serde {
                 msg,
-            } => write!(f, "error: unsupported {}", msg),
+            } => write!(f, "serde: {msg}"),
         }
-    }
-}
-
-impl From<CliError> for ExitCode {
-    fn from(value: CliError) -> Self {
-        ExitCode::from(match value {
-            CliError::Unsupported {
-                ..
-            } => 255,
-        })
     }
 }
 
 impl std::error::Error for CliError {}
 
+impl From<CliError> for ExitCode {
+    fn from(value: CliError) -> Self {
+        ExitCode::from(match value {
+            CliError::Serde {
+                ..
+            } => 11,
+        })
+    }
+}
+
 /// Fermion to qubit mappings
 #[derive(Debug, Parser)] // requires `derive` feature
 #[command(name = "f2q")]
-#[command(about = "Fermion to qubit mappings", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -66,14 +69,22 @@ enum Commands {
     /// Generates Hamiltonian
     #[command(arg_required_else_help = true)]
     #[command(short_flag = 'G')]
-    Generate {
-        #[arg(short, long)]
-        random:    bool,
-        #[arg(short, long)]
-        encoding:  Encoding,
-        num_terms: u64,
-    },
+    Generate(GenerateArgs),
     Convert,
+}
+
+#[derive(Debug, Args)]
+struct GenerateArgs {
+    #[arg(short, long, required = true)]
+    random:       bool,
+    #[arg(short, long)]
+    encoding:     Encoding,
+    #[arg(short, long, default_value = "json")]
+    format:       Format,
+    /// Pretty print the output if possible
+    #[arg(short, long, default_value = "false")]
+    pretty_print: bool,
+    num_terms:    u64,
 }
 
 #[derive(ValueEnum, Copy, Clone, Debug, PartialEq, Eq)]
@@ -94,10 +105,29 @@ impl std::fmt::Display for Encoding {
     }
 }
 
+#[derive(ValueEnum, Copy, Clone, Debug, PartialEq, Eq)]
+enum Format {
+    Json,
+    Yaml,
+    Toml,
+}
+
+impl std::fmt::Display for Format {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        self.to_possible_value()
+            .expect("no values are skipped")
+            .get_name()
+            .fmt(f)
+    }
+}
+
 fn main() -> ExitCode {
     let arg = Cli::parse();
 
-    match main_exec(arg.command) {
+    match main_exec(&arg.command) {
         Ok(()) => ExitCode::from(0),
         Err(err) => {
             eprintln!("{err}");
@@ -106,59 +136,38 @@ fn main() -> ExitCode {
     }
 }
 
-fn main_exec(command: Commands) -> Result<(), CliError> {
+fn main_exec(command: &Commands) -> Result<(), CliError> {
     match command {
-        Commands::Generate {
-            random,
-            encoding: _,
-            num_terms: _,
-        } => {
-            if !random {
-                Err(CliError::Unsupported {
-                    msg: "For now, only random generation is supported. \
-                          Provide the relevant flag: --random."
-                        .to_string(),
-                })?;
-            }
-            generate_hamiltonian(command)
-        }
+        Commands::Generate(args) => generate_hamiltonian(args),
         Commands::Convert => todo!(),
     }
 }
 
-fn generate_hamiltonian(command: Commands) -> Result<(), CliError> {
-    let Commands::Generate {
-        random: _,
-        encoding,
-        num_terms: _,
-    } = command
-    else {
-        panic!("wrong command passed. This is a bug.");
-    };
-
-    match encoding {
+fn generate_hamiltonian(args: &GenerateArgs) -> Result<(), CliError> {
+    match args.encoding {
         Encoding::Fermions => {
-            generate_hamiltonian_fermions(command)?;
+            generate_hamiltonian_fermions(args)?;
         }
-        Encoding::Qubits => generate_hamiltonian_qubits(command)?,
+        Encoding::Qubits => generate_hamiltonian_qubits(args)?,
     }
     Ok(())
 }
 
-fn generate_hamiltonian_fermions(command: Commands) -> Result<(), CliError> {
-    let Commands::Generate {
-        random: _,
-        encoding: _,
-        num_terms,
-    } = command
-    else {
-        panic!("wrong command passed. This is a bug.");
-    };
+fn generate_hamiltonian_fermions(args: &GenerateArgs) -> Result<(), CliError> {
+    if args.random {
+        generate_hamiltonian_fermions_random(args)
+    } else {
+        todo!()
+    }
+}
 
+fn generate_hamiltonian_fermions_random(
+    args: &GenerateArgs
+) -> Result<(), CliError> {
     let mut rng = rand::thread_rng();
     let mut repr = SumRepr::new();
     let mut count = 0;
-    while count < num_terms {
+    while count < args.num_terms {
         let category = rng.gen_range(0..=2);
         match category {
             0 => repr.add_term(FermiCode::Offset, rng.gen_range(-1.0..1.0)),
@@ -193,40 +202,76 @@ fn generate_hamiltonian_fermions(command: Commands) -> Result<(), CliError> {
                     )
                     .unwrap(),
                     rng.gen_range(-1.0..1.0),
-                )
+                );
             }
             _ => (),
         }
         count += 1;
     }
 
-    let json = serde_json::to_string_pretty(&repr).unwrap();
-    println!("{json}");
+    let repr_str = serialize_sumrepr_to_string(args, repr)?;
+    println!("{repr_str}");
 
     Ok(())
 }
 
-fn generate_hamiltonian_qubits(command: Commands) -> Result<(), CliError> {
-    let Commands::Generate {
-        random: _,
-        encoding: _,
-        num_terms,
-    } = command
-    else {
-        panic!("wrong command passed. This is a bug.");
-    };
+fn generate_hamiltonian_qubits(args: &GenerateArgs) -> Result<(), CliError> {
+    if args.random {
+        generate_hamiltonian_qubits_random(args)
+    } else {
+        todo!()
+    }
+}
 
+fn generate_hamiltonian_qubits_random(
+    args: &GenerateArgs
+) -> Result<(), CliError> {
     let mut rng = rand::thread_rng();
     let mut repr = SumRepr::new();
-    for _ in 0..num_terms {
+    for _ in 0..args.num_terms {
         repr.add_term(
             PauliCode::new((rng.gen(), rng.gen())),
             rng.gen_range(-1.0..1.0),
-        )
+        );
     }
 
-    let json = serde_json::to_string_pretty(&repr).unwrap();
-    println!("{json}");
+    let repr_str = serialize_sumrepr_to_string(args, repr)?;
+
+    println!("{repr_str}");
 
     Ok(())
+}
+
+fn serialize_sumrepr_to_string<T, K>(
+    args: &GenerateArgs,
+    repr: SumRepr<T, K>,
+) -> Result<String, CliError>
+where
+    T: Float,
+    K: Code,
+    SumRepr<T, K>: Serialize,
+{
+    Ok(match args.format {
+        Format::Json => if args.pretty_print {
+            serde_json::to_string_pretty(&repr)
+        } else {
+            serde_json::to_string(&repr)
+        }
+        .map_err(|e| CliError::Serde {
+            msg: e.to_string()
+        })?,
+        Format::Yaml => {
+            serde_yaml::to_string(&repr).map_err(|e| CliError::Serde {
+                msg: e.to_string(),
+            })?
+        }
+        Format::Toml => if args.pretty_print {
+            toml::to_string_pretty(&repr)
+        } else {
+            toml::to_string(&repr)
+        }
+        .map_err(|e| CliError::Serde {
+            msg: e.to_string()
+        })?,
+    })
 }
