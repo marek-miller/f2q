@@ -234,11 +234,11 @@ where
 }
 
 #[derive(Deserialize)]
-struct FermiSumDe<'a, T>
+struct FermiSumDe<T>
 where
     T: Float,
 {
-    r#type:   &'a str,
+    r#type:   String,
     encoding: Encoding,
     terms:    FermiSumDeSequence<T>,
 }

@@ -273,11 +273,11 @@ where
 }
 
 #[derive(Deserialize)]
-struct PauliSumDe<'a, T>
+struct PauliSumDe<T>
 where
     T: Float,
 {
-    r#type:   &'a str,
+    r#type:   String,
     encoding: Encoding,
     terms:    PauliSumDeSequence<T>,
 }

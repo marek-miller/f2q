@@ -13,13 +13,17 @@ homepage = "https://github.com/Quantum-for-Life/f2q"
 repository = "https://github.com/Quantum-for-Life/f2q.git"
 
 [dependencies]
+clap = { version = "4.4.6", features = ["derive"] }
 num = "0.4.1"
 rayon = "1.8.0"
+rand = "0.8.5"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
+serde_yaml = "0.9.25"
+toml = "0.8.2"
+log = "0.4.20"
+env_logger = "0.10.0"
 
-[dev-dependencies]
-rand = "0.8.5"
 
 [profile.release]
 lto = "fat"
