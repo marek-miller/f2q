@@ -4,6 +4,7 @@ use f2q::{
     terms::Terms,
 };
 
+use super::serialize_sumrepr;
 use crate::{
     args::{
         Convert,
@@ -26,7 +27,12 @@ pub fn jordan_wigner(args: &Convert) -> Result<(), Error> {
     let in_repr = jordan_wigner::parse_input(args)?;
     let mut out_repr = PauliSum::with_capacity(in_repr.len() * 4);
     JordanWigner::new(&in_repr).add_to(&mut out_repr)?;
-    jordan_wigner::gen_ouput(&out_repr, args)
+    serialize_sumrepr(
+        &out_repr,
+        args.output_file.as_deref(),
+        args.output_format,
+        args.pretty_print,
+    )
 }
 
 mod jordan_wigner {
@@ -36,15 +42,10 @@ mod jordan_wigner {
         io::{
             BufRead,
             BufReader,
-            BufWriter,
-            Write,
         },
     };
 
-    use f2q::codes::{
-        fermions::FermiSum,
-        qubits::PauliSum,
-    };
+    use f2q::codes::fermions::FermiSum;
 
     use crate::{
         args::{
@@ -80,47 +81,5 @@ mod jordan_wigner {
             }
             Format::Yaml => serde_yaml::from_reader(reader)?,
         })
-    }
-
-    pub fn gen_ouput(
-        out_repr: &PauliSum<f64>,
-        args: &Convert,
-    ) -> Result<(), Error> {
-        if let Some(path) = &args.output_file {
-            let file = File::create(path)?;
-            let writer = BufWriter::new(file);
-            parse_gen_output_writer(out_repr, writer, args)
-        } else {
-            let stdout = std::io::stdout().lock();
-            let writer = BufWriter::new(stdout);
-            parse_gen_output_writer(out_repr, writer, args)
-        }
-    }
-
-    fn parse_gen_output_writer<W: Write>(
-        out_repr: &PauliSum<f64>,
-        writer: BufWriter<W>,
-        args: &Convert,
-    ) -> Result<(), Error> {
-        match args.input_format {
-            Format::Json => {
-                if args.pretty_print {
-                    serde_json::to_writer_pretty(writer, &out_repr)?;
-                } else {
-                    serde_json::to_writer(writer, &out_repr)?;
-                }
-            }
-            Format::Toml => {
-                let mut writer = writer;
-                let repr = if args.pretty_print {
-                    toml::to_string_pretty(&out_repr)
-                } else {
-                    toml::to_string(&out_repr)
-                }?;
-                write!(writer, "{repr}")?;
-            }
-            Format::Yaml => serde_yaml::to_writer(writer, &out_repr)?,
-        };
-        Ok(())
     }
 }
