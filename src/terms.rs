@@ -67,6 +67,44 @@ where
         }
     }
 
+    /// Creates an empty `SumRepr` with at least the specified capacity.
+    ///
+    /// The struct will be able to hold at least `capacity` elements without
+    /// reallocating.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::{terms::SumRepr, codes::qubits::PauliCode};
+    /// let repr = SumRepr::<f64, PauliCode>::with_capacity(8);
+    ///
+    /// assert!(repr.capacity() >= 8);
+    /// ```
+    #[must_use]
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            terms: HashMap::with_capacity(capacity),
+        }
+    }
+
+    /// Returns the number of elements the map can hold without reallocating.
+    ///
+    /// This number is a lower bound; the struct might be able to hold more, but
+    /// is guaranteed to be able to hold at least this many.
+    ///
+    ///  /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::{terms::SumRepr, codes::qubits::PauliCode};
+    /// let repr = SumRepr::<f64, PauliCode>::with_capacity(8);
+    ///
+    /// assert!(repr.capacity() >= 8);
+    /// ```
+    #[must_use]
+    pub fn capacity(&self) -> usize {
+        self.terms.capacity()
+    }
+
     /// Number of terms in the sum.
     #[must_use]
     pub fn len(&self) -> usize {
