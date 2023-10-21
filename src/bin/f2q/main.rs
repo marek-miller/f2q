@@ -488,10 +488,20 @@ fn cmd_convert_jordan_wigner_parse_gen_output_writer<W: Write>(
         } else {
             serde_json::to_writer(writer, &out_repr)
         }
-        .map_err(|e| CliError::Serde {
-            msg: format!("{e}"),
-        }),
-        Format::Toml => todo!(),
-        Format::Yaml => todo!(),
+        .map_err(CliError::from),
+        Format::Toml => {
+            let mut writer = writer;
+            let repr = if args.pretty_print {
+                toml::to_string_pretty(&out_repr)
+            } else {
+                toml::to_string(&out_repr)
+            }
+            .map_err(CliError::from)?;
+
+            write!(writer, "{repr}").map_err(CliError::from)
+        }
+        Format::Yaml => {
+            serde_yaml::to_writer(writer, &out_repr).map_err(CliError::from)
+        }
     }
 }
