@@ -11,6 +11,7 @@ pub mod math;
 pub mod terms;
 
 mod serialize;
+pub use serialize::Encoding;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
