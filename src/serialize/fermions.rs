@@ -13,10 +13,10 @@ use crate::{
         An,
         Cr,
         FermiCode,
-        FermiSum,
         Orbital,
     },
     serialize::Encoding,
+    terms::SumRepr,
 };
 
 impl Serialize for FermiCode {
@@ -117,7 +117,7 @@ struct FermiSumTerm<T> {
     value: T,
 }
 
-struct FermiSumSerSequence<'a, T>(&'a FermiSum<T>);
+struct FermiSumSerSequence<'a, T>(&'a SumRepr<T, FermiCode>);
 
 impl<'a, T> Serialize for FermiSumSerSequence<'a, T>
 where
@@ -152,7 +152,7 @@ where
     terms:    FermiSumSerSequence<'a, T>,
 }
 
-impl<T> Serialize for FermiSum<T>
+impl<T> Serialize for SumRepr<T, FermiCode>
 where
     T: Float + Serialize,
 {
@@ -172,7 +172,7 @@ where
     }
 }
 
-struct FermiSumDeSequence<T>(FermiSum<T>);
+struct FermiSumDeSequence<T>(SumRepr<T, FermiCode>);
 
 struct FermiSumVisitor<T> {
     _marker: PhantomData<T>,
@@ -207,7 +207,7 @@ where
         A: serde::de::SeqAccess<'de>,
     {
         let mut seq = seq;
-        let mut repr = FermiSum::new();
+        let mut repr = SumRepr::new();
 
         while let Some(FermiSumTerm {
             code,
@@ -243,7 +243,7 @@ where
     terms:    FermiSumDeSequence<T>,
 }
 
-impl<'de, T> Deserialize<'de> for FermiSum<T>
+impl<'de, T> Deserialize<'de> for SumRepr<T, FermiCode>
 where
     T: Float + Deserialize<'de>,
 {

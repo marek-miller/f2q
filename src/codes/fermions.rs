@@ -12,7 +12,7 @@ use std::{
 
 use crate::terms::SumRepr;
 
-pub type FermiSum<T> = SumRepr<T, FermiCode>;
+pub type FermiSum = SumRepr<f64, FermiCode>;
 
 /// Spin one-half
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]

@@ -7,7 +7,7 @@ use crate::{
     Error,
 };
 
-pub type PauliSum<T> = SumRepr<T, PauliCode>;
+pub type PauliSum = SumRepr<f64, PauliCode>;
 
 const PAULI_MASK: u64 = 0b11;
 

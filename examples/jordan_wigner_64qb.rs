@@ -68,7 +68,7 @@ fn main() -> Result<(), f2q::Error> {
     );
 
     let now = Instant::now();
-    let fermi_sum_de: FermiSum<f64> = serde_json::from_str(&json).unwrap();
+    let fermi_sum_de: FermiSum = serde_json::from_str(&json).unwrap();
     println!(
         "Deserialized to sumrepr with {} terms in {} ms.",
         fermi_sum_de.len(),
@@ -79,7 +79,7 @@ fn main() -> Result<(), f2q::Error> {
     let _ = std::io::stdout().flush();
 
     let now = Instant::now();
-    let mut pauli_sum = SumRepr::new();
+    let mut pauli_sum = PauliSum::new();
 
     JordanWigner::new(&fermi_sum).add_to(&mut pauli_sum)?;
 
@@ -99,7 +99,7 @@ fn main() -> Result<(), f2q::Error> {
     );
 
     let now = Instant::now();
-    let pauli_sum_de: PauliSum<f64> = serde_json::from_str(&json).unwrap();
+    let pauli_sum_de: PauliSum = serde_json::from_str(&json).unwrap();
     println!(
         "Deserialized to sumrepr with {} terms in {} ms.",
         pauli_sum_de.len(),

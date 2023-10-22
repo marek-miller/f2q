@@ -36,6 +36,7 @@ mod jordan_wigner;
 ///         qubits::{
 ///             Pauli,
 ///             PauliCode,
+///             PauliSum,
 ///         },
 ///     },
 ///     maps::JordanWigner,
@@ -56,7 +57,7 @@ mod jordan_wigner;
 /// fermi_repr.add_term(FermiCode::one_electron(Cr(p), An(p)).unwrap(), 1.0);
 ///
 /// // Map fermionic hamiltonian to a sum of Pauli strings
-/// let mut pauli_repr = SumRepr::new();
+/// let mut pauli_repr = PauliSum::new();
 /// JordanWigner::new(&fermi_repr).add_to(&mut pauli_repr)?;
 ///
 /// // We should obtain the following two Pauli strings weights 0.5
@@ -85,20 +86,21 @@ impl<'a, T> JordanWigner<'a, T> {
     }
 }
 
-impl<'a, T> Terms<T, PauliCode> for JordanWigner<'a, T>
+impl<'a, T> Terms<PauliCode> for JordanWigner<'a, T>
 where
     T: Float,
 {
     type Error = Error;
 
-    fn add_to(
+    fn add_to<U: Float>(
         &mut self,
-        repr: &mut SumRepr<T, PauliCode>,
+        repr: &mut SumRepr<U, PauliCode>,
     ) -> Result<(), Self::Error> {
         self.repr.iter().try_for_each({
             |(&coeff, &code)| {
+                let u_coeff = U::from(coeff).ok_or(Error::FloatConversion)?;
                 jordan_wigner::Map::try_from(code)
-                    .map(|jw| jw.map(coeff).for_each(|x| repr.add_tuple(x)))
+                    .map(|jw| jw.map(u_coeff).for_each(|x| repr.add_tuple(x)))
             }
         })
     }

@@ -55,7 +55,7 @@ mod jordan_wigner {
         errors::Error,
     };
 
-    pub fn parse_input(args: &Convert) -> Result<FermiSum<f64>, Error> {
+    pub fn parse_input(args: &Convert) -> Result<FermiSum, Error> {
         if let Some(path) = &args.input_file {
             let file = File::open(path)?;
             let reader = BufReader::new(file);
@@ -70,7 +70,7 @@ mod jordan_wigner {
     fn parse_input_reader<R: BufRead>(
         reader: R,
         args: &Convert,
-    ) -> Result<FermiSum<f64>, Error> {
+    ) -> Result<FermiSum, Error> {
         Ok(match args.input_format {
             Format::Json => serde_json::from_reader(reader)?,
             Format::Toml => {
