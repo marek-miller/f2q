@@ -1,9 +1,14 @@
+//! Fermion-to-qubit mappings.
+//!
+//! High-octane representation of Pauli Hamiltonians
+//! with up to 64 qubits. 🎇
+//!
+//! This is a software library to parse and convert quantum chemistry
+//! Hamiltonians into a form suitable for quantum hardware based on qubit gates.
+
 use std::fmt::Display;
 
 use codes::Code;
-use terms::SumRepr;
-
-pub type IndexedSum<T> = SumRepr<T, u64>;
 
 pub mod codes;
 pub mod maps;
@@ -11,7 +16,6 @@ pub mod math;
 pub mod terms;
 
 mod serialize;
-pub use serialize::Encoding;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {

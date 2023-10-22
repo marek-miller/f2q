@@ -1,3 +1,5 @@
+//! Encoding of Hamiltonian terms.
+
 use std::hash::Hash;
 
 use fermions::FermiCode;

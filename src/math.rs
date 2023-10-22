@@ -1,4 +1,4 @@
-//! Various mathematical structures
+//! Various mathematical structures.
 
 use std::ops::{
     Mul,

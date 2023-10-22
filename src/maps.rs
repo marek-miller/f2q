@@ -1,4 +1,4 @@
-//! Mappings between various encodings
+//! Mappings between various encodings.
 
 use num::Float;
 
