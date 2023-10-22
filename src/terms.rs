@@ -8,20 +8,17 @@ use super::Code;
 use crate::Error;
 
 /// Convert and serialize sum of terms in various encodings
-pub trait Terms<K>
-where
-    K: Code,
-{
+pub trait Terms<T> {
     type Error;
 
-    /// Add terms to the supplied [`SumRepr`].
+    /// Add terms to the supplied representation.
     ///
     /// # Errors
     ///
     /// Return error on failure.
-    fn add_to<T: Float>(
+    fn add_to(
         &mut self,
-        repr: &mut SumRepr<T, K>,
+        repr: impl Extend<T>,
     ) -> Result<(), Error>;
 }
 
@@ -233,13 +230,6 @@ where
         let prev_coeff = self.coeff(code);
         let _ = self.update(code, coeff + prev_coeff);
     }
-
-    pub(crate) fn add_tuple(
-        &mut self,
-        (code, coeff): (K, T),
-    ) {
-        self.add_term(code, coeff);
-    }
 }
 
 /// Iterator over terms in [`SumRepr`].
@@ -329,20 +319,19 @@ where
     }
 }
 
-impl<T, K> Terms<K> for SumRepr<T, K>
+impl<T, K> Terms<(T, K)> for SumRepr<T, K>
 where
     T: Float,
     K: Code,
 {
     type Error = Error;
 
-    fn add_to<U: Float>(
+    fn add_to(
         &mut self,
-        repr: &mut SumRepr<U, K>,
-    ) -> Result<(), Self::Error> {
+        mut repr: impl Extend<(T, K)>,
+    ) -> Result<(), Error> {
         self.iter().try_for_each(|(&coeff, &code)| {
-            let u_coeff = U::from(coeff).ok_or(Error::FloatConversion)?;
-            repr.add_term(code, u_coeff);
+            repr.extend(Some((coeff, code)));
             Ok(())
         })
     }
@@ -362,6 +351,19 @@ where
         for (coeff, code) in iter {
             self.add_term(code, coeff);
         }
+    }
+}
+
+impl<T, K> Extend<(T, K)> for &mut SumRepr<T, K>
+where
+    K: Code,
+    T: Float,
+{
+    fn extend<I: IntoIterator<Item = (T, K)>>(
+        &mut self,
+        iter: I,
+    ) {
+        (*self).extend(iter);
     }
 }
 
@@ -474,7 +476,7 @@ where
     }
 }
 
-impl<T, K, OP> Terms<K> for StackRepr<T, K, OP>
+impl<T, K, OP> Terms<(T, K)> for StackRepr<T, K, OP>
 where
     T: Float,
     K: Code,
@@ -482,13 +484,12 @@ where
 {
     type Error = Error;
 
-    fn add_to<U: Float>(
+    fn add_to(
         &mut self,
-        repr: &mut SumRepr<U, K>,
-    ) -> Result<(), Self::Error> {
+        mut repr: impl Extend<(T, K)>,
+    ) -> Result<(), Error> {
         while let Some((coeff, code)) = (self.f)() {
-            let u_coeff = U::from(coeff).ok_or(Error::FloatConversion)?;
-            repr.add_term(code, u_coeff);
+            repr.extend(Some((coeff, code)));
         }
 
         Ok(())
@@ -511,20 +512,19 @@ impl<'a, T, K> HeapRepr<'a, T, K> {
     }
 }
 
-impl<'a, T, K> Terms<K> for HeapRepr<'a, T, K>
+impl<'a, T, K> Terms<(T, K)> for HeapRepr<'a, T, K>
 where
     T: Float,
     K: Code,
 {
     type Error = Error;
 
-    fn add_to<U: Float>(
+    fn add_to(
         &mut self,
-        repr: &mut SumRepr<U, K>,
-    ) -> Result<(), Self::Error> {
+        mut repr: impl Extend<(T, K)>,
+    ) -> Result<(), Error> {
         while let Some((coeff, code)) = (self.f)() {
-            let u_coeff = U::from(coeff).ok_or(Error::FloatConversion)?;
-            repr.add_term(code, u_coeff);
+            repr.extend(Some((coeff, code)));
         }
 
         Ok(())

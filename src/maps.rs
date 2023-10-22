@@ -86,21 +86,23 @@ impl<'a, T> JordanWigner<'a, T> {
     }
 }
 
-impl<'a, T> Terms<PauliCode> for JordanWigner<'a, T>
+impl<'a, T> Terms<(T, PauliCode)> for JordanWigner<'a, T>
 where
     T: Float,
 {
     type Error = Error;
 
-    fn add_to<U: Float>(
+    fn add_to(
         &mut self,
-        repr: &mut SumRepr<U, PauliCode>,
-    ) -> Result<(), Self::Error> {
+        mut repr: impl Extend<(T, PauliCode)>,
+    ) -> Result<(), Error> {
         self.repr.iter().try_for_each({
             |(&coeff, &code)| {
-                let u_coeff = U::from(coeff).ok_or(Error::FloatConversion)?;
-                jordan_wigner::Map::try_from(code)
-                    .map(|jw| jw.map(u_coeff).for_each(|x| repr.add_tuple(x)))
+                jordan_wigner::Map::try_from(code).map(|jw| {
+                    jw.map(coeff).for_each(|(code, coeff)| {
+                        repr.extend(Some((coeff, code)))
+                    })
+                })
             }
         })
     }
