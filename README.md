@@ -43,7 +43,7 @@ cargo add f2q
 ```
 
 The full documentation is available
-[online at docs.rs](https://docs.rs/f2q/0.1.0/f2q). 📚
+[online at docs.rs](https://docs.rs/f2q/latest/f2q/index.html). 📚
 
 # Testing
 
