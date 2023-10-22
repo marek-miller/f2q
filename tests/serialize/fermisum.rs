@@ -156,7 +156,7 @@ fn fermisum_deserialize_01() {
         }
     "#;
 
-    let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
+    let repr: FermiSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 1);
     assert_eq!(repr.coeff(FermiCode::Offset), 0.1);
@@ -182,7 +182,7 @@ fn fermisum_deserialize_02() {
         }
     "#;
 
-    let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
+    let repr: FermiSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 2);
     assert_eq!(repr.coeff(FermiCode::Offset), 0.1);
@@ -226,7 +226,7 @@ fn fermisum_deserialize_03() {
         }
     "#;
 
-    let repr: FermiSum<f64> = serde_json::from_str(data).unwrap();
+    let repr: FermiSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 3);
     assert_eq!(repr.coeff(FermiCode::Offset), 0.19);

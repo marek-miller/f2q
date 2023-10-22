@@ -1,9 +1,6 @@
 //! Representation of Hamiltonian sum terms.
 
-use std::{
-    collections::HashMap,
-    ops::Add,
-};
+use std::collections::HashMap;
 
 use num::Float;
 
@@ -11,29 +8,23 @@ use super::Code;
 use crate::Error;
 
 /// Convert and serialize sum of terms in various encodings
-pub trait Terms<T, K>
-where
-    K: Code,
-{
+pub trait Terms<T> {
     type Error;
 
-    /// Add terms to the supplied [`SumRepr`].
+    /// Add terms to the supplied representation.
     ///
     /// # Errors
     ///
     /// Return error on failure.
     fn add_to(
         &mut self,
-        repr: &mut SumRepr<T, K>,
+        repr: impl Extend<T>,
     ) -> Result<(), Error>;
 }
 
 /// Weighted sum of codes
 #[derive(Debug)]
-pub struct SumRepr<T, K>
-where
-    K: Code,
-{
+pub struct SumRepr<T, K> {
     terms: HashMap<K, T>,
 }
 
@@ -135,9 +126,8 @@ where
     ///
     /// assert_eq!(sum, 1.0);
     /// ```
-    #[must_use]
-    pub fn iter(&self) -> SumIter<'_, T, K> {
-        SumIter::new(self)
+    pub fn iter(&self) -> impl Iterator<Item = (&T, &K)> {
+        self.terms.iter().map(|(code, coeff)| (coeff, code))
     }
 
     /// Iterate over terms in the sum, allow mutable access to coefficients.
@@ -161,8 +151,8 @@ where
     /// assert_eq!(repr.coeff(PauliCode::default()), 0.6);
     /// assert_eq!(repr.coeff(PauliCode::new((1, 0))), 0.6);
     /// ```
-    pub fn iter_mut(&mut self) -> SumIterMut<'_, T, K> {
-        SumIterMut::new(self)
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&mut T, &K)> {
+        self.terms.iter_mut().map(|(code, coeff)| (coeff, code))
     }
 }
 
@@ -239,103 +229,9 @@ where
         let prev_coeff = self.coeff(code);
         let _ = self.update(code, coeff + prev_coeff);
     }
-
-    pub(crate) fn add_tuple(
-        &mut self,
-        (code, coeff): (K, T),
-    ) {
-        self.add_term(code, coeff);
-    }
 }
 
-/// Iterator over terms in [`SumRepr`].
-#[derive(Debug)]
-pub struct SumIter<'a, T, K>
-where
-    K: Code,
-{
-    iter: std::collections::hash_map::Iter<'a, K, T>,
-}
-
-impl<'a, T, K> SumIter<'a, T, K>
-where
-    K: Code,
-{
-    #[must_use]
-    pub fn new(repr: &'a SumRepr<T, K>) -> Self {
-        Self {
-            iter: repr.terms.iter(),
-        }
-    }
-}
-
-impl<'a, T, K> Iterator for SumIter<'a, T, K>
-where
-    K: Code,
-{
-    type Item = (&'a T, &'a K);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(code, coeff)| (coeff, code))
-    }
-}
-
-/// Iterator over terms in [`SumRepr`].
-#[derive(Debug)]
-pub struct SumIterMut<'a, T, K>
-where
-    K: Code,
-{
-    iter: std::collections::hash_map::IterMut<'a, K, T>,
-}
-
-impl<'a, T, K> SumIterMut<'a, T, K>
-where
-    K: Code,
-{
-    pub fn new(repr: &'a mut SumRepr<T, K>) -> Self {
-        Self {
-            iter: repr.terms.iter_mut(),
-        }
-    }
-}
-
-impl<'a, T, K> Iterator for SumIterMut<'a, T, K>
-where
-    K: Code,
-{
-    type Item = (&'a mut T, &'a K);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(code, coeff)| (coeff, code))
-    }
-}
-
-impl<'a, T, K> IntoIterator for &'a SumRepr<T, K>
-where
-    K: Code,
-{
-    type IntoIter = SumIter<'a, T, K>;
-    type Item = (&'a T, &'a K);
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-impl<'a, T, K> IntoIterator for &'a mut SumRepr<T, K>
-where
-    K: Code,
-{
-    type IntoIter = SumIterMut<'a, T, K>;
-    type Item = (&'a mut T, &'a K);
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter_mut()
-    }
-}
-
-impl<T, K> Terms<T, K> for SumRepr<T, K>
+impl<T, K> Terms<(T, K)> for SumRepr<T, K>
 where
     T: Float,
     K: Code,
@@ -344,10 +240,10 @@ where
 
     fn add_to(
         &mut self,
-        repr: &mut SumRepr<T, K>,
-    ) -> Result<(), Self::Error> {
+        mut repr: impl Extend<(T, K)>,
+    ) -> Result<(), Error> {
         self.iter().try_for_each(|(&coeff, &code)| {
-            repr.add_term(code, coeff);
+            repr.extend(Some((coeff, code)));
             Ok(())
         })
     }
@@ -370,109 +266,16 @@ where
     }
 }
 
-/// Dynamic representation of a Hamiltonian
-pub enum Hamil<T, K> {
-    Offset(T),
-    Sum(Box<Self>, Box<Self>),
-    Terms(Box<dyn Terms<T, K, Error = Error> + Send + Sync>),
-}
-
-impl<T, K> Default for Hamil<T, K>
+impl<T, K> Extend<(T, K)> for &mut SumRepr<T, K>
 where
-    T: Default,
-{
-    fn default() -> Self {
-        Self::Offset(T::default())
-    }
-}
-
-impl<T, K> Add for Hamil<T, K> {
-    type Output = Self;
-
-    fn add(
-        self,
-        rhs: Self,
-    ) -> Self::Output {
-        Self::Sum(Box::new(self), Box::new(rhs))
-    }
-}
-
-impl<T, K> Hamil<T, K>
-where
-    T: Float,
     K: Code,
+    T: Float,
 {
-    #[must_use]
-    pub fn add_offset(
-        self,
-        value: T,
-    ) -> Self {
-        self + Self::Offset(value)
-    }
-
-    /// Add terms to the Hamiltonian.
-    #[must_use]
-    pub fn add_terms(
-        self,
-        terms: Box<dyn Terms<T, K, Error = Error> + Send + Sync>,
-    ) -> Self {
-        self + Self::Terms(terms)
-    }
-
-    #[must_use]
-    pub fn add_hamil(
-        self,
-        other: Self,
-    ) -> Self {
-        self + other
-    }
-}
-
-impl<T, K> Terms<T, K> for Hamil<T, K>
-where
-    T: Float + Send,
-    K: Code + Send,
-{
-    type Error = Error;
-
-    fn add_to(
+    fn extend<I: IntoIterator<Item = (T, K)>>(
         &mut self,
-        repr: &mut SumRepr<T, K>,
-    ) -> Result<(), Self::Error> {
-        match self {
-            Self::Offset(t) => {
-                repr.add_term(K::default(), *t);
-            }
-            Self::Terms(terms) => terms.add_to(repr)?,
-            Self::Sum(h1, h2) => {
-                let mut repr_left = SumRepr::new();
-                let mut repr_right = SumRepr::new();
-                let (res_left, res_right) = rayon::join(
-                    || h1.add_to(&mut repr_left),
-                    || h2.add_to(&mut repr_right),
-                );
-                res_left?;
-                res_right?;
-                repr_left.add_to(repr)?;
-                repr_right.add_to(repr)?;
-            }
-        }
-
-        Ok(())
-    }
-}
-
-impl<T, K> TryFrom<Hamil<T, K>> for SumRepr<T, K>
-where
-    T: Float + Send,
-    K: Code + Send,
-{
-    type Error = Error;
-
-    fn try_from(value: Hamil<T, K>) -> Result<Self, Self::Error> {
-        let mut hamil = value;
-        let mut repr = SumRepr::new();
-        hamil.add_to(&mut repr).map(|()| repr)
+        iter: I,
+    ) {
+        (*self).extend(iter);
     }
 }
 
@@ -495,7 +298,7 @@ where
     }
 }
 
-impl<T, K, OP> Terms<T, K> for StackRepr<T, K, OP>
+impl<T, K, OP> Terms<(T, K)> for StackRepr<T, K, OP>
 where
     T: Float,
     K: Code,
@@ -505,10 +308,10 @@ where
 
     fn add_to(
         &mut self,
-        repr: &mut SumRepr<T, K>,
-    ) -> Result<(), Self::Error> {
+        mut repr: impl Extend<(T, K)>,
+    ) -> Result<(), Error> {
         while let Some((coeff, code)) = (self.f)() {
-            repr.add_term(code, coeff);
+            repr.extend(Some((coeff, code)));
         }
 
         Ok(())
@@ -531,7 +334,7 @@ impl<'a, T, K> HeapRepr<'a, T, K> {
     }
 }
 
-impl<'a, T, K> Terms<T, K> for HeapRepr<'a, T, K>
+impl<'a, T, K> Terms<(T, K)> for HeapRepr<'a, T, K>
 where
     T: Float,
     K: Code,
@@ -540,10 +343,10 @@ where
 
     fn add_to(
         &mut self,
-        repr: &mut SumRepr<T, K>,
-    ) -> Result<(), Self::Error> {
+        mut repr: impl Extend<(T, K)>,
+    ) -> Result<(), Error> {
         while let Some((coeff, code)) = (self.f)() {
-            repr.add_term(code, coeff);
+            repr.extend(Some((coeff, code)));
         }
 
         Ok(())

@@ -12,9 +12,9 @@ use crate::{
     codes::qubits::{
         Pauli,
         PauliCode,
-        PauliSum,
     },
     serialize::Encoding,
+    terms::SumRepr,
 };
 
 impl Serialize for Pauli {
@@ -156,7 +156,7 @@ struct PauliSumTerm<T> {
     value: T,
 }
 
-struct PauliSumSerSequence<'a, T>(&'a PauliSum<T>);
+struct PauliSumSerSequence<'a, T>(&'a SumRepr<T, PauliCode>);
 
 impl<'a, T> Serialize for PauliSumSerSequence<'a, T>
 where
@@ -170,7 +170,7 @@ where
         S: serde::Serializer,
     {
         let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
-        for (&coeff, &code) in self.0 {
+        for (&coeff, &code) in self.0.iter() {
             seq.serialize_element(&PauliSumTerm {
                 code,
                 value: coeff,
@@ -191,7 +191,7 @@ where
     terms:    PauliSumSerSequence<'a, T>,
 }
 
-impl<T> Serialize for PauliSum<T>
+impl<T> Serialize for SumRepr<T, PauliCode>
 where
     T: Float + Serialize,
 {
@@ -211,7 +211,7 @@ where
     }
 }
 
-struct PauliSumDeSequence<T>(PauliSum<T>);
+struct PauliSumDeSequence<T>(SumRepr<T, PauliCode>);
 
 struct PauliSumVisitor<T> {
     _marker: PhantomData<T>,
@@ -246,7 +246,7 @@ where
         A: serde::de::SeqAccess<'de>,
     {
         let mut seq = seq;
-        let mut repr = PauliSum::new();
+        let mut repr = SumRepr::new();
 
         while let Some(PauliSumTerm {
             code,
@@ -282,7 +282,7 @@ where
     terms:    PauliSumDeSequence<T>,
 }
 
-impl<'de, T> Deserialize<'de> for PauliSum<T>
+impl<'de, T> Deserialize<'de> for SumRepr<T, PauliCode>
 where
     T: Float + Deserialize<'de>,
 {

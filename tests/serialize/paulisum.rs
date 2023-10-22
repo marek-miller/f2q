@@ -132,7 +132,7 @@ fn paulisum_deserialize_01() {
         }
     "#;
 
-    let repr: PauliSum<f64> = serde_json::from_str(data).unwrap();
+    let repr: PauliSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 1);
     assert_eq!(repr.coeff(PauliCode::identity()), 0.1);
@@ -158,7 +158,7 @@ fn paulisum_deserialize_02() {
         }
     "#;
 
-    let repr: PauliSum<f64> = serde_json::from_str(data).unwrap();
+    let repr: PauliSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 2);
     assert_eq!(repr.coeff(PauliCode::identity()), 0.1);
@@ -196,7 +196,7 @@ fn pauliisum_deserialize_03() {
         }
     "#;
 
-    let repr: PauliSum<f64> = serde_json::from_str(data).unwrap();
+    let repr: PauliSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 3);
     assert_eq!(repr.coeff(PauliCode::identity()), 0.19);
