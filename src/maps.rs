@@ -6,6 +6,7 @@ use crate::{
     codes::{
         fermions::FermiCode,
         qubits::PauliCode,
+        Code,
     },
     terms::{
         SumRepr,
@@ -16,6 +17,48 @@ use crate::{
 
 mod jordan_wigner;
 
+pub trait Map<T, K>
+where
+    K: Code,
+{
+    type Error;
+    type FromCode: Code;
+
+    fn map<Ter>(
+        &mut self,
+        from_terms: &mut Ter,
+    ) -> Result<impl Terms<T, K>, Self::Error>
+    // this requires nightly Rust
+    where
+        Ter: Terms<T, Self::FromCode>;
+}
+
+struct JW<T> {
+    // change this to JordanWigner, the struct below to JWTerms<'_,K>
+    scratch_repr: SumRepr<T, FermiCode>,
+}
+
+impl<T> Map<T, PauliCode> for JW<T>
+where
+    T: Float,
+{
+    type Error = Error;
+    type FromCode = FermiCode;
+
+    fn map<Ter>(
+        &mut self,
+        from_terms: &mut Ter,
+    ) -> Result<impl Terms<T, PauliCode>, Self::Error>
+    where
+        Ter: Terms<T, Self::FromCode>,
+    {
+        // SumRepr should have a method to reset itself.
+        self.scratch_repr = SumRepr::new();
+        from_terms.add_to(&mut self.scratch_repr)?;
+        Ok(JordanWigner::new(&self.scratch_repr))
+    }
+}
+
 /// Jordan-Wigner mapping.
 ///
 /// This mapping is initialized with [`SumRepr<T,FermiCode>`],
@@ -25,25 +68,25 @@ mod jordan_wigner;
 /// # Examples
 ///
 /// ```rust
-/// use f2q::{
-///     codes::{
-///         fermions::{
-///             An,
-///             Cr,
-///             FermiCode,
-///             Orbital,
-///         },
-///         qubits::{
-///             Pauli,
-///             PauliCode,
-///         },
-///     },
-///     maps::JordanWigner,
-///     terms::{
-///         SumRepr,
-///         Terms,
-///     },
-/// };
+/// # use f2q::{
+/// #     codes::{
+/// #         fermions::{
+/// #             An,
+/// #             Cr,
+/// #             FermiCode,
+/// #             Orbital,
+/// #         },
+/// #         qubits::{
+/// #             Pauli,
+/// #             PauliCode,
+/// #         },
+/// #     },
+/// #     maps::JordanWigner,
+/// #     terms::{
+/// #         SumRepr,
+/// #         Terms,
+/// #     },
+/// # };
 /// # fn main() -> Result<(), f2q::Error> {
 ///
 /// let idx = 11;
