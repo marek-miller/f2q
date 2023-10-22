@@ -20,10 +20,7 @@ mod serialize;
 #[derive(Debug, PartialEq)]
 pub enum Error {
     /// Invalid index of a Pauli operator
-    PauliIndex {
-        msg: String,
-    },
-    FloatConversion,
+    PauliIndex { msg: String },
 }
 
 impl Display for Error {
@@ -35,7 +32,6 @@ impl Display for Error {
             Self::PauliIndex {
                 msg,
             } => write!(f, "PauliIndex: {msg}"),
-            Self::FloatConversion => write!(f, "floating point conversion"),
         }
     }
 }

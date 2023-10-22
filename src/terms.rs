@@ -4,8 +4,10 @@ use std::collections::HashMap;
 
 use num::Float;
 
-use super::Code;
-use crate::Error;
+use crate::{
+    codes::Code,
+    Error,
+};
 
 /// Convert and serialize sum of terms in various encodings
 pub trait Terms<T> {

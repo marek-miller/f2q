@@ -8,7 +8,7 @@ use serde::{
 
 /// Possible encodings of Hamiltonian terms
 #[derive(Debug, PartialEq)]
-pub enum Encoding {
+enum Encoding {
     /// Second quantization fermion interaction
     FermiCode,
     /// Pauli strings (codes)
