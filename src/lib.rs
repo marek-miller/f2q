@@ -8,8 +8,6 @@
 
 use std::fmt::Display;
 
-use codes::Code;
-
 pub mod codes;
 pub mod maps;
 pub mod math;

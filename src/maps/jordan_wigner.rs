@@ -8,17 +8,16 @@ use crate::{
             PauliCode,
         },
     },
-    Code,
     Error,
 };
 
-pub struct Map<K: Code>(K);
+pub struct Map(FermiCode);
 
-impl Map<FermiCode> {
-    pub fn map<T>(
+impl Map {
+    pub fn pauli_iter<T>(
         &self,
         coeff: T,
-    ) -> impl Iterator<Item = (PauliCode, T)>
+    ) -> impl Iterator<Item = (T, PauliCode)>
     where
         T: Float,
     {
@@ -26,7 +25,7 @@ impl Map<FermiCode> {
     }
 }
 
-impl TryFrom<FermiCode> for Map<FermiCode> {
+impl TryFrom<FermiCode> for Map {
     type Error = Error;
 
     fn try_from(value: FermiCode) -> Result<Self, Self::Error> {
@@ -65,16 +64,16 @@ impl TryFrom<FermiCode> for Map<FermiCode> {
 }
 
 #[derive(Debug)]
-pub struct PauliIter<T, K> {
+pub struct PauliIter<T> {
     coeff: T,
-    code:  K,
+    code:  FermiCode,
     index: u8,
 }
 
-impl<T, K> PauliIter<T, K> {
+impl<T> PauliIter<T> {
     pub fn new(
         coeff: T,
-        code: K,
+        code: FermiCode,
     ) -> Self {
         Self {
             coeff,
@@ -84,18 +83,18 @@ impl<T, K> PauliIter<T, K> {
     }
 }
 
-impl<T> Iterator for PauliIter<T, FermiCode>
+impl<T> Iterator for PauliIter<T>
 where
     T: Float,
 {
-    type Item = (PauliCode, T);
+    type Item = (T, PauliCode);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.code {
             FermiCode::Offset => {
                 if self.index == 0 {
                     self.index += 1;
-                    Some((PauliCode::default(), self.coeff))
+                    Some((self.coeff, PauliCode::default()))
                 } else {
                     None
                 }
@@ -147,15 +146,15 @@ fn next_item_one_pp<T: Float>(
     index: u8,
     coeff: T,
     p: u16,
-) -> Option<(PauliCode, T)> {
+) -> Option<(T, PauliCode)> {
     let one_half = T::from(0.5).expect("cannot convert 0.5");
 
     match index {
-        0 => Some((PauliCode::default(), coeff * one_half)),
+        0 => Some((coeff * one_half, PauliCode::identity())),
         1 => {
             let mut code = PauliCode::default();
             code.set(p, Pauli::Z);
-            Some((code, -coeff * one_half))
+            Some((-coeff * one_half, code))
         }
         _ => None,
     }
@@ -166,7 +165,7 @@ fn next_item_one_pq<T: Float>(
     coeff: T,
     p: u16,
     q: u16,
-) -> Option<(PauliCode, T)> {
+) -> Option<(T, PauliCode)> {
     let one_half = T::from(0.5).expect("cannot convert 0.5");
 
     let code = {
@@ -182,13 +181,13 @@ fn next_item_one_pq<T: Float>(
             let mut code = code;
             code.set(p, Pauli::X);
             code.set(q, Pauli::X);
-            Some((code, coeff * one_half))
+            Some((coeff * one_half, code))
         }
         1 => {
             let mut code = code;
             code.set(p, Pauli::Y);
             code.set(q, Pauli::Y);
-            Some((code, coeff * one_half))
+            Some((coeff * one_half, code))
         }
         _ => None,
     }
@@ -199,30 +198,30 @@ fn next_item_two_pq<T: Float>(
     coeff: T,
     p: u16,
     q: u16,
-) -> Option<(PauliCode, T)> {
+) -> Option<(T, PauliCode)> {
     let term = coeff
         * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
 
     match index {
         0 => {
             let code = PauliCode::default();
-            Some((code, term))
+            Some((term, code))
         }
         1 => {
             let mut code = PauliCode::default();
             code.set(p, Pauli::Z);
-            Some((code, -term))
+            Some((-term, code))
         }
         2 => {
             let mut code = PauliCode::default();
             code.set(q, Pauli::Z);
-            Some((code, -term))
+            Some((-term, code))
         }
         3 => {
             let mut code = PauliCode::default();
             code.set(p, Pauli::Z);
             code.set(q, Pauli::Z);
-            Some((code, term))
+            Some((term, code))
         }
         _ => None,
     }
@@ -234,7 +233,7 @@ fn next_item_two_pqs<T: Float>(
     p: u16,
     q: u16,
     s: u16,
-) -> Option<(PauliCode, T)> {
+) -> Option<(T, PauliCode)> {
     let term = coeff
         * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
 
@@ -251,27 +250,27 @@ fn next_item_two_pqs<T: Float>(
             let mut code = code;
             code.set(p, Pauli::X);
             code.set(s, Pauli::X);
-            Some((code, term))
+            Some((term, code))
         }
         1 => {
             let mut code = code;
             code.set(p, Pauli::X);
             code.set(q, Pauli::Z);
             code.set(s, Pauli::X);
-            Some((code, -term))
+            Some((-term, code))
         }
         2 => {
             let mut code = code;
             code.set(p, Pauli::Y);
             code.set(s, Pauli::Y);
-            Some((code, term))
+            Some((term, code))
         }
         3 => {
             let mut code = code;
             code.set(p, Pauli::Y);
             code.set(q, Pauli::Z);
             code.set(s, Pauli::Y);
-            Some((code, -term))
+            Some((-term, code))
         }
         _ => None,
     }
@@ -284,7 +283,7 @@ fn next_item_two_pqrs<T: Float>(
     q: u16,
     r: u16,
     s: u16,
-) -> Option<(PauliCode, T)> {
+) -> Option<(T, PauliCode)> {
     let term = coeff
         * T::from(0.125).expect("cannot obtain floating point fraction: 0.125");
 
@@ -306,7 +305,7 @@ fn next_item_two_pqrs<T: Float>(
             code.set(q, Pauli::X);
             code.set(r, Pauli::X);
             code.set(s, Pauli::X);
-            Some((code, term))
+            Some((term, code))
         }
         1 => {
             let mut code = code;
@@ -314,7 +313,7 @@ fn next_item_two_pqrs<T: Float>(
             code.set(q, Pauli::X);
             code.set(r, Pauli::Y);
             code.set(s, Pauli::Y);
-            Some((code, -term))
+            Some((-term, code))
         }
         2 => {
             let mut code = code;
@@ -322,7 +321,7 @@ fn next_item_two_pqrs<T: Float>(
             code.set(q, Pauli::Y);
             code.set(r, Pauli::X);
             code.set(s, Pauli::Y);
-            Some((code, term))
+            Some((term, code))
         }
         3 => {
             let mut code = code;
@@ -330,7 +329,7 @@ fn next_item_two_pqrs<T: Float>(
             code.set(q, Pauli::X);
             code.set(r, Pauli::X);
             code.set(s, Pauli::Y);
-            Some((code, term))
+            Some((term, code))
         }
         4 => {
             let mut code = code;
@@ -338,7 +337,7 @@ fn next_item_two_pqrs<T: Float>(
             code.set(q, Pauli::X);
             code.set(r, Pauli::Y);
             code.set(s, Pauli::X);
-            Some((code, term))
+            Some((term, code))
         }
         5 => {
             let mut code = code;
@@ -346,7 +345,7 @@ fn next_item_two_pqrs<T: Float>(
             code.set(q, Pauli::Y);
             code.set(r, Pauli::X);
             code.set(s, Pauli::X);
-            Some((code, -term))
+            Some((-term, code))
         }
         6 => {
             let mut code = code;
@@ -354,7 +353,7 @@ fn next_item_two_pqrs<T: Float>(
             code.set(q, Pauli::Y);
             code.set(r, Pauli::Y);
             code.set(s, Pauli::X);
-            Some((code, term))
+            Some((term, code))
         }
         7 => {
             let mut code = code;
@@ -362,7 +361,7 @@ fn next_item_two_pqrs<T: Float>(
             code.set(q, Pauli::Y);
             code.set(r, Pauli::Y);
             code.set(s, Pauli::Y);
-            Some((code, term))
+            Some((term, code))
         }
         _ => None,
     }

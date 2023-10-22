@@ -96,14 +96,10 @@ where
         &mut self,
         mut repr: impl Extend<(T, PauliCode)>,
     ) -> Result<(), Error> {
-        self.repr.iter().try_for_each({
-            |(&coeff, &code)| {
-                jordan_wigner::Map::try_from(code).map(|jw| {
-                    jw.map(coeff).for_each(|(code, coeff)| {
-                        repr.extend(Some((coeff, code)));
-                    });
-                })
-            }
-        })
+        for (&coeff, &code) in self.repr.iter() {
+            repr.extend(jordan_wigner::Map::try_from(code)?.pauli_iter(coeff))
+        }
+
+        Ok(())
     }
 }
