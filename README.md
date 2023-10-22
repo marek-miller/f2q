@@ -2,31 +2,92 @@
 
 [![Test](https://github.com/Quantum-for-Life/f2q/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Quantum-for-Life/f2q/actions/workflows/test.yml)
 
-Fermion-to-qubit mappings.
+Fermion-to-qubit mappings. High-octane representation of Pauli Hamiltonians with
+up to 64 qubits.
 
-High-octane representation of Pauli Hamiltonians with up to 64 qubits.
+This is a software library and a command line tool to parse and convert quantum
+chemistry Hamiltonians into a form suitable for quantum hardware based on qubit
+gates.
 
-WIP 🚧
+# How to use it
 
-- Parse and convert Hamiltonian representations used in quantum chemical
-  calculation into sums of Pauli strings
-- Canonical representation of second-quantized Hamiltonian
-- `SumRepr` can be serialized/deserialized quickly
-- `Hamil` is dynamical and can store: various encodings, functions generating
-  sum terms, iterators etc., all at the same time
-- Interface easily extendible to other mappings by implementing `Terms` trait.
-- Implement time evolution / dump to QASM file
+Make sure you have the Rust compiler installed, in version at least 1.70: 🦀
 
-To use the command line tool:
+```bash
+rustc --version
+```
 
-```sh
+If not, update Rust:
+
+```bash
+rustup update
+```
+
+or check out the
+[official Rust website](https://www.rust-lang.org/learn/get-started) on how to
+get started.
+
+If you only want to use the accompanying command line tool: `f2q`, install the
+executable like this:
+
+```bash
 cargo install f2q
+f2q --help
 ```
 
-To see documentation:
+To include the software library into you Rust project, use the package available
+on [crates.io](https://crates.io/crates/f2q):
 
-```sh
-cargo doc --open
+```bash
+cargo add f2q
 ```
 
-or [online](https://docs.rs/f2q/0.1.0/f2q/).
+The full documentation is available
+[online at docs.rs](https://docs.rs/f2q/0.1.0/f2q). 📚
+
+# Testing
+
+To run the library's test suite, make sure you have the
+[nightly Rust](https://rust-lang.github.io/rustup/concepts/channels.html)
+toolchain installed:
+
+```bash
+rustup install nightly
+```
+
+Clone the `f2q` repository to your local system:
+
+```bash
+git clone https://github.com/Quantum-for-Life/f2q.git
+cd f2q
+```
+
+and set nightly Rust as the default toolchain for this repo:
+
+```bash
+rustup override set nightly
+```
+
+Now, you can run the tests: ⚙️🪛
+
+```
+cargo test
+```
+
+# Contributing
+
+All contributions are welcome. 💐
+
+Before submitting patches, please reformat your code as specified in
+`rustfmt.toml` by running:
+
+```bash
+cargo clippy --fix
+cargo fmt
+```
+
+or if you have [`just`](https://just.systems/) installed:
+
+```
+just lint
+```
