@@ -6,6 +6,7 @@ authors = ["Marek Miller", "⧉⧉⧉"]
 keywords = ["quantum", "qubit", "fermion", "Jordan-Wigner", "Bravyi-Kitaev"]
 license = "MIT"
 edition = "2021"
+rust-version = "1.70"
 resolver = "2"
 default-run = "f2q"
 readme = "README.md"
