@@ -131,7 +131,7 @@ where
         S: serde::Serializer,
     {
         let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
-        for (&coeff, &code) in self.0 {
+        for (&coeff, &code) in self.0.iter() {
             seq.serialize_element(&FermiSumTerm {
                 code,
                 value: coeff,

@@ -100,8 +100,8 @@ where
             |(&coeff, &code)| {
                 jordan_wigner::Map::try_from(code).map(|jw| {
                     jw.map(coeff).for_each(|(code, coeff)| {
-                        repr.extend(Some((coeff, code)))
-                    })
+                        repr.extend(Some((coeff, code)));
+                    });
                 })
             }
         })

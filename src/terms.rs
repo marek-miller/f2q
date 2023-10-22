@@ -126,9 +126,8 @@ where
     ///
     /// assert_eq!(sum, 1.0);
     /// ```
-    #[must_use]
-    pub fn iter(&self) -> SumIter<'_, T, K> {
-        SumIter::new(self)
+    pub fn iter(&self) -> impl Iterator<Item = (&T, &K)> {
+        self.terms.iter().map(|(code, coeff)| (coeff, code))
     }
 
     /// Iterate over terms in the sum, allow mutable access to coefficients.
@@ -234,38 +233,6 @@ where
 
 /// Iterator over terms in [`SumRepr`].
 #[derive(Debug)]
-pub struct SumIter<'a, T, K>
-where
-    K: Code,
-{
-    iter: std::collections::hash_map::Iter<'a, K, T>,
-}
-
-impl<'a, T, K> SumIter<'a, T, K>
-where
-    K: Code,
-{
-    #[must_use]
-    pub fn new(repr: &'a SumRepr<T, K>) -> Self {
-        Self {
-            iter: repr.terms.iter(),
-        }
-    }
-}
-
-impl<'a, T, K> Iterator for SumIter<'a, T, K>
-where
-    K: Code,
-{
-    type Item = (&'a T, &'a K);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(code, coeff)| (coeff, code))
-    }
-}
-
-/// Iterator over terms in [`SumRepr`].
-#[derive(Debug)]
 pub struct SumIterMut<'a, T, K>
 where
     K: Code,
@@ -292,18 +259,6 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|(code, coeff)| (coeff, code))
-    }
-}
-
-impl<'a, T, K> IntoIterator for &'a SumRepr<T, K>
-where
-    K: Code,
-{
-    type IntoIter = SumIter<'a, T, K>;
-    type Item = (&'a T, &'a K);
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
     }
 }
 
