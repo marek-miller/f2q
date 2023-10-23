@@ -1,11 +1,11 @@
 use f2q::{
-    code::qubits::PauliCode,
+    code::qubits::Pauli,
     terms::SumRepr,
 };
 
 #[test]
 fn test_sumrepr_init_01() {
-    let code = PauliCode::new((1234, 0));
+    let code = Pauli::new((1234, 0));
     let mut hamil = SumRepr::new();
 
     hamil.update(code, 4321.);

@@ -10,8 +10,8 @@ use serde::{
 
 use crate::{
     code::qubits::{
+        Pauli,
         PauliOp,
-        PauliCode,
     },
     serialize::Encoding,
     terms::SumRepr,
@@ -29,9 +29,9 @@ impl Serialize for PauliOp {
     }
 }
 
-struct PauliVisitor;
+struct PauliOpVisitor;
 
-impl<'de> Visitor<'de> for PauliVisitor {
+impl<'de> Visitor<'de> for PauliOpVisitor {
     type Value = PauliOp;
 
     fn expecting(
@@ -79,11 +79,11 @@ impl<'de> Deserialize<'de> for PauliOp {
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_str(PauliVisitor)
+        deserializer.deserialize_str(PauliOpVisitor)
     }
 }
 
-impl Serialize for PauliCode {
+impl Serialize for Pauli {
     fn serialize<S>(
         &self,
         serializer: S,
@@ -95,10 +95,10 @@ impl Serialize for PauliCode {
     }
 }
 
-struct PauliCodeVisitor;
+struct PauliVisitor;
 
-impl<'de> Visitor<'de> for PauliCodeVisitor {
-    type Value = PauliCode;
+impl<'de> Visitor<'de> for PauliVisitor {
+    type Value = Pauli;
 
     fn expecting(
         &self,
@@ -120,7 +120,7 @@ impl<'de> Visitor<'de> for PauliCodeVisitor {
             return Err(E::custom("str len out of range: 1..=64".to_string()));
         }
 
-        let mut code = PauliCode::default();
+        let mut code = Pauli::default();
 
         for (i, ch) in v.chars().enumerate() {
             let pauli = match ch {
@@ -141,22 +141,22 @@ impl<'de> Visitor<'de> for PauliCodeVisitor {
     }
 }
 
-impl<'de> Deserialize<'de> for PauliCode {
+impl<'de> Deserialize<'de> for Pauli {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_str(PauliCodeVisitor)
+        deserializer.deserialize_str(PauliVisitor)
     }
 }
 
 #[derive(Serialize, Deserialize)]
 struct PauliSumTerm<T> {
-    code:  PauliCode,
+    code:  Pauli,
     value: T,
 }
 
-struct PauliSumSerSequence<'a, T>(&'a SumRepr<T, PauliCode>);
+struct PauliSumSerSequence<'a, T>(&'a SumRepr<T, Pauli>);
 
 impl<'a, T> Serialize for PauliSumSerSequence<'a, T>
 where
@@ -191,7 +191,7 @@ where
     terms:    PauliSumSerSequence<'a, T>,
 }
 
-impl<T> Serialize for SumRepr<T, PauliCode>
+impl<T> Serialize for SumRepr<T, Pauli>
 where
     T: Float + Serialize,
 {
@@ -211,7 +211,7 @@ where
     }
 }
 
-struct PauliSumDeSequence<T>(SumRepr<T, PauliCode>);
+struct PauliSumDeSequence<T>(SumRepr<T, Pauli>);
 
 struct PauliSumVisitor<T> {
     _marker: PhantomData<T>,
@@ -282,7 +282,7 @@ where
     terms:    PauliSumDeSequence<T>,
 }
 
-impl<'de, T> Deserialize<'de> for SumRepr<T, PauliCode>
+impl<'de, T> Deserialize<'de> for SumRepr<T, Pauli>
 where
     T: Float + Deserialize<'de>,
 {

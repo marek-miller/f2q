@@ -4,8 +4,8 @@ use crate::{
     code::{
         fermions::FermiCode,
         qubits::{
+            Pauli,
             PauliOp,
-            PauliCode,
         },
     },
     terms::{
@@ -21,7 +21,7 @@ impl Map {
     pub fn pauli_iter<T>(
         &self,
         coeff: T,
-    ) -> impl Iterator<Item = (T, PauliCode)>
+    ) -> impl Iterator<Item = (T, Pauli)>
     where
         T: Float,
     {
@@ -91,14 +91,14 @@ impl<T> Iterator for PauliIter<T>
 where
     T: Float,
 {
-    type Item = (T, PauliCode);
+    type Item = (T, Pauli);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.code {
             FermiCode::Offset => {
                 if self.index == 0 {
                     self.index += 1;
-                    Some((self.coeff, PauliCode::default()))
+                    Some((self.coeff, Pauli::default()))
                 } else {
                     None
                 }
@@ -150,13 +150,13 @@ fn next_item_one_pp<T: Float>(
     index: u8,
     coeff: T,
     p: u16,
-) -> Option<(T, PauliCode)> {
+) -> Option<(T, Pauli)> {
     let one_half = T::from(0.5).expect("cannot convert 0.5");
 
     match index {
-        0 => Some((coeff * one_half, PauliCode::identity())),
+        0 => Some((coeff * one_half, Pauli::identity())),
         1 => {
-            let mut code = PauliCode::default();
+            let mut code = Pauli::default();
             code.set(p, PauliOp::Z);
             Some((-coeff * one_half, code))
         }
@@ -169,11 +169,11 @@ fn next_item_one_pq<T: Float>(
     coeff: T,
     p: u16,
     q: u16,
-) -> Option<(T, PauliCode)> {
+) -> Option<(T, Pauli)> {
     let one_half = T::from(0.5).expect("cannot convert 0.5");
 
     let code = {
-        let mut code = PauliCode::default();
+        let mut code = Pauli::default();
         for i in p + 1..q {
             code.set(i, PauliOp::Z);
         }
@@ -202,27 +202,27 @@ fn next_item_two_pq<T: Float>(
     coeff: T,
     p: u16,
     q: u16,
-) -> Option<(T, PauliCode)> {
+) -> Option<(T, Pauli)> {
     let term = coeff
         * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
 
     match index {
         0 => {
-            let code = PauliCode::default();
+            let code = Pauli::default();
             Some((term, code))
         }
         1 => {
-            let mut code = PauliCode::default();
+            let mut code = Pauli::default();
             code.set(p, PauliOp::Z);
             Some((-term, code))
         }
         2 => {
-            let mut code = PauliCode::default();
+            let mut code = Pauli::default();
             code.set(q, PauliOp::Z);
             Some((-term, code))
         }
         3 => {
-            let mut code = PauliCode::default();
+            let mut code = Pauli::default();
             code.set(p, PauliOp::Z);
             code.set(q, PauliOp::Z);
             Some((term, code))
@@ -237,12 +237,12 @@ fn next_item_two_pqs<T: Float>(
     p: u16,
     q: u16,
     s: u16,
-) -> Option<(T, PauliCode)> {
+) -> Option<(T, Pauli)> {
     let term = coeff
         * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
 
     let code = {
-        let mut code = PauliCode::default();
+        let mut code = Pauli::default();
         for i in p + 1..s {
             code.set(i, PauliOp::Z);
         }
@@ -287,12 +287,12 @@ fn next_item_two_pqrs<T: Float>(
     q: u16,
     r: u16,
     s: u16,
-) -> Option<(T, PauliCode)> {
+) -> Option<(T, Pauli)> {
     let term = coeff
         * T::from(0.125).expect("cannot obtain floating point fraction: 0.125");
 
     let code = {
-        let mut code = PauliCode::default();
+        let mut code = Pauli::default();
         for i in p + 1..q {
             code.set(i, PauliOp::Z);
         }
@@ -374,7 +374,7 @@ fn next_item_two_pqrs<T: Float>(
 /// Jordan-Wigner mapping.
 ///
 /// This mapping is initialized with [`SumRepr<T,FermiCode>`],
-/// but implements [`Terms<T, PauliCode>`].  The standard way
+/// but implements [`Terms<T, Pauli>`].  The standard way
 /// of using it is presented in the following example.
 ///
 /// # Examples
@@ -389,8 +389,8 @@ fn next_item_two_pqrs<T: Float>(
 ///             Orbital,
 ///         },
 ///         qubits::{
+///             Pauli,
 ///             PauliOp,
-///             PauliCode,
 ///             PauliSum,
 ///         },
 ///     },
@@ -416,9 +416,9 @@ fn next_item_two_pqrs<T: Float>(
 /// JordanWigner::new(&fermi_repr).add_to(&mut pauli_repr)?;
 ///
 /// // We should obtain the following two Pauli strings weights 0.5
-/// let code_i0 = PauliCode::default();
+/// let code_i0 = Pauli::default();
 /// let code_z0 = {
-///     let mut code = PauliCode::default();
+///     let mut code = Pauli::default();
 ///     code.set(idx.try_into().unwrap(), PauliOp::Z);
 ///     code
 /// };
@@ -441,7 +441,7 @@ impl<'a, T> JordanWigner<'a, T> {
     }
 }
 
-impl<'a, T> Terms<(T, PauliCode)> for JordanWigner<'a, T>
+impl<'a, T> Terms<(T, Pauli)> for JordanWigner<'a, T>
 where
     T: Float,
 {
@@ -449,7 +449,7 @@ where
 
     fn add_to(
         &mut self,
-        mut repr: impl Extend<(T, PauliCode)>,
+        mut repr: impl Extend<(T, Pauli)>,
     ) -> Result<(), Error> {
         for (&coeff, &code) in self.repr.iter() {
             repr.extend(Map::try_from(code)?.pauli_iter(coeff));
