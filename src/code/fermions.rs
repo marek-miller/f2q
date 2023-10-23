@@ -28,7 +28,7 @@ impl Spin {
     /// # Example
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::Spin;
+    /// # use f2q::code::fermions::Spin;
     ///
     /// let spin = Spin::Up;
     /// assert!(spin.is_up());
@@ -49,7 +49,7 @@ impl Spin {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::Spin;
+    /// # use f2q::code::fermions::Spin;
     ///
     /// let spin = Spin::Down;
     /// assert_eq!(spin.flip(), Spin::Up);
@@ -67,7 +67,7 @@ impl Spin {
     /// # Example
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::Spin;
+    /// # use f2q::code::fermions::Spin;
     ///
     /// let spins: Vec<_> = Spin::both().collect();
     ///
@@ -119,7 +119,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{Orbital, Spin};
+    /// # use f2q::code::fermions::{Orbital, Spin};
     ///
     /// let orb = Orbital::new(0, Spin::Down);
     /// assert_eq!(orb.index(), 0);
@@ -148,7 +148,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{Orbital, Spin};
+    /// # use f2q::code::fermions::{Orbital, Spin};
     ///
     /// let orb = Orbital::new(0, Spin::Down);
     /// assert_eq!(orb.index(), 0);
@@ -170,7 +170,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{Orbital, Spin};
+    /// # use f2q::code::fermions::{Orbital, Spin};
     ///
     /// let orbital = Orbital::from_index(3);
     ///
@@ -190,7 +190,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{Orbital, Spin};
+    /// # use f2q::code::fermions::{Orbital, Spin};
     ///
     /// let orbitals: Vec<_> = Orbital::gen_range((1..=3)).collect();
     ///
@@ -303,7 +303,7 @@ impl FermiCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::FermiCode;
+    /// # use f2q::code::fermions::FermiCode;
     ///
     /// let integral = FermiCode::new();
     ///
@@ -320,7 +320,7 @@ impl FermiCode {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{FermiCode, Orbital, Spin, Cr, An};
+    /// # use f2q::code::fermions::{FermiCode, Orbital, Spin, Cr, An};
     ///
     /// let integral = FermiCode::one_electron(
     ///     Cr(Orbital::new(0, Spin::Down)),
@@ -357,7 +357,7 @@ impl FermiCode {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{FermiCode, Orbital, Spin, Cr, An};
+    /// # use f2q::code::fermions::{FermiCode, Orbital, Spin, Cr, An};
     ///
     /// let integral = FermiCode::two_electron(
     ///     (

@@ -1,7 +1,7 @@
 use num::Float;
 
 use crate::{
-    codes::{
+    code::{
         fermions::FermiCode,
         qubits::{
             Pauli,
@@ -381,7 +381,7 @@ fn next_item_two_pqrs<T: Float>(
 ///
 /// ```rust
 /// use f2q::{
-///     codes::{
+///     code::{
 ///         fermions::{
 ///             An,
 ///             Cr,
@@ -394,7 +394,7 @@ fn next_item_two_pqrs<T: Float>(
 ///             PauliSum,
 ///         },
 ///     },
-///     maps::JordanWigner,
+///     map::JordanWigner,
 ///     terms::{
 ///         SumRepr,
 ///         Terms,

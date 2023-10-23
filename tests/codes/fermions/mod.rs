@@ -1,6 +1,6 @@
 use std::ops::RangeBounds;
 
-use f2q::codes::fermions::{
+use f2q::code::fermions::{
     Orbital,
     Spin,
 };

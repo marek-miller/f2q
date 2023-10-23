@@ -9,7 +9,7 @@ use serde::{
 };
 
 use crate::{
-    codes::qubits::{
+    code::qubits::{
         Pauli,
         PauliCode,
     },

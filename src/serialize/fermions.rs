@@ -9,7 +9,7 @@ use serde::{
 };
 
 use crate::{
-    codes::fermions::{
+    code::fermions::{
         An,
         Cr,
         FermiCode,

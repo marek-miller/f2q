@@ -1,5 +1,5 @@
 use f2q::{
-    codes::qubits::{
+    code::qubits::{
         PauliCode,
         PauliGroup,
     },

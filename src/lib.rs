@@ -8,7 +8,7 @@
 
 use std::fmt::Display;
 
-pub mod codes;
+pub mod code;
 pub mod map;
 pub mod math;
 pub mod terms;

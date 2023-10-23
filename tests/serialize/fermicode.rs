@@ -1,4 +1,4 @@
-use f2q::codes::fermions::{
+use f2q::code::fermions::{
     An,
     Cr,
     FermiCode,

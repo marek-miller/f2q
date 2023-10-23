@@ -16,7 +16,7 @@ const PAULI_MASK: u64 = 0b11;
 /// # Examples
 ///
 /// ```rust
-/// # use f2q::codes::qubits::Pauli;
+/// # use f2q::code::qubits::Pauli;
 /// use f2q::Error::PauliIndex;
 ///
 /// let paulis: Vec<_> = (0..=4).map(|i| Pauli::try_from(i)).collect();
@@ -99,7 +99,7 @@ impl From<Pauli> for String {
 /// # Examples
 ///
 /// ```rust
-/// # use f2q::codes::qubits::PauliCode;
+/// # use f2q::code::qubits::PauliCode;
 /// let code = PauliCode::default();
 ///
 /// assert_eq!(code.enumerate(), 0);
@@ -149,7 +149,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::{Pauli, PauliCode};
+    /// # use f2q::code::qubits::{Pauli, PauliCode};
     ///
     /// let code = PauliCode::new((0b0100, 0b1110));
     ///
@@ -172,7 +172,7 @@ impl PauliCode {
     /// # Example
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::{Pauli, PauliCode};
+    /// # use f2q::code::qubits::{Pauli, PauliCode};
     ///
     /// let code = PauliCode::identity();
     ///
@@ -196,7 +196,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::PauliCode;
+    /// # use f2q::code::qubits::PauliCode;
     /// let code = PauliCode::new((3, 4));
     ///
     /// assert_eq!(code.enumerate(), 3 + (4 << 64));
@@ -217,7 +217,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::{PauliCode, Pauli};
+    /// # use f2q::code::qubits::{PauliCode, Pauli};
     /// let code = PauliCode::new((0b1000, 0));
     /// let pauli = unsafe { code.pauli_unchecked(1) };
     ///
@@ -246,7 +246,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::{PauliCode, Pauli};
+    /// # use f2q::code::qubits::{PauliCode, Pauli};
     /// let code = PauliCode::new((0b1000, 0));
     ///
     /// let pauli = code.pauli(1);
@@ -280,7 +280,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::{Pauli, PauliCode};
+    /// # use f2q::code::qubits::{Pauli, PauliCode};
     /// let mut code = PauliCode::new((0, 0b01));
     /// assert_eq!(code.pauli(32), Some(Pauli::X));
     ///
@@ -318,7 +318,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::{Pauli, PauliCode};
+    /// # use f2q::code::qubits::{Pauli, PauliCode};
     /// let mut code = PauliCode::default();
     /// assert_eq!(code.pauli(17), Some(Pauli::I));
     ///
@@ -347,7 +347,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::{Pauli, PauliCode};
+    /// # use f2q::code::qubits::{Pauli, PauliCode};
     /// let mut code = PauliCode::new((0, 0b01));
     /// assert_eq!(code.pauli(32), Some(Pauli::X));
     ///
@@ -392,7 +392,7 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::{Pauli, PauliCode};
+    /// # use f2q::code::qubits::{Pauli, PauliCode};
     /// let mut code = PauliCode::default();
     /// assert_eq!(code.pauli(17), Some(Pauli::I));
     ///
@@ -419,8 +419,8 @@ impl PauliCode {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::{Pauli, PauliCode};
-    /// use f2q::codes::qubits::Pauli::{
+    /// # use f2q::code::qubits::{Pauli, PauliCode};
+    /// use f2q::code::qubits::Pauli::{
     ///     X,
     ///     Y,
     ///     Z,
@@ -463,7 +463,7 @@ impl PauliCode {
     ///
     ///
     /// ```rust
-    /// # use f2q::codes::qubits::{Pauli, PauliCode};
+    /// # use f2q::code::qubits::{Pauli, PauliCode};
     ///
     /// let par_op = PauliCode::parity_op(2);
     ///
@@ -561,7 +561,7 @@ mod pauli_group {
     use std::ops::Mul;
 
     use crate::{
-        codes::qubits::{
+        code::qubits::{
             Pauli,
             PauliCode,
         },

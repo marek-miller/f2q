@@ -1,5 +1,5 @@
 use f2q::{
-    codes::qubits::PauliSum,
+    code::qubits::PauliSum,
     map::JordanWigner,
     terms::Terms,
 };
@@ -45,7 +45,7 @@ mod jordan_wigner {
         },
     };
 
-    use f2q::codes::fermions::FermiSum;
+    use f2q::code::fermions::FermiSum;
 
     use crate::{
         cli::{

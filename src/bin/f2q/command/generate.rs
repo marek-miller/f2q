@@ -1,5 +1,5 @@
 use f2q::{
-    codes::{
+    code::{
         fermions::{
             An,
             Cr,

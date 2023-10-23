@@ -1,4 +1,4 @@
-use f2q::codes::qubits::{
+use f2q::code::qubits::{
     Pauli,
     PauliCode,
 };

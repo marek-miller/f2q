@@ -1,5 +1,5 @@
 use f2q::{
-    codes::qubits::PauliCode,
+    code::qubits::PauliCode,
     terms::SumRepr,
 };
 

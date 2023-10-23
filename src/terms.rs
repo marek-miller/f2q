@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use num::Float;
 
 use crate::{
-    codes::Code,
+    code::Code,
     Error,
 };
 
@@ -48,7 +48,7 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{terms::SumRepr, codes::qubits::PauliCode};
+    /// # use f2q::{terms::SumRepr, code::qubits::PauliCode};
     /// let repr = SumRepr::<f64, PauliCode>::new();
     ///
     /// assert!(repr.is_empty());
@@ -68,7 +68,7 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{terms::SumRepr, codes::qubits::PauliCode};
+    /// # use f2q::{terms::SumRepr, code::qubits::PauliCode};
     /// let repr = SumRepr::<f64, PauliCode>::with_capacity(8);
     ///
     /// assert!(repr.capacity() >= 8);
@@ -88,7 +88,7 @@ where
     ///  /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{terms::SumRepr, codes::qubits::PauliCode};
+    /// # use f2q::{terms::SumRepr, code::qubits::PauliCode};
     /// let repr = SumRepr::<f64, PauliCode>::with_capacity(8);
     ///
     /// assert!(repr.capacity() >= 8);
@@ -117,7 +117,7 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{codes::qubits::PauliCode, terms::SumRepr};
+    /// # use f2q::{code::qubits::PauliCode, terms::SumRepr};
     ///
     /// let mut repr = SumRepr::new();
     ///
@@ -140,7 +140,7 @@ where
     ///  /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{codes::qubits::PauliCode, terms::SumRepr};
+    /// # use f2q::{code::qubits::PauliCode, terms::SumRepr};
     ///
     /// let mut repr = SumRepr::new();
     ///

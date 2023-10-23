@@ -7,7 +7,7 @@ use std::{
 };
 
 use f2q::{
-    codes::Code,
+    code::Code,
     terms::SumRepr,
 };
 use num::Float;
