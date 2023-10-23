@@ -13,7 +13,7 @@ use f2q::{
             PauliSum,
         },
     },
-    maps::JordanWigner,
+    map::JordanWigner,
     terms::{
         SumRepr,
         Terms,

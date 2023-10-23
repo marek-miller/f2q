@@ -1,6 +1,6 @@
 use f2q::{
     codes::qubits::PauliSum,
-    maps::JordanWigner,
+    map::JordanWigner,
     terms::Terms,
 };
 
