@@ -10,14 +10,14 @@ use serde::{
 
 use crate::{
     code::qubits::{
-        Pauli,
+        PauliOp,
         PauliCode,
     },
     serialize::Encoding,
     terms::SumRepr,
 };
 
-impl Serialize for Pauli {
+impl Serialize for PauliOp {
     fn serialize<S>(
         &self,
         serializer: S,
@@ -32,7 +32,7 @@ impl Serialize for Pauli {
 struct PauliVisitor;
 
 impl<'de> Visitor<'de> for PauliVisitor {
-    type Value = Pauli;
+    type Value = PauliOp;
 
     fn expecting(
         &self,
@@ -49,10 +49,10 @@ impl<'de> Visitor<'de> for PauliVisitor {
         E: serde::de::Error,
     {
         match v {
-            'I' => Ok(Pauli::I),
-            'X' => Ok(Pauli::X),
-            'Y' => Ok(Pauli::Y),
-            'Z' => Ok(Pauli::Z),
+            'I' => Ok(PauliOp::I),
+            'X' => Ok(PauliOp::X),
+            'Y' => Ok(PauliOp::Y),
+            'Z' => Ok(PauliOp::Z),
             _ => Err(E::custom("unknown symbol")),
         }
     }
@@ -65,16 +65,16 @@ impl<'de> Visitor<'de> for PauliVisitor {
         E: serde::de::Error,
     {
         match v {
-            "I" => Ok(Pauli::I),
-            "X" => Ok(Pauli::X),
-            "Y" => Ok(Pauli::Y),
-            "Z" => Ok(Pauli::Z),
+            "I" => Ok(PauliOp::I),
+            "X" => Ok(PauliOp::X),
+            "Y" => Ok(PauliOp::Y),
+            "Z" => Ok(PauliOp::Z),
             _ => Err(E::custom("unknown symbol")),
         }
     }
 }
 
-impl<'de> Deserialize<'de> for Pauli {
+impl<'de> Deserialize<'de> for PauliOp {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -124,10 +124,10 @@ impl<'de> Visitor<'de> for PauliCodeVisitor {
 
         for (i, ch) in v.chars().enumerate() {
             let pauli = match ch {
-                'I' => Ok(Pauli::I),
-                'X' => Ok(Pauli::X),
-                'Y' => Ok(Pauli::Y),
-                'Z' => Ok(Pauli::Z),
+                'I' => Ok(PauliOp::I),
+                'X' => Ok(PauliOp::X),
+                'Y' => Ok(PauliOp::Y),
+                'Z' => Ok(PauliOp::Z),
                 _ => Err(E::custom(
                     "character must be one of: I, X, Y, Z".to_string(),
                 )),

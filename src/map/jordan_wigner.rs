@@ -4,7 +4,7 @@ use crate::{
     code::{
         fermions::FermiCode,
         qubits::{
-            Pauli,
+            PauliOp,
             PauliCode,
         },
     },
@@ -157,7 +157,7 @@ fn next_item_one_pp<T: Float>(
         0 => Some((coeff * one_half, PauliCode::identity())),
         1 => {
             let mut code = PauliCode::default();
-            code.set(p, Pauli::Z);
+            code.set(p, PauliOp::Z);
             Some((-coeff * one_half, code))
         }
         _ => None,
@@ -175,7 +175,7 @@ fn next_item_one_pq<T: Float>(
     let code = {
         let mut code = PauliCode::default();
         for i in p + 1..q {
-            code.set(i, Pauli::Z);
+            code.set(i, PauliOp::Z);
         }
         code
     };
@@ -183,14 +183,14 @@ fn next_item_one_pq<T: Float>(
     match index {
         0 => {
             let mut code = code;
-            code.set(p, Pauli::X);
-            code.set(q, Pauli::X);
+            code.set(p, PauliOp::X);
+            code.set(q, PauliOp::X);
             Some((coeff * one_half, code))
         }
         1 => {
             let mut code = code;
-            code.set(p, Pauli::Y);
-            code.set(q, Pauli::Y);
+            code.set(p, PauliOp::Y);
+            code.set(q, PauliOp::Y);
             Some((coeff * one_half, code))
         }
         _ => None,
@@ -213,18 +213,18 @@ fn next_item_two_pq<T: Float>(
         }
         1 => {
             let mut code = PauliCode::default();
-            code.set(p, Pauli::Z);
+            code.set(p, PauliOp::Z);
             Some((-term, code))
         }
         2 => {
             let mut code = PauliCode::default();
-            code.set(q, Pauli::Z);
+            code.set(q, PauliOp::Z);
             Some((-term, code))
         }
         3 => {
             let mut code = PauliCode::default();
-            code.set(p, Pauli::Z);
-            code.set(q, Pauli::Z);
+            code.set(p, PauliOp::Z);
+            code.set(q, PauliOp::Z);
             Some((term, code))
         }
         _ => None,
@@ -244,7 +244,7 @@ fn next_item_two_pqs<T: Float>(
     let code = {
         let mut code = PauliCode::default();
         for i in p + 1..s {
-            code.set(i, Pauli::Z);
+            code.set(i, PauliOp::Z);
         }
         code
     };
@@ -252,28 +252,28 @@ fn next_item_two_pqs<T: Float>(
     match index {
         0 => {
             let mut code = code;
-            code.set(p, Pauli::X);
-            code.set(s, Pauli::X);
+            code.set(p, PauliOp::X);
+            code.set(s, PauliOp::X);
             Some((term, code))
         }
         1 => {
             let mut code = code;
-            code.set(p, Pauli::X);
-            code.set(q, Pauli::Z);
-            code.set(s, Pauli::X);
+            code.set(p, PauliOp::X);
+            code.set(q, PauliOp::Z);
+            code.set(s, PauliOp::X);
             Some((-term, code))
         }
         2 => {
             let mut code = code;
-            code.set(p, Pauli::Y);
-            code.set(s, Pauli::Y);
+            code.set(p, PauliOp::Y);
+            code.set(s, PauliOp::Y);
             Some((term, code))
         }
         3 => {
             let mut code = code;
-            code.set(p, Pauli::Y);
-            code.set(q, Pauli::Z);
-            code.set(s, Pauli::Y);
+            code.set(p, PauliOp::Y);
+            code.set(q, PauliOp::Z);
+            code.set(s, PauliOp::Y);
             Some((-term, code))
         }
         _ => None,
@@ -294,10 +294,10 @@ fn next_item_two_pqrs<T: Float>(
     let code = {
         let mut code = PauliCode::default();
         for i in p + 1..q {
-            code.set(i, Pauli::Z);
+            code.set(i, PauliOp::Z);
         }
         for i in s + 1..r {
-            code.set(i, Pauli::Z);
+            code.set(i, PauliOp::Z);
         }
         code
     };
@@ -305,66 +305,66 @@ fn next_item_two_pqrs<T: Float>(
     match index {
         0 => {
             let mut code = code;
-            code.set(p, Pauli::X);
-            code.set(q, Pauli::X);
-            code.set(r, Pauli::X);
-            code.set(s, Pauli::X);
+            code.set(p, PauliOp::X);
+            code.set(q, PauliOp::X);
+            code.set(r, PauliOp::X);
+            code.set(s, PauliOp::X);
             Some((term, code))
         }
         1 => {
             let mut code = code;
-            code.set(p, Pauli::X);
-            code.set(q, Pauli::X);
-            code.set(r, Pauli::Y);
-            code.set(s, Pauli::Y);
+            code.set(p, PauliOp::X);
+            code.set(q, PauliOp::X);
+            code.set(r, PauliOp::Y);
+            code.set(s, PauliOp::Y);
             Some((-term, code))
         }
         2 => {
             let mut code = code;
-            code.set(p, Pauli::X);
-            code.set(q, Pauli::Y);
-            code.set(r, Pauli::X);
-            code.set(s, Pauli::Y);
+            code.set(p, PauliOp::X);
+            code.set(q, PauliOp::Y);
+            code.set(r, PauliOp::X);
+            code.set(s, PauliOp::Y);
             Some((term, code))
         }
         3 => {
             let mut code = code;
-            code.set(p, Pauli::Y);
-            code.set(q, Pauli::X);
-            code.set(r, Pauli::X);
-            code.set(s, Pauli::Y);
+            code.set(p, PauliOp::Y);
+            code.set(q, PauliOp::X);
+            code.set(r, PauliOp::X);
+            code.set(s, PauliOp::Y);
             Some((term, code))
         }
         4 => {
             let mut code = code;
-            code.set(p, Pauli::Y);
-            code.set(q, Pauli::X);
-            code.set(r, Pauli::Y);
-            code.set(s, Pauli::X);
+            code.set(p, PauliOp::Y);
+            code.set(q, PauliOp::X);
+            code.set(r, PauliOp::Y);
+            code.set(s, PauliOp::X);
             Some((term, code))
         }
         5 => {
             let mut code = code;
-            code.set(p, Pauli::Y);
-            code.set(q, Pauli::Y);
-            code.set(r, Pauli::X);
-            code.set(s, Pauli::X);
+            code.set(p, PauliOp::Y);
+            code.set(q, PauliOp::Y);
+            code.set(r, PauliOp::X);
+            code.set(s, PauliOp::X);
             Some((-term, code))
         }
         6 => {
             let mut code = code;
-            code.set(p, Pauli::X);
-            code.set(q, Pauli::Y);
-            code.set(r, Pauli::Y);
-            code.set(s, Pauli::X);
+            code.set(p, PauliOp::X);
+            code.set(q, PauliOp::Y);
+            code.set(r, PauliOp::Y);
+            code.set(s, PauliOp::X);
             Some((term, code))
         }
         7 => {
             let mut code = code;
-            code.set(p, Pauli::Y);
-            code.set(q, Pauli::Y);
-            code.set(r, Pauli::Y);
-            code.set(s, Pauli::Y);
+            code.set(p, PauliOp::Y);
+            code.set(q, PauliOp::Y);
+            code.set(r, PauliOp::Y);
+            code.set(s, PauliOp::Y);
             Some((term, code))
         }
         _ => None,
@@ -389,7 +389,7 @@ fn next_item_two_pqrs<T: Float>(
 ///             Orbital,
 ///         },
 ///         qubits::{
-///             Pauli,
+///             PauliOp,
 ///             PauliCode,
 ///             PauliSum,
 ///         },
@@ -419,7 +419,7 @@ fn next_item_two_pqrs<T: Float>(
 /// let code_i0 = PauliCode::default();
 /// let code_z0 = {
 ///     let mut code = PauliCode::default();
-///     code.set(idx.try_into().unwrap(), Pauli::Z);
+///     code.set(idx.try_into().unwrap(), PauliOp::Z);
 ///     code
 /// };
 ///

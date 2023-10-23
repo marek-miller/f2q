@@ -8,7 +8,7 @@ use f2q::{
             Orbital,
         },
         qubits::{
-            Pauli,
+            PauliOp,
             PauliCode,
             PauliSum,
         },
@@ -61,7 +61,7 @@ fn check_jordan_wigner_one_pp(index: u32) {
 
     let code = {
         let mut code = PauliCode::default();
-        code.set(u16::try_from(index).unwrap(), Pauli::Z);
+        code.set(u16::try_from(index).unwrap(), PauliOp::Z);
         code
     };
     let coeff = pauli_sum.coeff(code);
@@ -99,10 +99,10 @@ fn check_jordan_wigner_one_pq(
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index2 {
-        code.set(i, Pauli::Z);
+        code.set(i, PauliOp::Z);
     }
-    code.set(index1, Pauli::X);
-    code.set(index2, Pauli::X);
+    code.set(index1, PauliOp::X);
+    code.set(index2, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.5;
     assert!(
@@ -110,8 +110,8 @@ fn check_jordan_wigner_one_pq(
         "{coeff} {expected}"
     );
 
-    code.set(index1, Pauli::Y);
-    code.set(index2, Pauli::Y);
+    code.set(index1, PauliOp::Y);
+    code.set(index2, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.5;
     assert!(
@@ -157,7 +157,7 @@ fn check_jordan_wigner_two_pq(
     );
 
     let mut code = PauliCode::default();
-    code.set(index1, Pauli::Z);
+    code.set(index1, PauliOp::Z);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
@@ -166,7 +166,7 @@ fn check_jordan_wigner_two_pq(
     );
 
     let mut code = PauliCode::default();
-    code.set(index2, Pauli::Z);
+    code.set(index2, PauliOp::Z);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
@@ -175,8 +175,8 @@ fn check_jordan_wigner_two_pq(
     );
 
     let mut code = PauliCode::default();
-    code.set(index1, Pauli::Z);
-    code.set(index2, Pauli::Z);
+    code.set(index1, PauliOp::Z);
+    code.set(index2, PauliOp::Z);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
@@ -220,10 +220,10 @@ fn check_jordan_wigner_two_pqs(
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z);
+        code.set(i, PauliOp::Z);
     }
-    code.set(index1, Pauli::X);
-    code.set(index3, Pauli::X);
+    code.set(index1, PauliOp::X);
+    code.set(index3, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
@@ -233,10 +233,10 @@ fn check_jordan_wigner_two_pqs(
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z);
+        code.set(i, PauliOp::Z);
     }
-    code.set(index1, Pauli::Y);
-    code.set(index3, Pauli::Y);
+    code.set(index1, PauliOp::Y);
+    code.set(index3, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
@@ -246,11 +246,11 @@ fn check_jordan_wigner_two_pqs(
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z);
+        code.set(i, PauliOp::Z);
     }
-    code.set(index1, Pauli::X);
-    code.set(index3, Pauli::X);
-    code.set(index2, Pauli::Z);
+    code.set(index1, PauliOp::X);
+    code.set(index3, PauliOp::X);
+    code.set(index2, PauliOp::Z);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
@@ -260,11 +260,11 @@ fn check_jordan_wigner_two_pqs(
 
     let mut code = PauliCode::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z);
+        code.set(i, PauliOp::Z);
     }
-    code.set(index1, Pauli::Y);
-    code.set(index3, Pauli::Y);
-    code.set(index2, Pauli::Z);
+    code.set(index1, PauliOp::Y);
+    code.set(index3, PauliOp::Y);
+    code.set(index2, PauliOp::Z);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
@@ -311,19 +311,19 @@ fn check_jordan_wigner_two_pqrs(
     let base_code = {
         let mut code = PauliCode::default();
         for i in index1 + 1..index2 {
-            code.set(i, Pauli::Z);
+            code.set(i, PauliOp::Z);
         }
         for i in index4 + 1..index3 {
-            code.set(i, Pauli::Z);
+            code.set(i, PauliOp::Z);
         }
         code
     };
 
     let mut code = base_code;
-    code.set(index1, Pauli::X);
-    code.set(index2, Pauli::X);
-    code.set(index3, Pauli::X);
-    code.set(index4, Pauli::X);
+    code.set(index1, PauliOp::X);
+    code.set(index2, PauliOp::X);
+    code.set(index3, PauliOp::X);
+    code.set(index4, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
@@ -332,10 +332,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::X);
-    code.set(index2, Pauli::X);
-    code.set(index3, Pauli::Y);
-    code.set(index4, Pauli::Y);
+    code.set(index1, PauliOp::X);
+    code.set(index2, PauliOp::X);
+    code.set(index3, PauliOp::Y);
+    code.set(index4, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.125;
     assert!(
@@ -344,10 +344,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::X);
-    code.set(index2, Pauli::Y);
-    code.set(index3, Pauli::X);
-    code.set(index4, Pauli::Y);
+    code.set(index1, PauliOp::X);
+    code.set(index2, PauliOp::Y);
+    code.set(index3, PauliOp::X);
+    code.set(index4, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
@@ -356,10 +356,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::Y);
-    code.set(index2, Pauli::X);
-    code.set(index3, Pauli::X);
-    code.set(index4, Pauli::Y);
+    code.set(index1, PauliOp::Y);
+    code.set(index2, PauliOp::X);
+    code.set(index3, PauliOp::X);
+    code.set(index4, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
@@ -368,10 +368,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::Y);
-    code.set(index2, Pauli::X);
-    code.set(index3, Pauli::Y);
-    code.set(index4, Pauli::X);
+    code.set(index1, PauliOp::Y);
+    code.set(index2, PauliOp::X);
+    code.set(index3, PauliOp::Y);
+    code.set(index4, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
@@ -380,10 +380,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::Y);
-    code.set(index2, Pauli::Y);
-    code.set(index3, Pauli::X);
-    code.set(index4, Pauli::X);
+    code.set(index1, PauliOp::Y);
+    code.set(index2, PauliOp::Y);
+    code.set(index3, PauliOp::X);
+    code.set(index4, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.125;
     assert!(
@@ -392,10 +392,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::X);
-    code.set(index2, Pauli::Y);
-    code.set(index3, Pauli::Y);
-    code.set(index4, Pauli::X);
+    code.set(index1, PauliOp::X);
+    code.set(index2, PauliOp::Y);
+    code.set(index3, PauliOp::Y);
+    code.set(index4, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
@@ -404,10 +404,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::Y);
-    code.set(index2, Pauli::Y);
-    code.set(index3, Pauli::Y);
-    code.set(index4, Pauli::Y);
+    code.set(index1, PauliOp::Y);
+    code.set(index2, PauliOp::Y);
+    code.set(index3, PauliOp::Y);
+    code.set(index4, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
