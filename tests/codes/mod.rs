@@ -1,1 +1,2 @@
+mod fermions;
 mod qubits;

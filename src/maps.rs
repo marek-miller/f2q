@@ -97,7 +97,7 @@ where
         mut repr: impl Extend<(T, PauliCode)>,
     ) -> Result<(), Error> {
         for (&coeff, &code) in self.repr.iter() {
-            repr.extend(jordan_wigner::Map::try_from(code)?.pauli_iter(coeff))
+            repr.extend(jordan_wigner::Map::try_from(code)?.pauli_iter(coeff));
         }
 
         Ok(())
