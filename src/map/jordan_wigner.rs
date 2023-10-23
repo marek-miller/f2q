@@ -2,7 +2,7 @@ use num::Float;
 
 use crate::{
     code::{
-        fermions::FermiCode,
+        fermions::Fermions,
         qubits::{
             Pauli,
             PauliOp,
@@ -15,7 +15,7 @@ use crate::{
     Error,
 };
 
-pub struct Map(FermiCode);
+pub struct Map(Fermions);
 
 impl Map {
     pub fn pauli_iter<T>(
@@ -29,13 +29,13 @@ impl Map {
     }
 }
 
-impl TryFrom<FermiCode> for Map {
+impl TryFrom<Fermions> for Map {
     type Error = Error;
 
-    fn try_from(value: FermiCode) -> Result<Self, Self::Error> {
+    fn try_from(value: Fermions) -> Result<Self, Self::Error> {
         match value {
-            FermiCode::Offset => Ok(Self(value)),
-            FermiCode::One {
+            Fermions::Offset => Ok(Self(value)),
+            Fermions::One {
                 cr,
                 an,
             } => {
@@ -47,7 +47,7 @@ impl TryFrom<FermiCode> for Map {
                     })
                 }
             }
-            FermiCode::Two {
+            Fermions::Two {
                 cr,
                 an,
             } => {
@@ -70,14 +70,14 @@ impl TryFrom<FermiCode> for Map {
 #[derive(Debug)]
 pub struct PauliIter<T> {
     coeff: T,
-    code:  FermiCode,
+    code:  Fermions,
     index: u8,
 }
 
 impl<T> PauliIter<T> {
     pub fn new(
         coeff: T,
-        code: FermiCode,
+        code: Fermions,
     ) -> Self {
         Self {
             coeff,
@@ -95,7 +95,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.code {
-            FermiCode::Offset => {
+            Fermions::Offset => {
                 if self.index == 0 {
                     self.index += 1;
                     Some((self.coeff, Pauli::default()))
@@ -103,7 +103,7 @@ where
                     None
                 }
             }
-            FermiCode::One {
+            Fermions::One {
                 cr: p,
                 an: q,
             } => {
@@ -119,7 +119,7 @@ where
                 self.index = (self.index + 1).min(2);
                 item
             }
-            FermiCode::Two {
+            Fermions::Two {
                 cr: (p, q),
                 an: (r, s),
             } => {
@@ -373,7 +373,7 @@ fn next_item_two_pqrs<T: Float>(
 
 /// Jordan-Wigner mapping.
 ///
-/// This mapping is initialized with [`SumRepr<T,FermiCode>`],
+/// This mapping is initialized with [`SumRepr<T,Fermions>`],
 /// but implements [`Terms<T, Pauli>`].  The standard way
 /// of using it is presented in the following example.
 ///
@@ -385,7 +385,7 @@ fn next_item_two_pqrs<T: Float>(
 ///         fermions::{
 ///             An,
 ///             Cr,
-///             FermiCode,
+///             Fermions,
 ///             Orbital,
 ///         },
 ///         qubits::{
@@ -409,7 +409,7 @@ fn next_item_two_pqrs<T: Float>(
 /// let p = Orbital::from_index(idx);
 ///
 /// // Add it as one-electron interaction term to the sum with coefficient: 1.0
-/// fermi_repr.add_term(FermiCode::one_electron(Cr(p), An(p)).unwrap(), 1.0);
+/// fermi_repr.add_term(Fermions::one_electron(Cr(p), An(p)).unwrap(), 1.0);
 ///
 /// // Map fermionic hamiltonian to a sum of Pauli strings
 /// let mut pauli_repr = PauliSum::new();
@@ -429,12 +429,12 @@ fn next_item_two_pqrs<T: Float>(
 /// # }
 /// ```
 pub struct JordanWigner<'a, T> {
-    repr: &'a SumRepr<T, FermiCode>,
+    repr: &'a SumRepr<T, Fermions>,
 }
 
 impl<'a, T> JordanWigner<'a, T> {
     #[must_use]
-    pub fn new(repr: &'a SumRepr<T, FermiCode>) -> Self {
+    pub fn new(repr: &'a SumRepr<T, Fermions>) -> Self {
         Self {
             repr,
         }

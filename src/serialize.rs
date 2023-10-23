@@ -10,7 +10,7 @@ use serde::{
 #[derive(Debug, PartialEq)]
 enum Encoding {
     /// Second quantization fermion interaction
-    FermiCode,
+    Fermions,
     /// Pauli strings (codes)
     Qubits,
     /// Indexed
@@ -23,7 +23,7 @@ impl Display for Encoding {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match self {
-            Encoding::FermiCode => write!(f, "fermions"),
+            Encoding::Fermions => write!(f, "fermions"),
             Encoding::Qubits => write!(f, "qubits"),
             Encoding::U64 => write!(f, "u64"),
         }
@@ -62,7 +62,7 @@ impl<'de> Visitor<'de> for EncodingVisitor {
         E: serde::de::Error,
     {
         match v {
-            "fermions" => Ok(Encoding::FermiCode),
+            "fermions" => Ok(Encoding::Fermions),
             "qubits" => Ok(Encoding::Qubits),
             "u64" => Ok(Encoding::U64),
             _ => Err(E::custom("wrong encoding")),

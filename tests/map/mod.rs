@@ -3,8 +3,8 @@ use f2q::{
         fermions::{
             An,
             Cr,
-            FermiCode,
             FermiSum,
+            Fermions,
             Orbital,
         },
         qubits::{
@@ -25,7 +25,7 @@ const MOCK_COEFF: f64 = 0.12345;
 #[test]
 fn jordan_wigner_01() {
     let mut fermi_sum = FermiSum::new();
-    fermi_sum.add_term(FermiCode::Offset, MOCK_COEFF);
+    fermi_sum.add_term(Fermions::Offset, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
     JordanWigner::new(&fermi_sum)
@@ -43,7 +43,7 @@ fn check_jordan_wigner_one_pp(index: u32) {
     let mut fermi_sum = SumRepr::new();
 
     let p = Orbital::from_index(index);
-    let integral = FermiCode::one_electron(Cr(p), An(p)).unwrap();
+    let integral = Fermions::one_electron(Cr(p), An(p)).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
@@ -89,7 +89,7 @@ fn check_jordan_wigner_one_pq(
     assert!(index1 < index2);
     let p = Orbital::from_index(u32::from(index1));
     let q = Orbital::from_index(u32::from(index2));
-    let integral = FermiCode::one_electron(Cr(p), An(q)).unwrap();
+    let integral = Fermions::one_electron(Cr(p), An(q)).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
@@ -140,7 +140,7 @@ fn check_jordan_wigner_two_pq(
     let p = Orbital::from_index(u32::from(index1));
     let q = Orbital::from_index(u32::from(index2));
     let integral =
-        FermiCode::two_electron((Cr(p), Cr(q)), (An(q), An(p))).unwrap();
+        Fermions::two_electron((Cr(p), Cr(q)), (An(q), An(p))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
@@ -210,7 +210,7 @@ fn check_jordan_wigner_two_pqs(
     let q = Orbital::from_index(u32::from(index2));
     let s = Orbital::from_index(u32::from(index3));
     let integral =
-        FermiCode::two_electron((Cr(p), Cr(q)), (An(q), An(s))).unwrap();
+        Fermions::two_electron((Cr(p), Cr(q)), (An(q), An(s))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
@@ -300,7 +300,7 @@ fn check_jordan_wigner_two_pqrs(
     let r = Orbital::from_index(u32::from(index3));
     let s = Orbital::from_index(u32::from(index4));
     let integral =
-        FermiCode::two_electron((Cr(p), Cr(q)), (An(r), An(s))).unwrap();
+        Fermions::two_electron((Cr(p), Cr(q)), (An(r), An(s))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
