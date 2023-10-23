@@ -14,7 +14,7 @@ use rand::Rng;
 
 use super::serialize_sumrepr;
 use crate::{
-    args::Generate,
+    cli::Generate,
     errors::Error,
 };
 

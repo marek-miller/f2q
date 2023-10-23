@@ -6,7 +6,7 @@ use f2q::{
 
 use super::serialize_sumrepr;
 use crate::{
-    args::{
+    cli::{
         Convert,
         Encoding,
     },
@@ -48,7 +48,7 @@ mod jordan_wigner {
     use f2q::codes::fermions::FermiSum;
 
     use crate::{
-        args::{
+        cli::{
             Convert,
             Format,
         },

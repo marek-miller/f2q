@@ -14,7 +14,7 @@ use num::Float;
 use serde::Serialize;
 
 use crate::{
-    args::{
+    cli::{
         Convert,
         Encoding,
         Format,

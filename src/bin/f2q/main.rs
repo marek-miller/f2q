@@ -4,6 +4,15 @@ use std::{
 };
 
 use clap::Parser;
+use cli::{
+    Cli,
+    Commands,
+};
+use errors::Error;
+
+mod cli;
+mod command;
+mod errors;
 
 static CLI: OnceLock<Cli> = OnceLock::new();
 
@@ -16,17 +25,6 @@ fn log_or_eprintln_if_verbose(msg: &str) {
         }
     }
 }
-
-mod errors;
-use errors::Error;
-
-mod args;
-use args::{
-    Cli,
-    Commands,
-};
-
-mod command;
 
 fn main() -> ExitCode {
     env_logger::init();
