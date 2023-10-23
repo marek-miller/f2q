@@ -380,28 +380,27 @@ fn next_item_two_pqrs<T: Float>(
 /// # Examples
 ///
 /// ```rust
-/// use f2q::{
-///     code::{
-///         fermions::{
-///             An,
-///             Cr,
-///             Fermions,
-///             Orbital,
-///         },
-///         qubits::{
-///             Pauli,
-///             PauliOp,
-///             PauliSum,
-///         },
-///     },
-///     map::JordanWigner,
-///     terms::{
-///         SumRepr,
-///         Terms,
-///     },
-/// };
+/// # use f2q::{
+/// #     code::{
+/// #         fermions::{
+/// #             An,
+/// #             Cr,
+/// #             Fermions,
+/// #             Orbital,
+/// #         },
+/// #         qubits::{
+/// #             Pauli,
+/// #             PauliOp,
+/// #         },
+/// #     },
+/// #     map::JordanWigner,
+/// #     terms::{
+/// #         PauliSum,
+/// #         SumRepr,
+/// #         Terms,
+/// #     },
+/// # };
 /// # fn main() -> Result<(), f2q::Error> {
-///
 /// let idx = 11;
 /// let mut fermi_repr = SumRepr::new();
 ///

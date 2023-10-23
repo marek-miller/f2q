@@ -2,9 +2,11 @@ use f2q::{
     code::qubits::{
         Pauli,
         PauliOp,
-        PauliSum,
     },
-    terms::SumRepr,
+    terms::{
+        PauliSum,
+        SumRepr,
+    },
 };
 use serde_json::Value;
 

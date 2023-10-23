@@ -10,10 +10,6 @@ use std::{
     },
 };
 
-use crate::terms::SumRepr;
-
-pub type FermiSum = SumRepr<f64, Fermions>;
-
 /// Spin one-half
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum Spin {

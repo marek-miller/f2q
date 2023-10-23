@@ -3,18 +3,18 @@ use f2q::{
         fermions::{
             An,
             Cr,
-            FermiSum,
             Fermions,
             Orbital,
         },
         qubits::{
             Pauli,
             PauliOp,
-            PauliSum,
         },
     },
     map::JordanWigner,
     terms::{
+        FermiSum,
+        PauliSum,
         SumRepr,
         Terms,
     },

@@ -1,7 +1,9 @@
 use f2q::{
-    code::qubits::PauliSum,
     map::JordanWigner,
-    terms::Terms,
+    terms::{
+        PauliSum,
+        Terms,
+    },
 };
 
 use super::serialize_sumrepr;
@@ -45,7 +47,7 @@ mod jordan_wigner {
         },
     };
 
-    use f2q::code::fermions::FermiSum;
+    use f2q::terms::FermiSum;
 
     use crate::{
         cli::{

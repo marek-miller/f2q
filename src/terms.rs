@@ -5,9 +5,16 @@ use std::collections::HashMap;
 use num::Float;
 
 use crate::{
-    code::Code,
+    code::{
+        fermions::Fermions,
+        qubits::Pauli,
+        Code,
+    },
     Error,
 };
+
+pub type FermiSum = SumRepr<f64, Fermions>;
+pub type PauliSum = SumRepr<f64, Pauli>;
 
 /// Convert and serialize sum of terms in various encodings
 pub trait Terms<T> {

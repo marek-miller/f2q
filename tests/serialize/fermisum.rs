@@ -2,11 +2,13 @@ use f2q::{
     code::fermions::{
         An,
         Cr,
-        FermiSum,
         Fermions,
         Orbital,
     },
-    terms::SumRepr,
+    terms::{
+        FermiSum,
+        SumRepr,
+    },
 };
 use serde_json::Value;
 

@@ -2,12 +2,7 @@
 
 use std::fmt::Display;
 
-use crate::{
-    terms::SumRepr,
-    Error,
-};
-
-pub type PauliSum = SumRepr<f64, Pauli>;
+use crate::Error;
 
 const PAULI_MASK: u64 = 0b11;
 
