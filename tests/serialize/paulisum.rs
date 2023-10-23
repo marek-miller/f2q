@@ -1,10 +1,12 @@
 use f2q::{
-    codes::qubits::{
+    code::qubits::{
         Pauli,
-        PauliCode,
-        PauliSum,
+        PauliOp,
     },
-    terms::SumRepr,
+    terms::{
+        PauliSum,
+        SumRepr,
+    },
 };
 use serde_json::Value;
 
@@ -13,7 +15,7 @@ use serde_json::Value;
 fn paulisum_serialize_01() {
     let mut repr = SumRepr::new();
 
-    repr.add_term(PauliCode::identity(), 0.1);
+    repr.add_term(Pauli::identity(), 0.1);
 
     let json = serde_json::to_value(&repr).unwrap();
     let expected: serde_json::Value = serde_json::from_str(
@@ -40,7 +42,7 @@ fn paulisum_serialize_01() {
 fn pauliisum_serialize_02() {
     let mut repr = SumRepr::new();
 
-    repr.add_term(PauliCode::from_paulis([Pauli::X, Pauli::Y]), 0.2);
+    repr.add_term(Pauli::from_paulis([PauliOp::X, PauliOp::Y]), 0.2);
     let json = serde_json::to_value(&repr).unwrap();
     let expected: serde_json::Value = serde_json::from_str(
         r#"
@@ -67,7 +69,7 @@ fn paulisum_serialize_03() {
     let mut repr = SumRepr::new();
 
     repr.add_term(
-        PauliCode::from_paulis([Pauli::I, Pauli::X, Pauli::Y, Pauli::Z]),
+        Pauli::from_paulis([PauliOp::I, PauliOp::X, PauliOp::Y, PauliOp::Z]),
         0.3,
     );
     let json = serde_json::to_value(&repr).unwrap();
@@ -94,10 +96,10 @@ fn paulisum_serialize_03() {
 fn paulisum_serialize_04() {
     let mut repr = SumRepr::new();
 
-    repr.add_term(PauliCode::identity(), 0.1);
-    repr.add_term(PauliCode::from_paulis([Pauli::X, Pauli::Y]), 0.2);
+    repr.add_term(Pauli::identity(), 0.1);
+    repr.add_term(Pauli::from_paulis([PauliOp::X, PauliOp::Y]), 0.2);
     repr.add_term(
-        PauliCode::from_paulis([Pauli::I, Pauli::X, Pauli::Y, Pauli::Z]),
+        Pauli::from_paulis([PauliOp::I, PauliOp::X, PauliOp::Y, PauliOp::Z]),
         0.3,
     );
     let json = serde_json::to_value(&repr).unwrap();
@@ -135,7 +137,7 @@ fn paulisum_deserialize_01() {
     let repr: PauliSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 1);
-    assert_eq!(repr.coeff(PauliCode::identity()), 0.1);
+    assert_eq!(repr.coeff(Pauli::identity()), 0.1);
 }
 
 #[test]
@@ -161,9 +163,9 @@ fn paulisum_deserialize_02() {
     let repr: PauliSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 2);
-    assert_eq!(repr.coeff(PauliCode::identity()), 0.1);
+    assert_eq!(repr.coeff(Pauli::identity()), 0.1);
     assert_eq!(
-        repr.coeff(PauliCode::from_paulis([Pauli::X, Pauli::Y])),
+        repr.coeff(Pauli::from_paulis([PauliOp::X, PauliOp::Y])),
         0.2
     );
 }
@@ -199,17 +201,17 @@ fn pauliisum_deserialize_03() {
     let repr: PauliSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 3);
-    assert_eq!(repr.coeff(PauliCode::identity()), 0.19);
+    assert_eq!(repr.coeff(Pauli::identity()), 0.19);
     assert_eq!(
-        repr.coeff(PauliCode::from_paulis([Pauli::X, Pauli::Y])),
+        repr.coeff(Pauli::from_paulis([PauliOp::X, PauliOp::Y])),
         0.2
     );
     assert_eq!(
-        repr.coeff(PauliCode::from_paulis([
-            Pauli::I,
-            Pauli::X,
-            Pauli::Y,
-            Pauli::Z
+        repr.coeff(Pauli::from_paulis([
+            PauliOp::I,
+            PauliOp::X,
+            PauliOp::Y,
+            PauliOp::Z
         ]),),
         0.3
     );

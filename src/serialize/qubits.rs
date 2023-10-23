@@ -9,13 +9,79 @@ use serde::{
 };
 
 use crate::{
-    codes::qubits::{
+    code::qubits::{
         Pauli,
-        PauliCode,
+        PauliOp,
     },
     serialize::Encoding,
     terms::SumRepr,
 };
+
+impl Serialize for PauliOp {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+struct PauliOpVisitor;
+
+impl<'de> Visitor<'de> for PauliOpVisitor {
+    type Value = PauliOp;
+
+    fn expecting(
+        &self,
+        formatter: &mut std::fmt::Formatter,
+    ) -> std::fmt::Result {
+        write!(formatter, "one-character string: I, X, Y, or Z")
+    }
+
+    fn visit_char<E>(
+        self,
+        v: char,
+    ) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        match v {
+            'I' => Ok(PauliOp::I),
+            'X' => Ok(PauliOp::X),
+            'Y' => Ok(PauliOp::Y),
+            'Z' => Ok(PauliOp::Z),
+            _ => Err(E::custom("unknown symbol")),
+        }
+    }
+
+    fn visit_str<E>(
+        self,
+        v: &str,
+    ) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        match v {
+            "I" => Ok(PauliOp::I),
+            "X" => Ok(PauliOp::X),
+            "Y" => Ok(PauliOp::Y),
+            "Z" => Ok(PauliOp::Z),
+            _ => Err(E::custom("unknown symbol")),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for PauliOp {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(PauliOpVisitor)
+    }
+}
 
 impl Serialize for Pauli {
     fn serialize<S>(
@@ -38,72 +104,6 @@ impl<'de> Visitor<'de> for PauliVisitor {
         &self,
         formatter: &mut std::fmt::Formatter,
     ) -> std::fmt::Result {
-        write!(formatter, "one-character string: I, X, Y, or Z")
-    }
-
-    fn visit_char<E>(
-        self,
-        v: char,
-    ) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        match v {
-            'I' => Ok(Pauli::I),
-            'X' => Ok(Pauli::X),
-            'Y' => Ok(Pauli::Y),
-            'Z' => Ok(Pauli::Z),
-            _ => Err(E::custom("unknown symbol")),
-        }
-    }
-
-    fn visit_str<E>(
-        self,
-        v: &str,
-    ) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        match v {
-            "I" => Ok(Pauli::I),
-            "X" => Ok(Pauli::X),
-            "Y" => Ok(Pauli::Y),
-            "Z" => Ok(Pauli::Z),
-            _ => Err(E::custom("unknown symbol")),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Pauli {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_str(PauliVisitor)
-    }
-}
-
-impl Serialize for PauliCode {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-struct PauliCodeVisitor;
-
-impl<'de> Visitor<'de> for PauliCodeVisitor {
-    type Value = PauliCode;
-
-    fn expecting(
-        &self,
-        formatter: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
         formatter.write_str(
             "string of 64 Pauli operators (trailing identities truncated)",
         )
@@ -120,14 +120,14 @@ impl<'de> Visitor<'de> for PauliCodeVisitor {
             return Err(E::custom("str len out of range: 1..=64".to_string()));
         }
 
-        let mut code = PauliCode::default();
+        let mut code = Pauli::default();
 
         for (i, ch) in v.chars().enumerate() {
             let pauli = match ch {
-                'I' => Ok(Pauli::I),
-                'X' => Ok(Pauli::X),
-                'Y' => Ok(Pauli::Y),
-                'Z' => Ok(Pauli::Z),
+                'I' => Ok(PauliOp::I),
+                'X' => Ok(PauliOp::X),
+                'Y' => Ok(PauliOp::Y),
+                'Z' => Ok(PauliOp::Z),
                 _ => Err(E::custom(
                     "character must be one of: I, X, Y, Z".to_string(),
                 )),
@@ -141,22 +141,22 @@ impl<'de> Visitor<'de> for PauliCodeVisitor {
     }
 }
 
-impl<'de> Deserialize<'de> for PauliCode {
+impl<'de> Deserialize<'de> for Pauli {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_str(PauliCodeVisitor)
+        deserializer.deserialize_str(PauliVisitor)
     }
 }
 
 #[derive(Serialize, Deserialize)]
 struct PauliSumTerm<T> {
-    code:  PauliCode,
+    code:  Pauli,
     value: T,
 }
 
-struct PauliSumSerSequence<'a, T>(&'a SumRepr<T, PauliCode>);
+struct PauliSumSerSequence<'a, T>(&'a SumRepr<T, Pauli>);
 
 impl<'a, T> Serialize for PauliSumSerSequence<'a, T>
 where
@@ -191,7 +191,7 @@ where
     terms:    PauliSumSerSequence<'a, T>,
 }
 
-impl<T> Serialize for SumRepr<T, PauliCode>
+impl<T> Serialize for SumRepr<T, Pauli>
 where
     T: Float + Serialize,
 {
@@ -211,7 +211,7 @@ where
     }
 }
 
-struct PauliSumDeSequence<T>(SumRepr<T, PauliCode>);
+struct PauliSumDeSequence<T>(SumRepr<T, Pauli>);
 
 struct PauliSumVisitor<T> {
     _marker: PhantomData<T>,
@@ -282,7 +282,7 @@ where
     terms:    PauliSumDeSequence<T>,
 }
 
-impl<'de, T> Deserialize<'de> for SumRepr<T, PauliCode>
+impl<'de, T> Deserialize<'de> for SumRepr<T, Pauli>
 where
     T: Float + Deserialize<'de>,
 {

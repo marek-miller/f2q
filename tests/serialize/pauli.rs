@@ -1,40 +1,147 @@
-use f2q::codes::qubits::Pauli;
+use std::{
+    fs::File,
+    io::BufReader,
+};
+
+use f2q::code::qubits::{
+    Pauli,
+    PauliOp,
+};
 
 #[test]
-fn display() {
-    assert_eq!(Pauli::I.to_string(), "I");
-    assert_eq!(Pauli::X.to_string(), "X");
-    assert_eq!(Pauli::Y.to_string(), "Y");
-    assert_eq!(Pauli::Z.to_string(), "Z");
+fn pauli_code_to_string() {
+    assert_eq!(Pauli::default().to_string(), "I");
+    assert_eq!(Pauli::new((1, 0)).to_string(), "X");
+    assert_eq!(Pauli::new((2, 0)).to_string(), "Y");
+    assert_eq!(Pauli::new((3, 0)).to_string(), "Z");
+
+    assert_eq!(
+        Pauli::new((0, 1)).to_string(),
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIX"
+    );
+    assert_eq!(
+        Pauli::new((0, 2)).to_string(),
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIY"
+    );
+    assert_eq!(
+        Pauli::new((0, 3)).to_string(),
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIZ"
+    );
+
+    assert_eq!(
+        Pauli::new((u64::MAX, u64::MAX)).to_string(),
+        "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    );
 }
 
 #[test]
-fn pauli_serialize_01() {
-    assert_eq!(
-        serde_json::to_value(Pauli::I).unwrap().as_str().unwrap(),
-        "I"
-    );
+fn serialize_01() {
+    let code = Pauli::default();
+    let json = serde_json::to_string(&code).unwrap();
 
-    assert_eq!(
-        serde_json::to_value(Pauli::X).unwrap().as_str().unwrap(),
-        "X"
-    );
+    assert_eq!(json, "\"I\"");
 
-    assert_eq!(
-        serde_json::to_value(Pauli::Y).unwrap().as_str().unwrap(),
-        "Y"
-    );
+    let code =
+        Pauli::from_paulis([PauliOp::I, PauliOp::X, PauliOp::Y, PauliOp::Z]);
+    let json = serde_json::to_string(&code).unwrap();
 
+    assert_eq!(json, "\"IXYZ\"");
+}
+
+#[test]
+fn deserialize_01() {
+    let data = r#"
+              "I" 
+     "#;
+    let code: Pauli = serde_json::from_str(data).unwrap();
+    assert_eq!(code, Pauli::default());
+
+    let data = r#"
+              "IXYZ" 
+     "#;
+    let code: Pauli = serde_json::from_str(data).unwrap();
     assert_eq!(
-        serde_json::to_value(Pauli::Z).unwrap().as_str().unwrap(),
-        "Z"
+        code,
+        Pauli::from_paulis([PauliOp::I, PauliOp::X, PauliOp::Y, PauliOp::Z])
     );
 }
 
 #[test]
-fn pauli_deserialize_01() {
-    assert_eq!(serde_json::from_str::<Pauli>("\"I\"").unwrap(), Pauli::I);
-    assert_eq!(serde_json::from_str::<Pauli>("\"X\"").unwrap(), Pauli::X);
-    assert_eq!(serde_json::from_str::<Pauli>("\"Y\"").unwrap(), Pauli::Y);
-    assert_eq!(serde_json::from_str::<Pauli>("\"Z\"").unwrap(), Pauli::Z);
+fn deserialize_02() {
+    let data = r#"
+              "" 
+     "#;
+    let _ = serde_json::from_str::<Pauli>(data).unwrap_err();
+
+    let data = r#"
+              "IP" 
+     "#;
+    let _ = serde_json::from_str::<Pauli>(data).unwrap_err();
+
+    // this is 65 chars
+    let data = r#"
+              "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 
+     "#;
+    let _ = serde_json::from_str::<Pauli>(data).unwrap_err();
+}
+
+fn check_serde(code: Pauli) {
+    let json = serde_json::to_string(&code).unwrap();
+    let result: Pauli = serde_json::from_str(&json).unwrap();
+    assert_eq!(result, code);
+}
+
+#[test]
+fn serde_01() {
+    use PauliOp::{
+        I,
+        X,
+        Y,
+        Z,
+    };
+    check_serde(Pauli::default());
+    check_serde(Pauli::from_paulis([I, X, Y, Z]));
+    check_serde(Pauli::from_paulis([X, X, X]));
+    check_serde(Pauli::from_paulis([
+        I, X, X, X, I, Y, Y, Y, I, X, X, X, I, Y, Y, Y, I, X, X, X, I, Y, Y, Y,
+        I, X, X, X, I, Y, Y, Y, I, X, X, X, I, Y, Y, Y, I, X, X, X, I, Y, Y, Y,
+        I, X, X, X, I, Y, Y, Y, I, X, X, X, I, Y, Y, Y,
+    ]));
+}
+
+const PAULI_CODES: &str = "./tests/serialize/paulicodes.json";
+
+fn paulis_compare() -> [Pauli; 8] {
+    use PauliOp::*;
+    [
+        Pauli::from_paulis([]),
+        Pauli::from_paulis([X, X]),
+        Pauli::from_paulis([I, Y]),
+        Pauli::from_paulis([I, X, Y, Z]),
+        Pauli::from_paulis([X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]),
+        Pauli::from_paulis([
+            X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X, X, X,
+        ]),
+        Pauli::from_paulis([
+            X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
+            X, X, X, X,
+        ]),
+        Pauli::from_paulis([
+            X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
+        ]),
+    ]
+}
+
+#[test]
+fn deserialize_paulis() {
+    // Open the file in read-only mode with buffer.
+    let file = File::open(PAULI_CODES).unwrap();
+    let reader = BufReader::new(file);
+
+    let codes: Vec<Pauli> = serde_json::from_reader(reader).unwrap();
+    assert_eq!(codes, paulis_compare());
 }

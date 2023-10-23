@@ -10,10 +10,6 @@ use std::{
     },
 };
 
-use crate::terms::SumRepr;
-
-pub type FermiSum = SumRepr<f64, FermiCode>;
-
 /// Spin one-half
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum Spin {
@@ -28,7 +24,7 @@ impl Spin {
     /// # Example
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::Spin;
+    /// # use f2q::code::fermions::Spin;
     ///
     /// let spin = Spin::Up;
     /// assert!(spin.is_up());
@@ -49,7 +45,7 @@ impl Spin {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::Spin;
+    /// # use f2q::code::fermions::Spin;
     ///
     /// let spin = Spin::Down;
     /// assert_eq!(spin.flip(), Spin::Up);
@@ -67,7 +63,7 @@ impl Spin {
     /// # Example
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::Spin;
+    /// # use f2q::code::fermions::Spin;
     ///
     /// let spins: Vec<_> = Spin::both().collect();
     ///
@@ -119,7 +115,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{Orbital, Spin};
+    /// # use f2q::code::fermions::{Orbital, Spin};
     ///
     /// let orb = Orbital::new(0, Spin::Down);
     /// assert_eq!(orb.index(), 0);
@@ -148,7 +144,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{Orbital, Spin};
+    /// # use f2q::code::fermions::{Orbital, Spin};
     ///
     /// let orb = Orbital::new(0, Spin::Down);
     /// assert_eq!(orb.index(), 0);
@@ -170,7 +166,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{Orbital, Spin};
+    /// # use f2q::code::fermions::{Orbital, Spin};
     ///
     /// let orbital = Orbital::from_index(3);
     ///
@@ -190,7 +186,7 @@ impl Orbital {
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{Orbital, Spin};
+    /// # use f2q::code::fermions::{Orbital, Spin};
     ///
     /// let orbitals: Vec<_> = Orbital::gen_range((1..=3)).collect();
     ///
@@ -284,7 +280,7 @@ impl Iterator for OrbitalRange {
 ///
 ///   then `p < q`, `r > s` and `p <= s`.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum FermiCode {
+pub enum Fermions {
     #[default]
     Offset,
     One {
@@ -297,20 +293,20 @@ pub enum FermiCode {
     },
 }
 
-impl FermiCode {
+impl Fermions {
     /// Create Integral as constant offset.
     ///
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::FermiCode;
+    /// # use f2q::code::fermions::Fermions;
     ///
-    /// let integral = FermiCode::new();
+    /// let integral = Fermions::new();
     ///
-    /// assert_eq!(integral, FermiCode::Offset);
+    /// assert_eq!(integral, Fermions::Offset);
     /// ```
     #[must_use]
-    pub fn new() -> FermiCode {
+    pub fn new() -> Fermions {
         Self::default()
     }
 
@@ -320,15 +316,15 @@ impl FermiCode {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{FermiCode, Orbital, Spin, Cr, An};
+    /// # use f2q::code::fermions::{Fermions, Orbital, Spin, Cr, An};
     ///
-    /// let integral = FermiCode::one_electron(
+    /// let integral = Fermions::one_electron(
     ///     Cr(Orbital::new(0, Spin::Down)),
     ///     An(Orbital::new(1, Spin::Down)),
     /// );
     /// assert!(integral.is_some());
     ///
-    /// let integral = FermiCode::one_electron(
+    /// let integral = Fermions::one_electron(
     ///     Cr(Orbital::new(1, Spin::Down)),
     ///     An(Orbital::new(0, Spin::Down)),
     /// );
@@ -357,9 +353,9 @@ impl FermiCode {
     /// otherwise return None.
     ///
     /// ```rust
-    /// # use f2q::codes::fermions::{FermiCode, Orbital, Spin, Cr, An};
+    /// # use f2q::code::fermions::{Fermions, Orbital, Spin, Cr, An};
     ///
-    /// let integral = FermiCode::two_electron(
+    /// let integral = Fermions::two_electron(
     ///     (
     ///         Cr(Orbital::new(0, Spin::Down)),
     ///         Cr(Orbital::new(0, Spin::Up)),
@@ -371,7 +367,7 @@ impl FermiCode {
     /// );
     /// assert!(integral.is_some());
     ///
-    /// let integral = FermiCode::two_electron(
+    /// let integral = Fermions::two_electron(
     ///     (
     ///         Cr(Orbital::new(0, Spin::Down)),
     ///         Cr(Orbital::new(0, Spin::Down)),
@@ -398,18 +394,18 @@ impl FermiCode {
     }
 }
 
-impl Display for FermiCode {
+impl Display for Fermions {
     fn fmt(
         &self,
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match self {
-            FermiCode::Offset => write!(f, "[]"),
-            FermiCode::One {
+            Fermions::Offset => write!(f, "[]"),
+            Fermions::One {
                 cr,
                 an,
             } => write!(f, "[{}, {}]", cr.index(), an.index()),
-            FermiCode::Two {
+            Fermions::Two {
                 cr,
                 an,
             } => write!(

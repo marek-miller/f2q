@@ -1,12 +1,14 @@
 use f2q::{
-    codes::qubits::PauliSum,
-    maps::JordanWigner,
-    terms::Terms,
+    map::JordanWigner,
+    terms::{
+        PauliSum,
+        Terms,
+    },
 };
 
 use super::serialize_sumrepr;
 use crate::{
-    args::{
+    cli::{
         Convert,
         Encoding,
     },
@@ -45,10 +47,10 @@ mod jordan_wigner {
         },
     };
 
-    use f2q::codes::fermions::FermiSum;
+    use f2q::terms::FermiSum;
 
     use crate::{
-        args::{
+        cli::{
             Convert,
             Format,
         },

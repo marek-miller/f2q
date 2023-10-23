@@ -8,8 +8,8 @@
 
 use std::fmt::Display;
 
-pub mod codes;
-pub mod maps;
+pub mod code;
+pub mod map;
 pub mod math;
 pub mod terms;
 
@@ -17,8 +17,8 @@ mod serialize;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-    /// Invalid index of a Pauli operator
-    PauliIndex { msg: String },
+    /// Invalid qubit index in a Pauli string
+    QubitIndex { msg: String },
 }
 
 impl Display for Error {
@@ -27,7 +27,7 @@ impl Display for Error {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match self {
-            Self::PauliIndex {
+            Self::QubitIndex {
                 msg,
             } => write!(f, "PauliIndex: {msg}"),
         }
@@ -35,3 +35,12 @@ impl Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+/// Import common traits and types.
+pub mod prelude {
+    pub use crate::{
+        code::Code,
+        math::Group,
+        terms::Terms,
+    };
+}

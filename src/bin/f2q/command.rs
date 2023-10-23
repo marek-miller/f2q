@@ -7,14 +7,14 @@ use std::{
 };
 
 use f2q::{
-    codes::Code,
+    code::Code,
     terms::SumRepr,
 };
 use num::Float;
 use serde::Serialize;
 
 use crate::{
-    args::{
+    cli::{
         Convert,
         Encoding,
         Format,

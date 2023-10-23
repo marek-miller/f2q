@@ -1,20 +1,20 @@
 use f2q::{
-    codes::{
+    code::{
         fermions::{
             An,
             Cr,
-            FermiCode,
-            FermiSum,
+            Fermions,
             Orbital,
         },
         qubits::{
             Pauli,
-            PauliCode,
-            PauliSum,
+            PauliOp,
         },
     },
-    maps::JordanWigner,
+    map::JordanWigner,
     terms::{
+        FermiSum,
+        PauliSum,
         SumRepr,
         Terms,
     },
@@ -25,14 +25,14 @@ const MOCK_COEFF: f64 = 0.12345;
 #[test]
 fn jordan_wigner_01() {
     let mut fermi_sum = FermiSum::new();
-    fermi_sum.add_term(FermiCode::Offset, MOCK_COEFF);
+    fermi_sum.add_term(Fermions::Offset, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
     JordanWigner::new(&fermi_sum)
         .add_to(&mut pauli_sum)
         .unwrap();
 
-    let coeff = pauli_sum.coeff(PauliCode::default());
+    let coeff = pauli_sum.coeff(Pauli::default());
     assert!(
         (coeff - MOCK_COEFF).abs() < f64::EPSILON,
         "{MOCK_COEFF} {coeff}"
@@ -43,7 +43,7 @@ fn check_jordan_wigner_one_pp(index: u32) {
     let mut fermi_sum = SumRepr::new();
 
     let p = Orbital::from_index(index);
-    let integral = FermiCode::one_electron(Cr(p), An(p)).unwrap();
+    let integral = Fermions::one_electron(Cr(p), An(p)).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
@@ -51,7 +51,7 @@ fn check_jordan_wigner_one_pp(index: u32) {
         .add_to(&mut pauli_sum)
         .unwrap();
 
-    let code = PauliCode::default();
+    let code = Pauli::default();
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.5;
     assert!(
@@ -60,8 +60,8 @@ fn check_jordan_wigner_one_pp(index: u32) {
     );
 
     let code = {
-        let mut code = PauliCode::default();
-        code.set(u16::try_from(index).unwrap(), Pauli::Z);
+        let mut code = Pauli::default();
+        code.set(u16::try_from(index).unwrap(), PauliOp::Z);
         code
     };
     let coeff = pauli_sum.coeff(code);
@@ -89,7 +89,7 @@ fn check_jordan_wigner_one_pq(
     assert!(index1 < index2);
     let p = Orbital::from_index(u32::from(index1));
     let q = Orbital::from_index(u32::from(index2));
-    let integral = FermiCode::one_electron(Cr(p), An(q)).unwrap();
+    let integral = Fermions::one_electron(Cr(p), An(q)).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
@@ -97,12 +97,12 @@ fn check_jordan_wigner_one_pq(
         .add_to(&mut pauli_sum)
         .unwrap();
 
-    let mut code = PauliCode::default();
+    let mut code = Pauli::default();
     for i in index1 + 1..index2 {
-        code.set(i, Pauli::Z);
+        code.set(i, PauliOp::Z);
     }
-    code.set(index1, Pauli::X);
-    code.set(index2, Pauli::X);
+    code.set(index1, PauliOp::X);
+    code.set(index2, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.5;
     assert!(
@@ -110,8 +110,8 @@ fn check_jordan_wigner_one_pq(
         "{coeff} {expected}"
     );
 
-    code.set(index1, Pauli::Y);
-    code.set(index2, Pauli::Y);
+    code.set(index1, PauliOp::Y);
+    code.set(index2, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.5;
     assert!(
@@ -140,7 +140,7 @@ fn check_jordan_wigner_two_pq(
     let p = Orbital::from_index(u32::from(index1));
     let q = Orbital::from_index(u32::from(index2));
     let integral =
-        FermiCode::two_electron((Cr(p), Cr(q)), (An(q), An(p))).unwrap();
+        Fermions::two_electron((Cr(p), Cr(q)), (An(q), An(p))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
@@ -148,7 +148,7 @@ fn check_jordan_wigner_two_pq(
         .add_to(&mut pauli_sum)
         .unwrap();
 
-    let code = PauliCode::default();
+    let code = Pauli::default();
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
@@ -156,8 +156,8 @@ fn check_jordan_wigner_two_pq(
         "{coeff} {expected}"
     );
 
-    let mut code = PauliCode::default();
-    code.set(index1, Pauli::Z);
+    let mut code = Pauli::default();
+    code.set(index1, PauliOp::Z);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
@@ -165,8 +165,8 @@ fn check_jordan_wigner_two_pq(
         "{coeff} {expected}"
     );
 
-    let mut code = PauliCode::default();
-    code.set(index2, Pauli::Z);
+    let mut code = Pauli::default();
+    code.set(index2, PauliOp::Z);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
@@ -174,9 +174,9 @@ fn check_jordan_wigner_two_pq(
         "{coeff} {expected}"
     );
 
-    let mut code = PauliCode::default();
-    code.set(index1, Pauli::Z);
-    code.set(index2, Pauli::Z);
+    let mut code = Pauli::default();
+    code.set(index1, PauliOp::Z);
+    code.set(index2, PauliOp::Z);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
@@ -210,7 +210,7 @@ fn check_jordan_wigner_two_pqs(
     let q = Orbital::from_index(u32::from(index2));
     let s = Orbital::from_index(u32::from(index3));
     let integral =
-        FermiCode::two_electron((Cr(p), Cr(q)), (An(q), An(s))).unwrap();
+        Fermions::two_electron((Cr(p), Cr(q)), (An(q), An(s))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
@@ -218,12 +218,12 @@ fn check_jordan_wigner_two_pqs(
         .add_to(&mut pauli_sum)
         .unwrap();
 
-    let mut code = PauliCode::default();
+    let mut code = Pauli::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z);
+        code.set(i, PauliOp::Z);
     }
-    code.set(index1, Pauli::X);
-    code.set(index3, Pauli::X);
+    code.set(index1, PauliOp::X);
+    code.set(index3, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
@@ -231,12 +231,12 @@ fn check_jordan_wigner_two_pqs(
         "{coeff} {expected}"
     );
 
-    let mut code = PauliCode::default();
+    let mut code = Pauli::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z);
+        code.set(i, PauliOp::Z);
     }
-    code.set(index1, Pauli::Y);
-    code.set(index3, Pauli::Y);
+    code.set(index1, PauliOp::Y);
+    code.set(index3, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.25;
     assert!(
@@ -244,13 +244,13 @@ fn check_jordan_wigner_two_pqs(
         "{coeff} {expected}"
     );
 
-    let mut code = PauliCode::default();
+    let mut code = Pauli::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z);
+        code.set(i, PauliOp::Z);
     }
-    code.set(index1, Pauli::X);
-    code.set(index3, Pauli::X);
-    code.set(index2, Pauli::Z);
+    code.set(index1, PauliOp::X);
+    code.set(index3, PauliOp::X);
+    code.set(index2, PauliOp::Z);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
@@ -258,13 +258,13 @@ fn check_jordan_wigner_two_pqs(
         "{coeff} {expected}"
     );
 
-    let mut code = PauliCode::default();
+    let mut code = Pauli::default();
     for i in index1 + 1..index3 {
-        code.set(i, Pauli::Z);
+        code.set(i, PauliOp::Z);
     }
-    code.set(index1, Pauli::Y);
-    code.set(index3, Pauli::Y);
-    code.set(index2, Pauli::Z);
+    code.set(index1, PauliOp::Y);
+    code.set(index3, PauliOp::Y);
+    code.set(index2, PauliOp::Z);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.25;
     assert!(
@@ -300,7 +300,7 @@ fn check_jordan_wigner_two_pqrs(
     let r = Orbital::from_index(u32::from(index3));
     let s = Orbital::from_index(u32::from(index4));
     let integral =
-        FermiCode::two_electron((Cr(p), Cr(q)), (An(r), An(s))).unwrap();
+        Fermions::two_electron((Cr(p), Cr(q)), (An(r), An(s))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
     let mut pauli_sum = PauliSum::new();
@@ -309,21 +309,21 @@ fn check_jordan_wigner_two_pqrs(
         .unwrap();
 
     let base_code = {
-        let mut code = PauliCode::default();
+        let mut code = Pauli::default();
         for i in index1 + 1..index2 {
-            code.set(i, Pauli::Z);
+            code.set(i, PauliOp::Z);
         }
         for i in index4 + 1..index3 {
-            code.set(i, Pauli::Z);
+            code.set(i, PauliOp::Z);
         }
         code
     };
 
     let mut code = base_code;
-    code.set(index1, Pauli::X);
-    code.set(index2, Pauli::X);
-    code.set(index3, Pauli::X);
-    code.set(index4, Pauli::X);
+    code.set(index1, PauliOp::X);
+    code.set(index2, PauliOp::X);
+    code.set(index3, PauliOp::X);
+    code.set(index4, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
@@ -332,10 +332,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::X);
-    code.set(index2, Pauli::X);
-    code.set(index3, Pauli::Y);
-    code.set(index4, Pauli::Y);
+    code.set(index1, PauliOp::X);
+    code.set(index2, PauliOp::X);
+    code.set(index3, PauliOp::Y);
+    code.set(index4, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.125;
     assert!(
@@ -344,10 +344,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::X);
-    code.set(index2, Pauli::Y);
-    code.set(index3, Pauli::X);
-    code.set(index4, Pauli::Y);
+    code.set(index1, PauliOp::X);
+    code.set(index2, PauliOp::Y);
+    code.set(index3, PauliOp::X);
+    code.set(index4, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
@@ -356,10 +356,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::Y);
-    code.set(index2, Pauli::X);
-    code.set(index3, Pauli::X);
-    code.set(index4, Pauli::Y);
+    code.set(index1, PauliOp::Y);
+    code.set(index2, PauliOp::X);
+    code.set(index3, PauliOp::X);
+    code.set(index4, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
@@ -368,10 +368,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::Y);
-    code.set(index2, Pauli::X);
-    code.set(index3, Pauli::Y);
-    code.set(index4, Pauli::X);
+    code.set(index1, PauliOp::Y);
+    code.set(index2, PauliOp::X);
+    code.set(index3, PauliOp::Y);
+    code.set(index4, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
@@ -380,10 +380,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::Y);
-    code.set(index2, Pauli::Y);
-    code.set(index3, Pauli::X);
-    code.set(index4, Pauli::X);
+    code.set(index1, PauliOp::Y);
+    code.set(index2, PauliOp::Y);
+    code.set(index3, PauliOp::X);
+    code.set(index4, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = -MOCK_COEFF * 0.125;
     assert!(
@@ -392,10 +392,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::X);
-    code.set(index2, Pauli::Y);
-    code.set(index3, Pauli::Y);
-    code.set(index4, Pauli::X);
+    code.set(index1, PauliOp::X);
+    code.set(index2, PauliOp::Y);
+    code.set(index3, PauliOp::Y);
+    code.set(index4, PauliOp::X);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(
@@ -404,10 +404,10 @@ fn check_jordan_wigner_two_pqrs(
     );
 
     let mut code = base_code;
-    code.set(index1, Pauli::Y);
-    code.set(index2, Pauli::Y);
-    code.set(index3, Pauli::Y);
-    code.set(index4, Pauli::Y);
+    code.set(index1, PauliOp::Y);
+    code.set(index2, PauliOp::Y);
+    code.set(index3, PauliOp::Y);
+    code.set(index4, PauliOp::Y);
     let coeff = pauli_sum.coeff(code);
     let expected = MOCK_COEFF * 0.125;
     assert!(

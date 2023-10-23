@@ -1,12 +1,12 @@
 use f2q::{
-    codes::{
+    code::{
         fermions::{
             An,
             Cr,
-            FermiCode,
+            Fermions,
             Orbital,
         },
-        qubits::PauliCode,
+        qubits::Pauli,
     },
     terms::SumRepr,
 };
@@ -14,7 +14,7 @@ use rand::Rng;
 
 use super::serialize_sumrepr;
 use crate::{
-    args::Generate,
+    cli::Generate,
     errors::Error,
 };
 
@@ -38,13 +38,13 @@ fn fermions_random(args: &Generate) -> Result<(), Error> {
     while count < args.num_terms {
         let category = rng.gen_range(0..=2);
         match category {
-            0 => out_repr.add_term(FermiCode::Offset, rng.gen_range(-1.0..1.0)),
+            0 => out_repr.add_term(Fermions::Offset, rng.gen_range(-1.0..1.0)),
             1 => {
                 let max_val = args.max_orbital_index;
                 let p = rng.gen_range(0..max_val - 1);
                 let q = rng.gen_range(p + 1..=max_val);
                 out_repr.add_term(
-                    FermiCode::one_electron(
+                    Fermions::one_electron(
                         Cr(Orbital::from_index(p)),
                         An(Orbital::from_index(q)),
                     )
@@ -60,7 +60,7 @@ fn fermions_random(args: &Generate) -> Result<(), Error> {
                 let r = rng.gen_range(s + 1..=max_val);
 
                 out_repr.add_term(
-                    FermiCode::two_electron(
+                    Fermions::two_electron(
                         (
                             Cr(Orbital::from_index(p)),
                             Cr(Orbital::from_index(q)),
@@ -104,7 +104,7 @@ fn qubits_random(args: &Generate) -> Result<(), Error> {
     let mut out_repr = SumRepr::with_capacity(capacity);
     for _ in 0..args.num_terms {
         out_repr.add_term(
-            PauliCode::new((rng.gen(), rng.gen())),
+            Pauli::new((rng.gen(), rng.gen())),
             rng.gen_range(-1.0..1.0),
         );
     }

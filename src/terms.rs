@@ -1,13 +1,20 @@
-//! Representation of Hamiltonian sum terms.
+//! Represent sum of terms.
 
 use std::collections::HashMap;
 
 use num::Float;
 
 use crate::{
-    codes::Code,
+    code::{
+        fermions::Fermions,
+        qubits::Pauli,
+        Code,
+    },
     Error,
 };
+
+pub type FermiSum = SumRepr<f64, Fermions>;
+pub type PauliSum = SumRepr<f64, Pauli>;
 
 /// Convert and serialize sum of terms in various encodings
 pub trait Terms<T> {
@@ -48,8 +55,8 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{terms::SumRepr, codes::qubits::PauliCode};
-    /// let repr = SumRepr::<f64, PauliCode>::new();
+    /// # use f2q::{terms::SumRepr, code::qubits::Pauli};
+    /// let repr = SumRepr::<f64, Pauli>::new();
     ///
     /// assert!(repr.is_empty());
     /// ```
@@ -68,8 +75,8 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{terms::SumRepr, codes::qubits::PauliCode};
-    /// let repr = SumRepr::<f64, PauliCode>::with_capacity(8);
+    /// # use f2q::{terms::SumRepr, code::qubits::Pauli};
+    /// let repr = SumRepr::<f64, Pauli>::with_capacity(8);
     ///
     /// assert!(repr.capacity() >= 8);
     /// ```
@@ -88,8 +95,8 @@ where
     ///  /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{terms::SumRepr, codes::qubits::PauliCode};
-    /// let repr = SumRepr::<f64, PauliCode>::with_capacity(8);
+    /// # use f2q::{terms::SumRepr, code::qubits::Pauli};
+    /// let repr = SumRepr::<f64, Pauli>::with_capacity(8);
     ///
     /// assert!(repr.capacity() >= 8);
     /// ```
@@ -117,12 +124,12 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{codes::qubits::PauliCode, terms::SumRepr};
+    /// # use f2q::{code::qubits::Pauli, terms::SumRepr};
     ///
     /// let mut repr = SumRepr::new();
     ///
-    /// repr.update(PauliCode::default(), 0.5);
-    /// repr.update(PauliCode::new((1, 0)), 0.5);
+    /// repr.update(Pauli::default(), 0.5);
+    /// repr.update(Pauli::new((1, 0)), 0.5);
     ///
     /// let sum = repr.iter().fold(0.0, |acc, (&coeff, _)| acc + coeff);
     ///
@@ -140,18 +147,18 @@ where
     ///  /// # Examples
     ///
     /// ```rust
-    /// # use f2q::{codes::qubits::PauliCode, terms::SumRepr};
+    /// # use f2q::{code::qubits::Pauli, terms::SumRepr};
     ///
     /// let mut repr = SumRepr::new();
     ///
-    /// repr.update(PauliCode::default(), 0.5);
-    /// repr.update(PauliCode::new((1, 0)), 0.5);
+    /// repr.update(Pauli::default(), 0.5);
+    /// repr.update(Pauli::new((1, 0)), 0.5);
     /// for (coeff, _) in repr.iter_mut() {
     ///     *coeff += 0.1;
     /// }
     ///
-    /// assert_eq!(repr.coeff(PauliCode::default()), 0.6);
-    /// assert_eq!(repr.coeff(PauliCode::new((1, 0))), 0.6);
+    /// assert_eq!(repr.coeff(Pauli::default()), 0.6);
+    /// assert_eq!(repr.coeff(Pauli::new((1, 0))), 0.6);
     /// ```
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (&mut T, &K)> {
         self.terms.iter_mut().map(|(code, coeff)| (coeff, code))

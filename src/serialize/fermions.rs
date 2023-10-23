@@ -9,17 +9,17 @@ use serde::{
 };
 
 use crate::{
-    codes::fermions::{
+    code::fermions::{
         An,
         Cr,
-        FermiCode,
+        Fermions,
         Orbital,
     },
     serialize::Encoding,
     terms::SumRepr,
 };
 
-impl Serialize for FermiCode {
+impl Serialize for Fermions {
     fn serialize<S>(
         &self,
         serializer: S,
@@ -28,11 +28,11 @@ impl Serialize for FermiCode {
         S: serde::Serializer,
     {
         match self {
-            FermiCode::Offset => {
+            Fermions::Offset => {
                 let seq = serializer.serialize_seq(Some(0))?;
                 seq.end()
             }
-            FermiCode::One {
+            Fermions::One {
                 cr,
                 an,
             } => {
@@ -41,7 +41,7 @@ impl Serialize for FermiCode {
                 seq.serialize_element(&an.index())?;
                 seq.end()
             }
-            FermiCode::Two {
+            Fermions::Two {
                 cr,
                 an,
             } => {
@@ -56,10 +56,10 @@ impl Serialize for FermiCode {
     }
 }
 
-struct FermiCodeVisitor;
+struct FermionsVisitor;
 
-impl<'de> Visitor<'de> for FermiCodeVisitor {
-    type Value = FermiCode;
+impl<'de> Visitor<'de> for FermionsVisitor {
+    type Value = Fermions;
 
     fn expecting(
         &self,
@@ -86,13 +86,13 @@ impl<'de> Visitor<'de> for FermiCodeVisitor {
         );
 
         match idx_tup {
-            (None, None, None, None) => Ok(FermiCode::Offset),
-            (Some(p), Some(q), None, None) => FermiCode::one_electron(
+            (None, None, None, None) => Ok(Fermions::Offset),
+            (Some(p), Some(q), None, None) => Fermions::one_electron(
                 Cr(Orbital::from_index(p)),
                 An(Orbital::from_index(q)),
             )
             .ok_or(A::Error::custom("cannot parse one-electron term")),
-            (Some(p), Some(q), Some(r), Some(s)) => FermiCode::two_electron(
+            (Some(p), Some(q), Some(r), Some(s)) => Fermions::two_electron(
                 (Cr(Orbital::from_index(p)), Cr(Orbital::from_index(q))),
                 (An(Orbital::from_index(r)), An(Orbital::from_index(s))),
             )
@@ -102,22 +102,22 @@ impl<'de> Visitor<'de> for FermiCodeVisitor {
     }
 }
 
-impl<'de> Deserialize<'de> for FermiCode {
+impl<'de> Deserialize<'de> for Fermions {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_seq(FermiCodeVisitor)
+        deserializer.deserialize_seq(FermionsVisitor)
     }
 }
 
 #[derive(Serialize, Deserialize)]
 struct FermiSumTerm<T> {
-    code:  FermiCode,
+    code:  Fermions,
     value: T,
 }
 
-struct FermiSumSerSequence<'a, T>(&'a SumRepr<T, FermiCode>);
+struct FermiSumSerSequence<'a, T>(&'a SumRepr<T, Fermions>);
 
 impl<'a, T> Serialize for FermiSumSerSequence<'a, T>
 where
@@ -152,7 +152,7 @@ where
     terms:    FermiSumSerSequence<'a, T>,
 }
 
-impl<T> Serialize for SumRepr<T, FermiCode>
+impl<T> Serialize for SumRepr<T, Fermions>
 where
     T: Float + Serialize,
 {
@@ -165,14 +165,14 @@ where
     {
         (FermiSumSer {
             r#type:   "sumrepr",
-            encoding: Encoding::FermiCode,
+            encoding: Encoding::Fermions,
             terms:    FermiSumSerSequence(self),
         })
         .serialize(serializer)
     }
 }
 
-struct FermiSumDeSequence<T>(SumRepr<T, FermiCode>);
+struct FermiSumDeSequence<T>(SumRepr<T, Fermions>);
 
 struct FermiSumVisitor<T> {
     _marker: PhantomData<T>,
@@ -243,7 +243,7 @@ where
     terms:    FermiSumDeSequence<T>,
 }
 
-impl<'de, T> Deserialize<'de> for SumRepr<T, FermiCode>
+impl<'de, T> Deserialize<'de> for SumRepr<T, Fermions>
 where
     T: Float + Deserialize<'de>,
 {
@@ -259,7 +259,7 @@ where
             return Err(D::Error::custom("type should be: 'sumrepr'"));
         }
 
-        if sumde.encoding != Encoding::FermiCode {
+        if sumde.encoding != Encoding::Fermions {
             return Err(D::Error::custom("encoding should be: 'fermions'"));
         }
 
