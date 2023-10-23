@@ -42,7 +42,7 @@ impl TryFrom<Fermions> for Map {
                 if cr.index() < 64 && an.index() < 64 {
                     Ok(Self(value))
                 } else {
-                    Err(Error::PauliIndex {
+                    Err(Error::QubitIndex {
                         msg: "orbital index must be less than 64".to_string(),
                     })
                 }
@@ -58,7 +58,7 @@ impl TryFrom<Fermions> for Map {
                 {
                     Ok(Self(value))
                 } else {
-                    Err(Error::PauliIndex {
+                    Err(Error::QubitIndex {
                         msg: "orbital index must be less than 64".to_string(),
                     })
                 }

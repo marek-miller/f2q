@@ -14,7 +14,7 @@ fn pauli_01() {
 #[test]
 fn pauli_02() {
     let err = PauliOp::try_from(4u16).unwrap_err();
-    matches!(err, Error::PauliIndex { .. });
+    matches!(err, Error::QubitIndex { .. });
 }
 
 #[test]

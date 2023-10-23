@@ -1,4 +1,4 @@
-//! Representation of Hamiltonian sum terms.
+//! Represent sum of terms.
 
 use std::collections::HashMap;
 
