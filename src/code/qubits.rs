@@ -493,9 +493,43 @@ impl Pauli {
     ///
     /// assert_eq!(code.num_nontrivial(), 3);
     /// ```
+    #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub fn num_nontrivial(&self) -> u8 {
         u8::try_from(self.into_iter().filter(|&x| x != PauliOp::I).count())
             .expect("pauli iterator has no more than 64 elements")
+    }
+
+    /// Return the minimal size of a qubit register that would fit the code.
+    ///
+    /// The value returned is simply the number of all [`PauliOp`]'s that remain
+    /// after removing the trailing `PauliOp::I`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use f2q::code::qubits::{PauliOp, Pauli};
+    /// use PauliOp::{
+    ///     I,
+    ///     X,
+    ///     Y,
+    ///     Z,
+    /// };
+    ///
+    /// assert_eq!(Pauli::identity().min_register_size(), 0);
+    ///
+    /// let code = Pauli::from_paulis([X, I, Y, I, Z, I, I]);
+    /// assert_eq!(code.min_register_size(), 5);
+    /// ```
+    #[must_use]
+    #[allow(clippy::missing_panics_doc)]
+    pub fn min_register_size(&self) -> u8 {
+        u8::try_from(if self.pack.1 == 0 {
+            (0..32).filter(|i| self.pack.0 >> (2 * i) != 0).count()
+        } else {
+            (0..32).filter(|i| self.pack.1 >> (2 * i) != 0).count() + 32
+        })
+        .expect("pauli iterator has no more than 64 elements")
     }
 }
 

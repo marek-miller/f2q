@@ -215,3 +215,80 @@ fn pauli_num_nontrivial() {
         43
     );
 }
+
+#[test]
+fn pauli_min_register_size_01() {
+    use PauliOp::{
+        I,
+        X,
+        Y,
+        Z,
+    };
+
+    assert_eq!(Pauli::from_paulis([]).min_register_size(), 0);
+
+    assert_eq!(Pauli::from_paulis([X]).min_register_size(), 1);
+    assert_eq!(Pauli::from_paulis([Y]).min_register_size(), 1);
+    assert_eq!(Pauli::from_paulis([Z]).min_register_size(), 1);
+
+    assert_eq!(Pauli::from_paulis([X, Y]).min_register_size(), 2);
+    assert_eq!(Pauli::from_paulis([Y, Z]).min_register_size(), 2);
+
+    assert_eq!(Pauli::from_paulis([X, Y, Z]).min_register_size(), 3);
+    assert_eq!(Pauli::from_paulis([I, X, Y, Z]).min_register_size(), 4);
+    assert_eq!(Pauli::from_paulis([I, X, I, Y, Z]).min_register_size(), 5);
+    assert_eq!(
+        Pauli::from_paulis([I, X, I, Y, I, Z]).min_register_size(),
+        6
+    );
+    assert_eq!(
+        Pauli::from_paulis([I, X, I, Y, I, Z, I]).min_register_size(),
+        6
+    );
+}
+
+#[test]
+fn pauli_min_register_size_02() {
+    use PauliOp::{
+        I,
+        X,
+        Y,
+        Z,
+    };
+
+    assert_eq!(Pauli::new((u64::MAX, 0)).min_register_size(), 32);
+    assert_eq!(Pauli::new((0, u64::MAX)).min_register_size(), 64);
+    assert_eq!(Pauli::new((u64::MAX, u64::MAX)).min_register_size(), 64);
+
+    assert_eq!(
+        Pauli::from_paulis([Y, I, X, Y, I, X, Y, I, X, Y, I, X])
+            .min_register_size(),
+        12
+    );
+    assert_eq!(
+        Pauli::from_paulis([
+            Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
+            I, X
+        ])
+        .min_register_size(),
+        24
+    );
+    assert_eq!(
+        Pauli::from_paulis([
+            Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
+            I, X, Y, I, X, Y, I, X, Z, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I,
+            X, Y, I, X
+        ])
+        .min_register_size(),
+        48
+    );
+    assert_eq!(
+        Pauli::from_paulis([
+            Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
+            I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I,
+            X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X,
+        ])
+        .min_register_size(),
+        60
+    );
+}
