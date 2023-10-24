@@ -164,3 +164,54 @@ fn from_u128() {
     );
     assert_eq!(Pauli::from(u128::MAX).index(), u128::MAX);
 }
+
+#[test]
+fn pauli_num_nontrivial() {
+    use PauliOp::*;
+
+    assert_eq!(Pauli::from_paulis([]).num_nontrivial(), 0);
+    assert_eq!(Pauli::from_paulis([X]).num_nontrivial(), 1);
+    assert_eq!(Pauli::from_paulis([Y, X]).num_nontrivial(), 2);
+    assert_eq!(Pauli::from_paulis([Z, Y, X]).num_nontrivial(), 3);
+
+    assert_eq!(Pauli::from_paulis([Y, I, X]).num_nontrivial(), 2);
+    assert_eq!(Pauli::from_paulis([Z, I, Y, I, X]).num_nontrivial(), 3);
+    assert_eq!(Pauli::from_paulis([Z, I, I, X]).num_nontrivial(), 2);
+    assert_eq!(Pauli::from_paulis([Z, I, I, I, I, Z]).num_nontrivial(), 2);
+
+    assert_eq!(Pauli::new((u64::MAX, 0)).num_nontrivial(), 32);
+    assert_eq!(Pauli::new((0, u64::MAX)).num_nontrivial(), 32);
+    assert_eq!(Pauli::new((u64::MAX, u64::MAX)).num_nontrivial(), 64);
+
+    assert_eq!(
+        Pauli::from_paulis([Y, I, X, Y, I, X, Y, I, X, Y, I, X])
+            .num_nontrivial(),
+        8
+    );
+    assert_eq!(
+        Pauli::from_paulis([
+            Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
+            I, X
+        ])
+        .num_nontrivial(),
+        16
+    );
+    assert_eq!(
+        Pauli::from_paulis([
+            Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
+            I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I,
+            X, Y, I, X
+        ])
+        .num_nontrivial(),
+        32
+    );
+    assert_eq!(
+        Pauli::from_paulis([
+            Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
+            I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I,
+            X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
+        ])
+        .num_nontrivial(),
+        43
+    );
+}

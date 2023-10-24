@@ -479,6 +479,24 @@ impl Pauli {
 
         Pauli::from_paulis((0..num_qubits).map(|_| PauliOp::Z))
     }
+
+    /// Return the number of non-trivial Pauli operators.
+    ///
+    /// The value returned is equal to the number of [`PauliOp`]s in self
+    /// that are different than `PauliOp::I`.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use f2q::code::qubits::{PauliOp, Pauli};
+    /// let code = Pauli::parity_op(3);
+    ///
+    /// assert_eq!(code.num_nontrivial(), 3);
+    /// ```
+    pub fn num_nontrivial(&self) -> u8 {
+        u8::try_from(self.into_iter().filter(|&x| x != PauliOp::I).count())
+            .expect("pauli iterator has no more than 64 elements")
+    }
 }
 
 /// Iterate over Paulis in `Pauli`
