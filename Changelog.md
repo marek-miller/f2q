@@ -4,3 +4,4 @@
 
   - Redefine Terms trait
   - Rename modules / types 
+  - Change method name: Pauli::index()

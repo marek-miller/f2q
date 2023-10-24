@@ -102,7 +102,7 @@ impl From<PauliOp> for String {
 /// # use f2q::code::qubits::Pauli;
 /// let code = Pauli::default();
 ///
-/// assert_eq!(code.enumerate(), 0);
+/// assert_eq!(code.index(), 0);
 /// ```
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Pauli {
@@ -199,11 +199,11 @@ impl Pauli {
     /// # use f2q::code::qubits::Pauli;
     /// let code = Pauli::new((3, 4));
     ///
-    /// assert_eq!(code.enumerate(), 3 + (4 << 64));
+    /// assert_eq!(code.index(), 3 + (4 << 64));
     /// assert_eq!(u128::from(code), 3 + (4 << 64));
     /// ```
     #[must_use]
-    pub fn enumerate(&self) -> u128 {
+    pub fn index(&self) -> u128 {
         u128::from(self.pack.0) + (u128::from(self.pack.1) << 64)
     }
 
@@ -475,7 +475,7 @@ impl Pauli {
     /// ```
     #[must_use]
     pub fn parity_op(num_qubits: u16) -> Self {
-        assert!(num_qubits <= 64, "number of qubits must be within 1..64");
+        assert!(num_qubits <= 64, "number of qubits must be within 1..=64");
 
         Pauli::from_paulis((0..num_qubits).map(|_| PauliOp::Z))
     }
@@ -525,7 +525,7 @@ impl Display for Pauli {
         &self,
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
-        if self.enumerate() == 0 {
+        if self.index() == 0 {
             write!(f, "I")
         } else {
             let mut pauli_str = String::with_capacity(64);
@@ -546,7 +546,7 @@ impl Display for Pauli {
 
 impl From<Pauli> for u128 {
     fn from(value: Pauli) -> Self {
-        value.enumerate()
+        value.index()
     }
 }
 

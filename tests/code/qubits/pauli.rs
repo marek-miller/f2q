@@ -6,7 +6,7 @@ use f2q::code::qubits::{
 #[test]
 fn init() {
     let code = Pauli::new((0b01, 0b00));
-    assert_eq!(code.enumerate(), 0b01);
+    assert_eq!(code.index(), 0b01);
 }
 
 #[test]
@@ -152,16 +152,15 @@ fn from_paulis_02() {
 
 #[test]
 fn from_u128() {
-    assert_eq!(Pauli::from(0u128).enumerate(), 0u128);
-    assert_eq!(Pauli::from(1u128).enumerate(), 1u128);
+    assert_eq!(Pauli::from(0u128).index(), 0u128);
+    assert_eq!(Pauli::from(1u128).index(), 1u128);
     assert_eq!(
-        Pauli::from(11_111_111_111_111_111_u128).enumerate(),
+        Pauli::from(11_111_111_111_111_111_u128).index(),
         11_111_111_111_111_111_u128
     );
     assert_eq!(
-        Pauli::from(1_234_567_898_765_432_112_345_678_987_654_321_u128)
-            .enumerate(),
+        Pauli::from(1_234_567_898_765_432_112_345_678_987_654_321_u128).index(),
         1_234_567_898_765_432_112_345_678_987_654_321_u128
     );
-    assert_eq!(Pauli::from(u128::MAX).enumerate(), u128::MAX);
+    assert_eq!(Pauli::from(u128::MAX).index(), u128::MAX);
 }
