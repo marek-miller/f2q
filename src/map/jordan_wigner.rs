@@ -448,7 +448,7 @@ where
 
     fn add_to(
         &mut self,
-        mut repr: impl Extend<(T, Pauli)>,
+        repr: &mut impl Extend<(T, Pauli)>,
     ) -> Result<(), Error> {
         for (&coeff, &code) in self.repr.iter() {
             repr.extend(Map::try_from(code)?.pauli_iter(coeff));

@@ -27,7 +27,7 @@ pub trait Terms<T> {
     /// Return error on failure.
     fn add_to(
         &mut self,
-        repr: impl Extend<T>,
+        repr: &mut impl Extend<T>,
     ) -> Result<(), Error>;
 }
 
@@ -240,6 +240,18 @@ where
     }
 }
 
+impl<T, K, const N: usize> From<[(T, K); N]> for SumRepr<T, K>
+where
+    T: Float,
+    K: Code,
+{
+    fn from(value: [(T, K); N]) -> Self {
+        Self {
+            terms: HashMap::from(value.map(|x| (x.1, x.0))),
+        }
+    }
+}
+
 impl<T, K> Terms<(T, K)> for SumRepr<T, K>
 where
     T: Float,
@@ -249,7 +261,7 @@ where
 
     fn add_to(
         &mut self,
-        mut repr: impl Extend<(T, K)>,
+        repr: &mut impl Extend<(T, K)>,
     ) -> Result<(), Error> {
         self.iter().try_for_each(|(&coeff, &code)| {
             repr.extend(Some((coeff, code)));
@@ -272,19 +284,6 @@ where
         for (coeff, code) in iter {
             self.add_term(code, coeff);
         }
-    }
-}
-
-impl<T, K> Extend<(T, K)> for &mut SumRepr<T, K>
-where
-    K: Code,
-    T: Float,
-{
-    fn extend<I: IntoIterator<Item = (T, K)>>(
-        &mut self,
-        iter: I,
-    ) {
-        (*self).extend(iter);
     }
 }
 
@@ -317,7 +316,7 @@ where
 
     fn add_to(
         &mut self,
-        mut repr: impl Extend<(T, K)>,
+        repr: &mut impl Extend<(T, K)>,
     ) -> Result<(), Error> {
         while let Some((coeff, code)) = (self.f)() {
             repr.extend(Some((coeff, code)));
@@ -352,7 +351,7 @@ where
 
     fn add_to(
         &mut self,
-        mut repr: impl Extend<(T, K)>,
+        repr: &mut impl Extend<(T, K)>,
     ) -> Result<(), Error> {
         while let Some((coeff, code)) = (self.f)() {
             repr.extend(Some((coeff, code)));
