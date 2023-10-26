@@ -40,9 +40,9 @@ fn test_orbital_enumerate_02() {
 
 #[test]
 fn orbital_from_index_01() {
-    assert_eq!(Orbital::from_index(1).index(), 1);
-    assert_eq!(Orbital::from_index(2).index(), 2);
-    assert_eq!(Orbital::from_index(19).index(), 19);
+    assert_eq!(Orbital::with_index(1).index(), 1);
+    assert_eq!(Orbital::with_index(2).index(), 2);
+    assert_eq!(Orbital::with_index(19).index(), 19);
 }
 
 #[test]
@@ -106,38 +106,38 @@ fn orbital_gen_range_04() {
 #[test]
 fn fermions_one_elec_init_01() {
     let _ = Fermions::one_electron(
-        Cr(Orbital::from_index(0)),
-        An(Orbital::from_index(0)),
+        Cr(Orbital::with_index(0)),
+        An(Orbital::with_index(0)),
     )
     .unwrap();
 
     let _ = Fermions::one_electron(
-        Cr(Orbital::from_index(0)),
-        An(Orbital::from_index(1)),
+        Cr(Orbital::with_index(0)),
+        An(Orbital::with_index(1)),
     )
     .unwrap();
 
     let _ = Fermions::one_electron(
-        Cr(Orbital::from_index(1)),
-        An(Orbital::from_index(1)),
+        Cr(Orbital::with_index(1)),
+        An(Orbital::with_index(1)),
     )
     .unwrap();
 
     let _ = Fermions::one_electron(
-        Cr(Orbital::from_index(1)),
-        An(Orbital::from_index(2)),
+        Cr(Orbital::with_index(1)),
+        An(Orbital::with_index(2)),
     )
     .unwrap();
 
     assert!(Fermions::one_electron(
-        Cr(Orbital::from_index(1)),
-        An(Orbital::from_index(0)),
+        Cr(Orbital::with_index(1)),
+        An(Orbital::with_index(0)),
     )
     .is_none());
 
     assert!(Fermions::one_electron(
-        Cr(Orbital::from_index(32)),
-        An(Orbital::from_index(2)),
+        Cr(Orbital::with_index(32)),
+        An(Orbital::with_index(2)),
     )
     .is_none());
 }
@@ -159,44 +159,44 @@ fn fermions_one_elec_from_01() {
 #[test]
 fn fermions_two_elec_init_01() {
     let _ = Fermions::two_electron(
-        (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
-        (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+        (An(Orbital::with_index(1)), An(Orbital::with_index(0))),
     )
     .unwrap();
 
     let _ = Fermions::two_electron(
-        (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(2))),
-        (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(2))),
+        (An(Orbital::with_index(1)), An(Orbital::with_index(0))),
     )
     .unwrap();
 
     let _ = Fermions::two_electron(
-        (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
-        (An(Orbital::from_index(2)), An(Orbital::from_index(1))),
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+        (An(Orbital::with_index(2)), An(Orbital::with_index(1))),
     )
     .unwrap();
 
     assert!(Fermions::two_electron(
-        (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(0))),
-        (An(Orbital::from_index(0)), An(Orbital::from_index(0))),
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(0))),
+        (An(Orbital::with_index(0)), An(Orbital::with_index(0))),
     )
     .is_none());
 
     assert!(Fermions::two_electron(
-        (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
-        (An(Orbital::from_index(0)), An(Orbital::from_index(0))),
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+        (An(Orbital::with_index(0)), An(Orbital::with_index(0))),
     )
     .is_none());
 
     assert!(Fermions::two_electron(
-        (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
-        (An(Orbital::from_index(1)), An(Orbital::from_index(1))),
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+        (An(Orbital::with_index(1)), An(Orbital::with_index(1))),
     )
     .is_none());
 
     assert!(Fermions::two_electron(
-        (Cr(Orbital::from_index(1)), Cr(Orbital::from_index(2))),
-        (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+        (Cr(Orbital::with_index(1)), Cr(Orbital::with_index(2))),
+        (An(Orbital::with_index(1)), An(Orbital::with_index(0))),
     )
     .is_none());
 }

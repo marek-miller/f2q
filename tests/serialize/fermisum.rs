@@ -46,8 +46,8 @@ fn fermisum_serialize_02() {
 
     repr.add_term(
         Fermions::one_electron(
-            Cr(Orbital::from_index(1)),
-            An(Orbital::from_index(2)),
+            Cr(Orbital::with_index(1)),
+            An(Orbital::with_index(2)),
         )
         .unwrap(),
         0.2,
@@ -79,8 +79,8 @@ fn fermisum_serialize_03() {
 
     repr.add_term(
         Fermions::two_electron(
-            (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
-            (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+            (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+            (An(Orbital::with_index(1)), An(Orbital::with_index(0))),
         )
         .unwrap(),
         0.3,
@@ -112,16 +112,16 @@ fn fermisum_serialize_04() {
     repr.add_term(Fermions::Offset, 0.1);
     repr.add_term(
         Fermions::one_electron(
-            Cr(Orbital::from_index(1)),
-            An(Orbital::from_index(2)),
+            Cr(Orbital::with_index(1)),
+            An(Orbital::with_index(2)),
         )
         .unwrap(),
         0.2,
     );
     repr.add_term(
         Fermions::two_electron(
-            (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
-            (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+            (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+            (An(Orbital::with_index(1)), An(Orbital::with_index(0))),
         )
         .unwrap(),
         0.3,
@@ -191,8 +191,8 @@ fn fermisum_deserialize_02() {
     assert_eq!(
         repr.coeff(
             Fermions::one_electron(
-                Cr(Orbital::from_index(1)),
-                An(Orbital::from_index(2))
+                Cr(Orbital::with_index(1)),
+                An(Orbital::with_index(2))
             )
             .unwrap()
         ),
@@ -235,8 +235,8 @@ fn fermisum_deserialize_03() {
     assert_eq!(
         repr.coeff(
             Fermions::one_electron(
-                Cr(Orbital::from_index(1)),
-                An(Orbital::from_index(2))
+                Cr(Orbital::with_index(1)),
+                An(Orbital::with_index(2))
             )
             .unwrap()
         ),
@@ -245,8 +245,8 @@ fn fermisum_deserialize_03() {
     assert_eq!(
         repr.coeff(
             Fermions::two_electron(
-                (Cr(Orbital::from_index(0)), Cr(Orbital::from_index(1))),
-                (An(Orbital::from_index(1)), An(Orbital::from_index(0))),
+                (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+                (An(Orbital::with_index(1)), An(Orbital::with_index(0))),
             )
             .unwrap(),
         ),

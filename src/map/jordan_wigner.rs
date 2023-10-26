@@ -405,7 +405,7 @@ fn next_item_two_pqrs<T: Float>(
 /// let mut fermi_repr = SumRepr::new();
 ///
 /// // Create orbital with qubit index 11
-/// let p = Orbital::from_index(idx);
+/// let p = Orbital::with_index(idx);
 ///
 /// // Add it as one-electron interaction term to the sum with coefficient: 1.0
 /// fermi_repr.add_term(Fermions::one_electron(Cr(p), An(p)).unwrap(), 1.0);

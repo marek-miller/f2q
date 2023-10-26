@@ -88,13 +88,13 @@ impl<'de> Visitor<'de> for FermionsVisitor {
         match idx_tup {
             (None, None, None, None) => Ok(Fermions::Offset),
             (Some(p), Some(q), None, None) => Fermions::one_electron(
-                Cr(Orbital::from_index(p)),
-                An(Orbital::from_index(q)),
+                Cr(Orbital::with_index(p)),
+                An(Orbital::with_index(q)),
             )
             .ok_or(A::Error::custom("cannot parse one-electron term")),
             (Some(p), Some(q), Some(r), Some(s)) => Fermions::two_electron(
-                (Cr(Orbital::from_index(p)), Cr(Orbital::from_index(q))),
-                (An(Orbital::from_index(r)), An(Orbital::from_index(s))),
+                (Cr(Orbital::with_index(p)), Cr(Orbital::with_index(q))),
+                (An(Orbital::with_index(r)), An(Orbital::with_index(s))),
             )
             .ok_or(A::Error::custom("cannot parse two-electron term")),
             _ => Err(A::Error::custom("cannot parse sequence")),

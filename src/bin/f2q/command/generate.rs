@@ -45,8 +45,8 @@ fn fermions_random(args: &Generate) -> Result<(), Error> {
                 let q = rng.gen_range(p + 1..=max_val);
                 out_repr.add_term(
                     Fermions::one_electron(
-                        Cr(Orbital::from_index(p)),
-                        An(Orbital::from_index(q)),
+                        Cr(Orbital::with_index(p)),
+                        An(Orbital::with_index(q)),
                     )
                     .unwrap(),
                     rng.gen_range(-1.0..1.0),
@@ -62,12 +62,12 @@ fn fermions_random(args: &Generate) -> Result<(), Error> {
                 out_repr.add_term(
                     Fermions::two_electron(
                         (
-                            Cr(Orbital::from_index(p)),
-                            Cr(Orbital::from_index(q)),
+                            Cr(Orbital::with_index(p)),
+                            Cr(Orbital::with_index(q)),
                         ),
                         (
-                            An(Orbital::from_index(r)),
-                            An(Orbital::from_index(s)),
+                            An(Orbital::with_index(r)),
+                            An(Orbital::with_index(s)),
                         ),
                     )
                     .unwrap(),

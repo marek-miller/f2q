@@ -11,15 +11,15 @@ fn display() {
     assert_eq!(code.to_string(), format!("[]"));
 
     let code = Fermions::one_electron(
-        Cr(Orbital::from_index(1)),
-        An(Orbital::from_index(2)),
+        Cr(Orbital::with_index(1)),
+        An(Orbital::with_index(2)),
     )
     .unwrap();
     assert_eq!(code.to_string(), format!("[1, 2]"));
 
     let code = Fermions::two_electron(
-        (Cr(Orbital::from_index(1)), Cr(Orbital::from_index(2))),
-        (An(Orbital::from_index(5)), An(Orbital::from_index(4))),
+        (Cr(Orbital::with_index(1)), Cr(Orbital::with_index(2))),
+        (An(Orbital::with_index(5)), An(Orbital::with_index(4))),
     )
     .unwrap();
     assert_eq!(code.to_string(), format!("[1, 2, 5, 4]"));
@@ -32,16 +32,16 @@ fn serialize_01() {
     assert_eq!(json, "[]");
 
     let code = Fermions::one_electron(
-        Cr(Orbital::from_index(1)),
-        An(Orbital::from_index(2)),
+        Cr(Orbital::with_index(1)),
+        An(Orbital::with_index(2)),
     )
     .unwrap();
     let json = serde_json::to_string(&code).unwrap();
     assert_eq!(json, "[1,2]");
 
     let code = Fermions::two_electron(
-        (Cr(Orbital::from_index(1)), Cr(Orbital::from_index(2))),
-        (An(Orbital::from_index(5)), An(Orbital::from_index(4))),
+        (Cr(Orbital::with_index(1)), Cr(Orbital::with_index(2))),
+        (An(Orbital::with_index(5)), An(Orbital::with_index(4))),
     )
     .unwrap();
     let json = serde_json::to_string(&code).unwrap();
@@ -61,8 +61,8 @@ fn deserialize_01() {
     ";
     let code: Fermions = serde_json::from_str(data).unwrap();
     let expected = Fermions::one_electron(
-        Cr(Orbital::from_index(1)),
-        An(Orbital::from_index(2)),
+        Cr(Orbital::with_index(1)),
+        An(Orbital::with_index(2)),
     )
     .unwrap();
     assert_eq!(code, expected);
@@ -72,8 +72,8 @@ fn deserialize_01() {
     ";
     let code: Fermions = serde_json::from_str(data).unwrap();
     let expected = Fermions::two_electron(
-        (Cr(Orbital::from_index(1)), Cr(Orbital::from_index(2))),
-        (An(Orbital::from_index(5)), An(Orbital::from_index(4))),
+        (Cr(Orbital::with_index(1)), Cr(Orbital::with_index(2))),
+        (An(Orbital::with_index(5)), An(Orbital::with_index(4))),
     )
     .unwrap();
     assert_eq!(code, expected);

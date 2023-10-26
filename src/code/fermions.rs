@@ -170,12 +170,12 @@ impl Orbital {
     /// ```rust
     /// # use f2q::code::fermions::{Orbital, Spin};
     ///
-    /// let orbital = Orbital::from_index(3);
+    /// let orbital = Orbital::with_index(3);
     ///
     /// assert_eq!(orbital, Orbital::new(1, Spin::Up));
     /// ```
     #[must_use]
-    pub fn from_index(index: u32) -> Self {
+    pub fn with_index(index: u32) -> Self {
         Self::new(index / 2, Spin::from(index & 1 != 0))
     }
 
@@ -250,7 +250,7 @@ impl Iterator for OrbitalRange {
                     if *i > end {
                         None
                     } else {
-                        let orbital = Orbital::from_index(*i);
+                        let orbital = Orbital::with_index(*i);
                         if *i < end {
                             *i += 1;
                         } else {
@@ -279,7 +279,7 @@ impl Cr {
     ///
     /// ```rust
     /// # use f2q::code::fermions::{Orbital, Cr};
-    /// let cr = Cr(Orbital::from_index(1));
+    /// let cr = Cr(Orbital::with_index(1));
     ///
     /// assert_eq!(cr.index(), 1);
     /// ```
@@ -302,7 +302,7 @@ impl An {
     ///
     /// ```rust
     /// # use f2q::code::fermions::{Orbital, An};
-    /// let an = An(Orbital::from_index(1));
+    /// let an = An(Orbital::with_index(1));
     ///
     /// assert_eq!(an.index(), 1);
     /// ```
@@ -453,8 +453,8 @@ impl TryFrom<(u32, u32)> for Fermions {
 
     fn try_from(value: (u32, u32)) -> Result<Self, Self::Error> {
         Fermions::one_electron(
-            Cr(Orbital::from_index(value.0)),
-            An(Orbital::from_index(value.1)),
+            Cr(Orbital::with_index(value.0)),
+            An(Orbital::with_index(value.1)),
         )
         .ok_or(Self::Error::QubitIndex {
             msg: "one-electron term orbital ordering".to_string(),
@@ -468,12 +468,12 @@ impl TryFrom<(u32, u32, u32, u32)> for Fermions {
     fn try_from(value: (u32, u32, u32, u32)) -> Result<Self, Self::Error> {
         Fermions::two_electron(
             (
-                Cr(Orbital::from_index(value.0)),
-                Cr(Orbital::from_index(value.1)),
+                Cr(Orbital::with_index(value.0)),
+                Cr(Orbital::with_index(value.1)),
             ),
             (
-                An(Orbital::from_index(value.2)),
-                An(Orbital::from_index(value.3)),
+                An(Orbital::with_index(value.2)),
+                An(Orbital::with_index(value.3)),
             ),
         )
         .ok_or(Self::Error::QubitIndex {

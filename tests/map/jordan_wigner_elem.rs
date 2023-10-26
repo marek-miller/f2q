@@ -42,7 +42,7 @@ fn jordan_wigner_01() {
 fn check_jordan_wigner_one_pp(index: u32) {
     let mut fermi_sum = SumRepr::new();
 
-    let p = Orbital::from_index(index);
+    let p = Orbital::with_index(index);
     let integral = Fermions::one_electron(Cr(p), An(p)).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
@@ -87,8 +87,8 @@ fn check_jordan_wigner_one_pq(
     let mut fermi_sum = SumRepr::new();
 
     assert!(index1 < index2);
-    let p = Orbital::from_index(u32::from(index1));
-    let q = Orbital::from_index(u32::from(index2));
+    let p = Orbital::with_index(u32::from(index1));
+    let q = Orbital::with_index(u32::from(index2));
     let integral = Fermions::one_electron(Cr(p), An(q)).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
 
@@ -137,8 +137,8 @@ fn check_jordan_wigner_two_pq(
     let mut fermi_sum = SumRepr::new();
 
     assert!(index1 < index2);
-    let p = Orbital::from_index(u32::from(index1));
-    let q = Orbital::from_index(u32::from(index2));
+    let p = Orbital::with_index(u32::from(index1));
+    let q = Orbital::with_index(u32::from(index2));
     let integral =
         Fermions::two_electron((Cr(p), Cr(q)), (An(q), An(p))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
@@ -206,9 +206,9 @@ fn check_jordan_wigner_two_pqs(
     assert!(index2 > index3);
     assert!(index1 <= index3);
 
-    let p = Orbital::from_index(u32::from(index1));
-    let q = Orbital::from_index(u32::from(index2));
-    let s = Orbital::from_index(u32::from(index3));
+    let p = Orbital::with_index(u32::from(index1));
+    let q = Orbital::with_index(u32::from(index2));
+    let s = Orbital::with_index(u32::from(index3));
     let integral =
         Fermions::two_electron((Cr(p), Cr(q)), (An(q), An(s))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
@@ -295,10 +295,10 @@ fn check_jordan_wigner_two_pqrs(
     assert!(index3 > index4);
     assert!(index1 <= index4);
 
-    let p = Orbital::from_index(u32::from(index1));
-    let q = Orbital::from_index(u32::from(index2));
-    let r = Orbital::from_index(u32::from(index3));
-    let s = Orbital::from_index(u32::from(index4));
+    let p = Orbital::with_index(u32::from(index1));
+    let q = Orbital::with_index(u32::from(index2));
+    let r = Orbital::with_index(u32::from(index3));
+    let s = Orbital::with_index(u32::from(index4));
     let integral =
         Fermions::two_electron((Cr(p), Cr(q)), (An(r), An(s))).unwrap();
     fermi_sum.add_term(integral, MOCK_COEFF);
