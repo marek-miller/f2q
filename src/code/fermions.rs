@@ -443,7 +443,7 @@ impl Fermions {
 }
 
 impl From<()> for Fermions {
-    fn from(_: ()) -> Self {
+    fn from((): ()) -> Self {
         Fermions::Offset
     }
 }

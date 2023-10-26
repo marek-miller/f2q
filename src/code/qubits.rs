@@ -178,7 +178,7 @@ impl Pauli {
     ///
     /// assert_eq!(code, Pauli::new((0, 0)));
     /// assert_eq!(code, Pauli::default());
-    /// assert_eq!(code, Pauli::from_paulis([PauliOp::I]));
+    /// assert_eq!(code, Pauli::with_ops([PauliOp::I]));
     /// ```
     #[must_use]
     pub fn identity() -> Self {
@@ -426,14 +426,14 @@ impl Pauli {
     ///     Z,
     /// };
     ///
-    /// let code = Pauli::from_paulis([X, Y, Z]);
+    /// let code = Pauli::with_ops([X, Y, Z]);
     ///
     /// assert_eq!(code.pauli(0), Some(X));
     /// assert_eq!(code.pauli(1), Some(Y));
     /// assert_eq!(code.pauli(2), Some(Z));
     /// ```
     #[allow(clippy::missing_panics_doc)]
-    pub fn from_paulis<I>(iter: I) -> Self
+    pub fn with_ops<I>(iter: I) -> Self
     where
         I: IntoIterator<Item = PauliOp>,
     {
@@ -477,7 +477,7 @@ impl Pauli {
     pub fn parity_op(num_qubits: u16) -> Self {
         assert!(num_qubits <= 64, "number of qubits must be within 1..=64");
 
-        Pauli::from_paulis((0..num_qubits).map(|_| PauliOp::Z))
+        Pauli::with_ops((0..num_qubits).map(|_| PauliOp::Z))
     }
 
     /// Return the number of non-trivial Pauli operators.
@@ -518,7 +518,7 @@ impl Pauli {
     ///
     /// assert_eq!(Pauli::identity().min_register_size(), 0);
     ///
-    /// let code = Pauli::from_paulis([X, I, Y, I, Z, I, I]);
+    /// let code = Pauli::with_ops([X, I, Y, I, Z, I, I]);
     /// assert_eq!(code.min_register_size(), 5);
     /// ```
     #[must_use]
