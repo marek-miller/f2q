@@ -10,6 +10,8 @@ use std::{
     },
 };
 
+use crate::Error;
+
 /// Spin one-half
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum Spin {
@@ -264,6 +266,52 @@ impl Iterator for OrbitalRange {
     }
 }
 
+/// Creation operator
+///
+/// A newtype struct representing a creation operator.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Cr(pub Orbital);
+
+impl Cr {
+    /// Orbital index.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use f2q::code::fermions::{Orbital, Cr};
+    /// let cr = Cr(Orbital::from_index(1));
+    ///
+    /// assert_eq!(cr.index(), 1);
+    /// ```
+    #[must_use]
+    pub fn index(&self) -> u32 {
+        self.0.index()
+    }
+}
+
+/// Annihilation operator
+///
+/// A newtype struct representing an annihilation operator.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct An(pub Orbital);
+
+impl An {
+    /// Orbital index.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use f2q::code::fermions::{Orbital, An};
+    /// let an = An(Orbital::from_index(1));
+    ///
+    /// assert_eq!(an.index(), 1);
+    /// ```
+    #[must_use]
+    pub fn index(&self) -> u32 {
+        self.0.index()
+    }
+}
+
 /// Electronic integral with creation (cr) and annihilation (an)
 /// operators indexed by orbitals in canonical order:
 ///
@@ -394,6 +442,46 @@ impl Fermions {
     }
 }
 
+impl From<()> for Fermions {
+    fn from(_: ()) -> Self {
+        Fermions::Offset
+    }
+}
+
+impl TryFrom<(u32, u32)> for Fermions {
+    type Error = Error;
+
+    fn try_from(value: (u32, u32)) -> Result<Self, Self::Error> {
+        Fermions::one_electron(
+            Cr(Orbital::from_index(value.0)),
+            An(Orbital::from_index(value.1)),
+        )
+        .ok_or(Self::Error::QubitIndex {
+            msg: "one-electron term orbital ordering".to_string(),
+        })
+    }
+}
+
+impl TryFrom<(u32, u32, u32, u32)> for Fermions {
+    type Error = Error;
+
+    fn try_from(value: (u32, u32, u32, u32)) -> Result<Self, Self::Error> {
+        Fermions::two_electron(
+            (
+                Cr(Orbital::from_index(value.0)),
+                Cr(Orbital::from_index(value.1)),
+            ),
+            (
+                An(Orbital::from_index(value.2)),
+                An(Orbital::from_index(value.3)),
+            ),
+        )
+        .ok_or(Self::Error::QubitIndex {
+            msg: "two-electron term orbital ordering".to_string(),
+        })
+    }
+}
+
 impl Display for Fermions {
     fn fmt(
         &self,
@@ -417,27 +505,5 @@ impl Display for Fermions {
                 an.1.index()
             ),
         }
-    }
-}
-
-/// Creation operator
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Cr(pub Orbital);
-
-impl Cr {
-    #[must_use]
-    pub fn index(&self) -> u32 {
-        self.0.index()
-    }
-}
-
-/// Annihilation operator
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct An(pub Orbital);
-
-impl An {
-    #[must_use]
-    pub fn index(&self) -> u32 {
-        self.0.index()
     }
 }
