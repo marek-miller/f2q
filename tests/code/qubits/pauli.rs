@@ -292,3 +292,30 @@ fn pauli_min_register_size_02() {
         60
     );
 }
+
+#[test]
+fn pauli_ord() {
+    assert!(Pauli::new((0, 0)) == Pauli::new((0, 0)));
+    assert!(Pauli::new((0, 0)) >= Pauli::new((0, 0)));
+    assert!(Pauli::new((0, 0)) <= Pauli::new((0, 0)));
+
+    assert!(Pauli::new((1, 0)) > Pauli::new((0, 0)));
+    assert!(Pauli::new((2, 0)) > Pauli::new((1, 0)));
+    assert!(Pauli::new((2, 0)) > Pauli::new((0, 0)));
+
+    assert!(Pauli::new((0, 1)) > Pauli::new((0, 0)));
+    assert!(Pauli::new((0, 2)) > Pauli::new((0, 1)));
+    assert!(Pauli::new((0, 2)) > Pauli::new((0, 0)));
+
+    assert!(Pauli::new((0, 0)) < Pauli::new((1, 0)));
+    assert!(Pauli::new((1, 0)) < Pauli::new((2, 0)));
+    assert!(Pauli::new((0, 0)) < Pauli::new((2, 0)));
+
+    assert!(Pauli::new((0, 0)) < Pauli::new((0, 1)));
+    assert!(Pauli::new((0, 1)) < Pauli::new((0, 2)));
+    assert!(Pauli::new((0, 0)) < Pauli::new((0, 2)));
+
+    assert!(Pauli::new((0, 1)) > Pauli::new((u64::MAX, 0)));
+    assert!(Pauli::new((0, 2)) > Pauli::new((u64::MAX, 0)));
+    assert!(Pauli::new((u64::MAX, u64::MAX)) > Pauli::new((u64::MAX, 0)));
+}

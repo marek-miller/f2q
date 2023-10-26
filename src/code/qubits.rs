@@ -609,6 +609,24 @@ impl From<u128> for Pauli {
     }
 }
 
+impl PartialOrd for Pauli {
+    fn partial_cmp(
+        &self,
+        other: &Self,
+    ) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Pauli {
+    fn cmp(
+        &self,
+        other: &Self,
+    ) -> std::cmp::Ordering {
+        u128::from(*self).cmp(&u128::from(*other))
+    }
+}
+
 mod pauli_group {
     use std::ops::Mul;
 
