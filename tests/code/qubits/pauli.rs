@@ -184,8 +184,7 @@ fn pauli_num_nontrivial() {
     assert_eq!(Pauli::new((u64::MAX, u64::MAX)).num_nontrivial(), 64);
 
     assert_eq!(
-        Pauli::with_ops([Y, I, X, Y, I, X, Y, I, X, Y, I, X])
-            .num_nontrivial(),
+        Pauli::with_ops([Y, I, X, Y, I, X, Y, I, X, Y, I, X]).num_nontrivial(),
         8
     );
     assert_eq!(
@@ -237,10 +236,7 @@ fn pauli_min_register_size_01() {
     assert_eq!(Pauli::with_ops([X, Y, Z]).min_register_size(), 3);
     assert_eq!(Pauli::with_ops([I, X, Y, Z]).min_register_size(), 4);
     assert_eq!(Pauli::with_ops([I, X, I, Y, Z]).min_register_size(), 5);
-    assert_eq!(
-        Pauli::with_ops([I, X, I, Y, I, Z]).min_register_size(),
-        6
-    );
+    assert_eq!(Pauli::with_ops([I, X, I, Y, I, Z]).min_register_size(), 6);
     assert_eq!(
         Pauli::with_ops([I, X, I, Y, I, Z, I]).min_register_size(),
         6

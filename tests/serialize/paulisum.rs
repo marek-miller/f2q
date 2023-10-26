@@ -164,10 +164,7 @@ fn paulisum_deserialize_02() {
 
     assert_eq!(repr.len(), 2);
     assert_eq!(repr.coeff(Pauli::identity()), 0.1);
-    assert_eq!(
-        repr.coeff(Pauli::with_ops([PauliOp::X, PauliOp::Y])),
-        0.2
-    );
+    assert_eq!(repr.coeff(Pauli::with_ops([PauliOp::X, PauliOp::Y])), 0.2);
 }
 
 #[test]
@@ -202,10 +199,7 @@ fn pauliisum_deserialize_03() {
 
     assert_eq!(repr.len(), 3);
     assert_eq!(repr.coeff(Pauli::identity()), 0.19);
-    assert_eq!(
-        repr.coeff(Pauli::with_ops([PauliOp::X, PauliOp::Y])),
-        0.2
-    );
+    assert_eq!(repr.coeff(Pauli::with_ops([PauliOp::X, PauliOp::Y])), 0.2);
     assert_eq!(
         repr.coeff(Pauli::with_ops([
             PauliOp::I,
