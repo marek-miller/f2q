@@ -240,15 +240,37 @@ where
     }
 }
 
+impl<T, K> FromIterator<(T, K)> for SumRepr<T, K>
+where
+    T: Float,
+    K: Code,
+{
+    fn from_iter<I: IntoIterator<Item = (T, K)>>(iter: I) -> Self {
+        let mut repr = SumRepr::new();
+        repr.extend(iter);
+        repr
+    }
+}
+
+impl<'a, T, K> FromIterator<&'a (T, K)> for SumRepr<T, K>
+where
+    T: Float,
+    K: Code,
+{
+    fn from_iter<I: IntoIterator<Item = &'a (T, K)>>(iter: I) -> Self {
+        let mut repr = SumRepr::new();
+        repr.extend(iter.into_iter().map(|(t, k)| (*t, *k)));
+        repr
+    }
+}
+
 impl<T, K, const N: usize> From<[(T, K); N]> for SumRepr<T, K>
 where
     T: Float,
     K: Code,
 {
     fn from(value: [(T, K); N]) -> Self {
-        Self {
-            terms: HashMap::from(value.map(|x| (x.1, x.0))),
-        }
+        Self::from_iter(value)
     }
 }
 
