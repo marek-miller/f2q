@@ -1,6 +1,6 @@
 use f2q::math::{
+    pairs,
     Group,
-    Pairs,
     Root4,
 };
 
@@ -59,9 +59,9 @@ fn root4_conj() {
 }
 
 #[test]
-fn pairs_01() {
+fn pairs_01a() {
     let data = [0, 1, 2];
-    let result = Pairs::new(&data).collect::<Vec<_>>();
+    let result = pairs(&data, &data).collect::<Vec<_>>();
 
     assert_eq!(
         result,
@@ -80,16 +80,47 @@ fn pairs_01() {
 }
 
 #[test]
+fn pairs_01b() {
+    let data_x = [0, 1];
+    let data_y = [0, 1, 2];
+    let result = pairs(&data_x, &data_y).collect::<Vec<_>>();
+
+    assert_eq!(
+        result,
+        &[(&0, &0), (&0, &1), (&0, &2), (&1, &0), (&1, &1), (&1, &2),]
+    );
+}
+
+#[test]
+fn pairs_01c() {
+    let data_x = [0, 1, 2];
+    let data_y = [0, 1];
+    let result = pairs(&data_x, &data_y).collect::<Vec<_>>();
+
+    assert_eq!(
+        result,
+        &[(&0, &0), (&0, &1), (&1, &0), (&1, &1), (&2, &0), (&2, &1),]
+    );
+}
+
+#[test]
 fn pairs_02() {
     let data = vec![0; 17];
-    let result = Pairs::new(&data).collect::<Vec<_>>();
+    let result = pairs(&data, &data).collect::<Vec<_>>();
     assert_eq!(result.len(), 17 * 17);
 }
 
 #[test]
 fn pairs_empty() {
-    let data: [usize; 0] = [];
-    let result = Pairs::new(&data).collect::<Vec<_>>();
+    let data = [1];
+    let data_empty: [usize; 0] = [];
 
+    let result = pairs(&data, &data_empty).collect::<Vec<_>>();
+    assert_eq!(result, &[]);
+
+    let result = pairs(&data_empty, &data).collect::<Vec<_>>();
+    assert_eq!(result, &[]);
+
+    let result = pairs(&data_empty, &data_empty).collect::<Vec<_>>();
     assert_eq!(result, &[]);
 }
