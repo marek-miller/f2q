@@ -1,10 +1,4 @@
-use std::ops::Mul;
-
-use num::{
-    Complex,
-    Float,
-    One,
-};
+use num::Float;
 
 use crate::{
     code::{
@@ -16,7 +10,6 @@ use crate::{
         },
         qubits::{
             Pauli,
-            PauliGroup,
             PauliOp,
         },
     },
@@ -58,7 +51,7 @@ impl TryFrom<An> for Map {
 }
 
 fn pauli_codes_from_index(index: u16) -> (Pauli, Pauli) {
-    let code = Pauli::parity_op(index.saturating_sub(1));
+    let code = Pauli::parity_op(index);
 
     let x = {
         let mut code = code;
@@ -100,7 +93,7 @@ impl Map {
             let (root_x, prod_x) = x * rhs_pauli;
             let (root_y, prod_y) = y * rhs_pauli;
 
-            let term_x = rhs_coeff * ReIm::from(one_half) * ReIm::from(root_x);
+            let term_x = rhs_coeff * ReIm::Re(one_half) * ReIm::from(root_x);
             let term_y = rhs_coeff
                 * match self {
                     Self::An(_) => ReIm::Im(one_half),
@@ -257,4 +250,97 @@ where
 
         Ok(())
     }
+}
+
+#[test]
+fn jwmap_mul_iter_01() {
+    use PauliOp::*;
+    let jw_cr = Map::try_from(Cr(Orbital::with_index(0))).unwrap();
+    let jw_an = Map::try_from(An(Orbital::with_index(0))).unwrap();
+
+    let start = [(ReIm::from(2.), Pauli::default())].into_iter();
+
+    let result = jw_cr.mul_iter(start.clone()).collect::<Vec<_>>();
+    assert_eq!(
+        result,
+        &[
+            (ReIm::Re(1.), Pauli::with_ops([X])),
+            (ReIm::Im(-1.), Pauli::with_ops([Y]))
+        ]
+    );
+
+    let result = jw_an.mul_iter(start.clone()).collect::<Vec<_>>();
+    assert_eq!(
+        result,
+        &[
+            (ReIm::Re(1.), Pauli::with_ops([X])),
+            (ReIm::Im(1.), Pauli::with_ops([Y]))
+        ]
+    );
+
+    let result = jw_cr
+        .mul_iter(jw_an.mul_iter(start.clone()))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        result,
+        &[
+            (ReIm::Re(0.5), Pauli::with_ops([])),
+            (ReIm::Re(-0.5), Pauli::with_ops([Z])),
+            (ReIm::Re(-0.5), Pauli::with_ops([Z])),
+            (ReIm::Re(0.5), Pauli::with_ops([])),
+        ]
+    );
+
+    let result = jw_an
+        .mul_iter(jw_cr.mul_iter(start.clone()))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        result,
+        &[
+            (ReIm::Re(0.5), Pauli::with_ops([])),
+            (ReIm::Re(0.5), Pauli::with_ops([Z])),
+            (ReIm::Re(0.5), Pauli::with_ops([Z])),
+            (ReIm::Re(0.5), Pauli::with_ops([])),
+        ]
+    );
+}
+
+#[test]
+fn jwmap_mul_iter_02() {
+    use PauliOp::*;
+    let jw_cr = Map::try_from(Cr(Orbital::with_index(0))).unwrap();
+    let jw_an = Map::try_from(An(Orbital::with_index(1))).unwrap();
+
+    let start = [(ReIm::from(2.), Pauli::default())].into_iter();
+
+    let result = jw_cr.mul_iter(start.clone()).collect::<Vec<_>>();
+    assert_eq!(
+        result,
+        &[
+            (ReIm::Re(1.), Pauli::with_ops([X])),
+            (ReIm::Im(-1.), Pauli::with_ops([Y]))
+        ]
+    );
+
+    let result = jw_an.mul_iter(start.clone()).collect::<Vec<_>>();
+    assert_eq!(
+        result,
+        &[
+            (ReIm::Re(1.), Pauli::with_ops([Z, X])),
+            (ReIm::Im(1.), Pauli::with_ops([Z, Y]))
+        ]
+    );
+
+    let result = jw_cr
+        .mul_iter(jw_an.mul_iter(start.clone()))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        result,
+        &[
+            (ReIm::Im(0.5), Pauli::with_ops([Y, X])),
+            (ReIm::Re(0.5), Pauli::with_ops([X, X])),
+            (ReIm::Re(-0.5), Pauli::with_ops([Y, Y])),
+            (ReIm::Im(0.5), Pauli::with_ops([X, Y])),
+        ]
+    );
 }
