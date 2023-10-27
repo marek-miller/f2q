@@ -2,6 +2,8 @@
 
 use std::fmt::Display;
 
+pub use pauli_group::PauliGroup;
+
 use crate::Error;
 
 const PAULI_MASK: u64 = 0b11;
@@ -718,7 +720,7 @@ mod pauli_group {
 
     impl From<Root4> for PauliGroup {
         fn from(value: Root4) -> Self {
-            Self::new(value, Pauli::default())
+            Self::new(value, Pauli::identity())
         }
     }
 
@@ -735,28 +737,20 @@ mod pauli_group {
             self,
             rhs: Self,
         ) -> Self::Output {
-            self.1.into_iter().enumerate().fold(
-                PauliGroup::identity(),
-                |acc, (i, pauli_lhs)| {
-                    let mut code = acc.1;
-                    let lhs = PGrp(Root4::R0, pauli_lhs);
-                    let i = u16::try_from(i).expect(
-                        "index out of bounds for type u16. This is a bug",
-                    );
-                    // SAFETY: index i is within bound
-                    // since it enumerates a valid Pauli
-                    let rhs =
-                        PGrp(Root4::R0, unsafe { rhs.1.pauli_unchecked(i) });
-
-                    let prod = lhs * rhs;
-                    // SAFETY: index i is within bound
-                    // since it enumerates a valid Pauli
-                    unsafe {
-                        code.set_unchecked(i, prod.1);
-                    }
-                    PauliGroup(acc.0 * prod.0, code)
+            let phase = self.1.into_iter().zip(rhs.1.into_iter()).fold(
+                self.0 * rhs.0,
+                |acc, (pauli_l, pauli_r)| {
+                    let PGrp(omega, _) =
+                        PGrp(Root4::R0, pauli_l) * PGrp(Root4::R0, pauli_r);
+                    acc * omega
                 },
-            )
+            );
+
+            let code = Pauli::new((
+                self.1.pack.0 ^ rhs.1.pack.0,
+                self.1.pack.1 ^ rhs.1.pack.1,
+            ));
+            PauliGroup::new(phase, code)
         }
     }
 
@@ -770,5 +764,3 @@ mod pauli_group {
         }
     }
 }
-
-pub use pauli_group::PauliGroup;
