@@ -99,7 +99,6 @@ fn paui_group_05() {
     );
 }
 
-
 #[test]
 fn paui_group_06() {
     use PauliOp::*;

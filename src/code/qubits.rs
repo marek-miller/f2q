@@ -758,7 +758,7 @@ mod pauli_group {
             self,
             rhs: Self,
         ) -> Self::Output {
-            let phase = self.1.into_iter().zip(rhs.1.into_iter()).fold(
+            let phase = self.1.into_iter().zip(rhs.1).fold(
                 self.0 * rhs.0,
                 |acc, (pauli_l, pauli_r)| {
                     let PGrp(omega, _) =
