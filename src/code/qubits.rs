@@ -5,10 +5,6 @@ use std::{
     ops::Mul,
 };
 
-use num::{
-    Complex,
-    Float,
-};
 pub use pauli_group::PauliGroup;
 
 use crate::{
@@ -783,23 +779,5 @@ mod pauli_group {
         fn inverse(self) -> Self {
             Self(self.0.inverse(), self.1)
         }
-    }
-}
-
-struct PauliTerm<T>(Complex<T>, Pauli);
-
-impl<T> Mul for PauliTerm<T>
-where
-    T: Float,
-{
-    type Output = Self;
-
-    fn mul(
-        self,
-        rhs: Self,
-    ) -> Self::Output {
-        let (root, pauli) =
-            (PauliGroup::from(self.1) * PauliGroup::from(rhs.1)).into();
-        Self(self.0 * rhs.0 * Complex::<T>::from(root), pauli)
     }
 }
