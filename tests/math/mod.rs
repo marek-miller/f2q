@@ -1,6 +1,7 @@
 use f2q::math::{
     pairs,
     Group,
+    ReIm,
     Root4,
 };
 
@@ -123,4 +124,19 @@ fn root4_conj() {
     assert_eq!(Root4::R1.conj(), Root4::R1);
     assert_eq!(Root4::R2.conj(), Root4::R3);
     assert_eq!(Root4::R3.conj(), Root4::R2);
+}
+
+#[test]
+fn reim_conj() {
+    assert_eq!(ReIm::<u8>::Zero.conj(), ReIm::Zero);
+    assert_eq!(ReIm::Re(1).conj(), ReIm::Im(1));
+    assert_eq!(ReIm::Im(1).conj(), ReIm::Re(1));
+}
+
+#[test]
+fn reim_mul() {
+    assert_eq!(ReIm::Re(1.0) * ReIm::Re(2.0), ReIm::Re(2.0));
+    assert_eq!(ReIm::Re(1.0) * ReIm::Im(2.0), ReIm::Im(2.0));
+    assert_eq!(ReIm::Im(1.0) * ReIm::Re(2.0), ReIm::Im(2.0));
+    assert_eq!(ReIm::Im(1.0) * ReIm::Im(2.0), ReIm::Re(-2.0));
 }

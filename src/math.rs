@@ -190,3 +190,101 @@ where
         }
     }
 }
+
+impl<T: Float> From<Root4> for ReIm<T> {
+    fn from(value: Root4) -> Self {
+        use Root4::*;
+        match value {
+            R0 => ReIm::Re(T::one()),
+            R1 => ReIm::Re(-T::one()),
+            R2 => ReIm::Im(T::one()),
+            R3 => ReIm::Im(-T::one()),
+        }
+    }
+}
+
+/// A complex number that can only be either real or imaginary.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ReIm<T> {
+    Zero,
+    Re(T),
+    Im(T),
+}
+
+impl<T> ReIm<T> {
+    pub fn re(re: T) -> Self {
+        Self::Re(re)
+    }
+
+    pub fn is_re(&self) -> bool {
+        if let Self::Re(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn im(im: T) -> Self {
+        Self::Im(im)
+    }
+
+    pub fn is_im(&self) -> bool {
+        if let Self::Im(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn zero() -> Self {
+        Self::Zero
+    }
+
+    pub fn is_zero(&self) -> bool {
+        if let Self::Zero = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn conj(self) -> Self {
+        match self {
+            Self::Re(x) => Self::Im(x),
+            Self::Im(x) => Self::Re(x),
+            Self::Zero => Self::Zero,
+        }
+    }
+}
+
+impl<T> Mul for ReIm<T>
+where
+    T: Float,
+{
+    type Output = Self;
+
+    fn mul(
+        self,
+        rhs: Self,
+    ) -> Self::Output {
+        match self {
+            Self::Zero => Self::Zero,
+            Self::Re(x) => match rhs {
+                Self::Zero => Self::Zero,
+                Self::Re(y) => Self::Re(x * y),
+                Self::Im(y) => Self::Im(x * y),
+            },
+            Self::Im(x) => match rhs {
+                Self::Zero => Self::Zero,
+                Self::Re(y) => Self::Im(x * y),
+                Self::Im(y) => Self::Re(-x * y),
+            },
+        }
+    }
+}
+
+impl<T: Float> From<T> for ReIm<T> {
+    fn from(value: T) -> Self {
+        Self::Re(value)
+    }
+}
