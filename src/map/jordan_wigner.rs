@@ -1,10 +1,22 @@
-use num::Float;
+use std::ops::Mul;
+
+use num::{
+    Complex,
+    Float,
+    One,
+};
 
 use crate::{
     code::{
-        fermions::Fermions,
+        fermions::{
+            An,
+            Cr,
+            Fermions,
+            Orbital,
+        },
         qubits::{
             Pauli,
+            PauliGroup,
             PauliOp,
         },
     },
@@ -14,6 +26,105 @@ use crate::{
     },
     Error,
 };
+
+enum JWMap {
+    Cr(Orbital),
+    An(Orbital),
+}
+
+impl TryFrom<Cr> for JWMap {
+    type Error = Error;
+
+    fn try_from(value: Cr) -> Result<Self, Self::Error> {
+        (value.index() < 64)
+            .then_some(Self::Cr(value.0))
+            .ok_or_else(|| Error::QubitIndex {
+                msg: "orbital index must be within 0..=63".to_string(),
+            })
+    }
+}
+
+impl TryFrom<An> for JWMap {
+    type Error = Error;
+
+    fn try_from(value: An) -> Result<Self, Self::Error> {
+        (value.index() < 64)
+            .then_some(Self::An(value.0))
+            .ok_or_else(|| Error::QubitIndex {
+                msg: "orbital index must be within 0..=63".to_string(),
+            })
+    }
+}
+
+fn pauli_codes_from_index(index: u16) -> (Pauli, Pauli) {
+    let code = Pauli::parity_op(index.saturating_sub(1));
+
+    let x = {
+        let mut code = code;
+        code.set(index, PauliOp::X);
+        code
+    };
+    let y = {
+        let mut code = code;
+        code.set(index, PauliOp::Y);
+        code
+    };
+
+    (x, y)
+}
+
+impl JWMap {
+    fn index(&self) -> u16 {
+        u16::try_from(match self {
+            Self::An(an) => an.index(),
+            Self::Cr(cr) => cr.index(),
+        })
+        .expect("index within 0..=63")
+    }
+
+    fn mul_iter<'a, T, I>(
+        &'a self,
+        rhs: I,
+    ) -> impl Iterator<Item = (Complex<T>, Pauli)> + 'a
+    where
+        T: Float + 'a,
+        I: Iterator<Item = (Complex<T>, Pauli)> + 'a,
+    {
+        let one_half =
+            T::from(0.5_f64).expect("floating point conversion from 0.5");
+
+        let (x, y) = pauli_codes_from_index(self.index());
+
+        rhs.flat_map(move |(rhs_coeff, rhs_pauli)| {
+            let (root_x, prod_x) = x * rhs_pauli;
+            let (root_y, prod_y) = y * rhs_pauli;
+
+            let term_x =
+                rhs_coeff * Complex::from(one_half) * Complex::from(root_x);
+            let term_y = rhs_coeff
+                * match self {
+                    Self::An(_) => Complex::new(T::zero(), one_half),
+                    Self::Cr(_) => Complex::new(T::zero(), -one_half),
+                }
+                * Complex::from(root_y);
+
+            [(term_x, prod_x), (term_y, prod_y)].into_iter()
+        })
+    }
+}
+
+fn jw_map_two_hemitian<'a, T: Float + 'a>(
+    op1: &'a JWMap,
+    op2: &'a JWMap,
+    coeff: T,
+) -> Result<impl Iterator<Item = (T, Pauli)> + 'a, Error> {
+    let start = [(Complex::from(coeff), Pauli::identity())].into_iter();
+
+    Ok(op1
+        .mul_iter(op2.mul_iter(start))
+        .filter(|(x, _)| x.re != T::zero())
+        .map(|(x, p)| (x.re, p)))
+}
 
 pub struct Map(Fermions);
 

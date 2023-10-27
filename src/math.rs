@@ -5,13 +5,17 @@ use std::ops::{
     Neg,
 };
 
+use num::{
+    Complex,
+    Float,
+};
+
 pub fn pairs<'a, T, K>(
     x: &'a [T],
     y: &'a [K],
 ) -> impl Iterator<Item = (&'a T, &'a K)> {
     x.iter().flat_map(|i| y.iter().map(move |j| (i, j)))
 }
-
 
 /// Group structure.
 pub trait Group: Mul<Output = Self> + Sized {
@@ -168,6 +172,21 @@ impl Group for Root4 {
             R1 => R1,
             R2 => R3,
             R3 => R2,
+        }
+    }
+}
+
+impl<T> From<Root4> for Complex<T>
+where
+    T: Float,
+{
+    fn from(value: Root4) -> Self {
+        use Root4::*;
+        match value {
+            R0 => Complex::new(T::one(), T::zero()),
+            R1 => Complex::new(-T::one(), T::zero()),
+            R2 => Complex::new(T::zero(), T::one()),
+            R3 => Complex::new(T::zero(), -T::one()),
         }
     }
 }

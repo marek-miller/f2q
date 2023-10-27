@@ -1,10 +1,20 @@
 //! Qubit representation
 
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    ops::Mul,
+};
 
+use num::{
+    Complex,
+    Float,
+};
 pub use pauli_group::PauliGroup;
 
-use crate::Error;
+use crate::{
+    math::Root4,
+    Error,
+};
 
 const PAULI_MASK: u64 = 0b11;
 
@@ -473,7 +483,7 @@ impl Pauli {
     /// assert_eq!(par_op.pauli(1), Some(PauliOp::Z));
     /// assert_eq!(par_op.pauli(2), Some(PauliOp::I));
     ///
-    /// assert_eq!(Pauli::parity_op(0), Pauli::default());
+    /// assert_eq!(Pauli::parity_op(0), Pauli::identity());
     /// ```
     #[must_use]
     pub fn parity_op(num_qubits: u16) -> Self {
@@ -629,6 +639,17 @@ impl Ord for Pauli {
     }
 }
 
+impl Mul for Pauli {
+    type Output = (Root4, Pauli);
+
+    fn mul(
+        self,
+        rhs: Self,
+    ) -> Self::Output {
+        (PauliGroup::from(self) * PauliGroup::from(rhs)).into()
+    }
+}
+
 mod pauli_group {
     use std::ops::Mul;
 
@@ -762,5 +783,23 @@ mod pauli_group {
         fn inverse(self) -> Self {
             Self(self.0.inverse(), self.1)
         }
+    }
+}
+
+struct PauliTerm<T>(Complex<T>, Pauli);
+
+impl<T> Mul for PauliTerm<T>
+where
+    T: Float,
+{
+    type Output = Self;
+
+    fn mul(
+        self,
+        rhs: Self,
+    ) -> Self::Output {
+        let (root, pauli) =
+            (PauliGroup::from(self.1) * PauliGroup::from(rhs.1)).into();
+        Self(self.0 * rhs.0 * Complex::<T>::from(root), pauli)
     }
 }
