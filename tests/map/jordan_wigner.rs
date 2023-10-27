@@ -18,8 +18,10 @@ use num::Float;
 
 fn jw_get_result<T: Float>(repr: &SumRepr<T, Fermions>) -> Vec<(T, Pauli)> {
     let mut jw_map = JordanWigner::new(repr);
+    let mut pauli_repr = SumRepr::new();
+    jw_map.add_to(&mut pauli_repr).unwrap();
     let mut result = vec![];
-    jw_map.add_to(&mut result).unwrap();
+    pauli_repr.add_to(&mut result).unwrap();
     result.sort_by(|(_, pauli_a), (_, pauli_b)| pauli_a.cmp(pauli_b));
     result
 }
@@ -47,32 +49,32 @@ fn jw_one_elec_01() {
     use PauliOp::*;
 
     jw_check_mapping(
-        &[(2.0, Fermions::try_from((0, 0)).unwrap())],
+        &[(1.0, Fermions::try_from((0, 0)).unwrap())],
         &[(1.0, Pauli::identity()), (-1.0, Pauli::with_ops([Z]))],
     );
 
     jw_check_mapping(
-        &[(2.0, Fermions::try_from((1, 1)).unwrap())],
+        &[(1.0, Fermions::try_from((1, 1)).unwrap())],
         &[(1.0, Pauli::identity()), (-1.0, Pauli::with_ops([I, Z]))],
     );
 
     jw_check_mapping(
-        &[(2.0, Fermions::try_from((2, 2)).unwrap())],
+        &[(1.0, Fermions::try_from((2, 2)).unwrap())],
         &[(1.0, Pauli::identity()), (-1.0, Pauli::with_ops([I, I, Z]))],
     );
 
     jw_check_mapping(
-        &[(2.0, Fermions::try_from((32, 32)).unwrap())],
+        &[(1.0, Fermions::try_from((32, 32)).unwrap())],
         &[(1.0, Pauli::identity()), (-1.0, Pauli::new((0, 0b11)))],
     );
 
     jw_check_mapping(
-        &[(2.0, Fermions::try_from((33, 33)).unwrap())],
+        &[(1.0, Fermions::try_from((33, 33)).unwrap())],
         &[(1.0, Pauli::identity()), (-1.0, Pauli::new((0, 0b1100)))],
     );
 
     jw_check_mapping(
-        &[(2.0, Fermions::try_from((63, 63)).unwrap())],
+        &[(1.0, Fermions::try_from((63, 63)).unwrap())],
         &[
             (1.0, Pauli::identity()),
             (-1.0, Pauli::new((0, 0b11 << 62))),
@@ -147,7 +149,7 @@ fn jw_two_elec_01() {
     use PauliOp::*;
 
     jw_check_mapping(
-        &[(4.0, Fermions::try_from((0, 1, 1, 0)).unwrap())],
+        &[(2.0, Fermions::try_from((0, 1, 1, 0)).unwrap())],
         &[
             (1.0, Pauli::identity()),
             (-1.0, Pauli::with_ops([Z])),
@@ -157,7 +159,7 @@ fn jw_two_elec_01() {
     );
 
     jw_check_mapping(
-        &[(4.0, Fermions::try_from((0, 2, 2, 0)).unwrap())],
+        &[(2.0, Fermions::try_from((0, 2, 2, 0)).unwrap())],
         &[
             (1.0, Pauli::identity()),
             (-1.0, Pauli::with_ops([Z])),
@@ -167,7 +169,7 @@ fn jw_two_elec_01() {
     );
 
     jw_check_mapping(
-        &[(4.0, Fermions::try_from((1, 3, 3, 1)).unwrap())],
+        &[(2.0, Fermions::try_from((1, 3, 3, 1)).unwrap())],
         &[
             (1.0, Pauli::identity()),
             (-1.0, Pauli::with_ops([I, Z])),

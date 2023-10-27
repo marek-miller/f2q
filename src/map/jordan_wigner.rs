@@ -20,6 +20,7 @@ use crate::{
             PauliOp,
         },
     },
+    math::ReIm,
     terms::{
         SumRepr,
         Terms,
@@ -27,12 +28,12 @@ use crate::{
     Error,
 };
 
-enum JWMap {
+enum Map {
     Cr(Orbital),
     An(Orbital),
 }
 
-impl TryFrom<Cr> for JWMap {
+impl TryFrom<Cr> for Map {
     type Error = Error;
 
     fn try_from(value: Cr) -> Result<Self, Self::Error> {
@@ -44,7 +45,7 @@ impl TryFrom<Cr> for JWMap {
     }
 }
 
-impl TryFrom<An> for JWMap {
+impl TryFrom<An> for Map {
     type Error = Error;
 
     fn try_from(value: An) -> Result<Self, Self::Error> {
@@ -73,7 +74,7 @@ fn pauli_codes_from_index(index: u16) -> (Pauli, Pauli) {
     (x, y)
 }
 
-impl JWMap {
+impl Map {
     fn index(&self) -> u16 {
         u16::try_from(match self {
             Self::An(an) => an.index(),
@@ -85,10 +86,10 @@ impl JWMap {
     fn mul_iter<'a, T, I>(
         &'a self,
         rhs: I,
-    ) -> impl Iterator<Item = (Complex<T>, Pauli)> + 'a
+    ) -> impl Iterator<Item = (ReIm<T>, Pauli)> + 'a
     where
         T: Float + 'a,
-        I: Iterator<Item = (Complex<T>, Pauli)> + 'a,
+        I: Iterator<Item = (ReIm<T>, Pauli)> + 'a,
     {
         let one_half =
             T::from(0.5_f64).expect("floating point conversion from 0.5");
@@ -99,14 +100,13 @@ impl JWMap {
             let (root_x, prod_x) = x * rhs_pauli;
             let (root_y, prod_y) = y * rhs_pauli;
 
-            let term_x =
-                rhs_coeff * Complex::from(one_half) * Complex::from(root_x);
+            let term_x = rhs_coeff * ReIm::from(one_half) * ReIm::from(root_x);
             let term_y = rhs_coeff
                 * match self {
-                    Self::An(_) => Complex::new(T::zero(), one_half),
-                    Self::Cr(_) => Complex::new(T::zero(), -one_half),
+                    Self::An(_) => ReIm::Im(one_half),
+                    Self::Cr(_) => ReIm::Im(-one_half),
                 }
-                * Complex::from(root_y);
+                * ReIm::from(root_y);
 
             [(term_x, prod_x), (term_y, prod_y)].into_iter()
         })
@@ -114,374 +114,41 @@ impl JWMap {
 }
 
 fn jw_map_two_hemitian<'a, T: Float + 'a>(
-    op1: &'a JWMap,
-    op2: &'a JWMap,
+    op1: &'a Map,
+    op2: &'a Map,
     coeff: T,
-) -> Result<impl Iterator<Item = (T, Pauli)> + 'a, Error> {
-    let start = [(Complex::from(coeff), Pauli::identity())].into_iter();
+) -> impl Iterator<Item = (T, Pauli)> + 'a {
+    let two = T::from(2.0_f64).expect("floating point conversion from 2.0");
+    let start = [(ReIm::from(coeff), Pauli::identity())].into_iter();
 
-    Ok(op1
-        .mul_iter(op2.mul_iter(start))
-        .filter(|(x, _)| x.re != T::zero())
-        .map(|(x, p)| (x.re, p)))
+    op1.mul_iter(op2.mul_iter(start)).filter_map(move |(x, p)| {
+        if let ReIm::Re(xre) = x {
+            Some((xre * two, p))
+        } else {
+            None
+        }
+    })
 }
 
-pub struct Map(Fermions);
+fn jw_map_four_hemitian<'a, T: Float + 'a>(
+    op1: &'a Map,
+    op2: &'a Map,
+    op3: &'a Map,
+    op4: &'a Map,
+    coeff: T,
+) -> impl Iterator<Item = (T, Pauli)> + 'a {
+    let two = T::from(2.0_f64).expect("floating point conversion from 2.0");
+    let start = [(ReIm::from(coeff), Pauli::identity())].into_iter();
 
-impl Map {
-    pub fn pauli_iter<T>(
-        &self,
-        coeff: T,
-    ) -> impl Iterator<Item = (T, Pauli)>
-    where
-        T: Float,
-    {
-        PauliIter::new(coeff, self.0)
-    }
-}
-
-impl TryFrom<Fermions> for Map {
-    type Error = Error;
-
-    fn try_from(value: Fermions) -> Result<Self, Self::Error> {
-        match value {
-            Fermions::Offset => Ok(Self(value)),
-            Fermions::One {
-                cr,
-                an,
-            } => {
-                if cr.index() < 64 && an.index() < 64 {
-                    Ok(Self(value))
-                } else {
-                    Err(Error::QubitIndex {
-                        msg: "orbital index must be less than 64".to_string(),
-                    })
-                }
+    op1.mul_iter(op2.mul_iter(op3.mul_iter(op4.mul_iter(start))))
+        .filter_map(move |(x, p)| {
+            if let ReIm::Re(xre) = x {
+                Some((xre * two, p))
+            } else {
+                None
             }
-            Fermions::Two {
-                cr,
-                an,
-            } => {
-                if cr.0.index() < 64
-                    && cr.1.index() < 64
-                    && an.0.index() < 64
-                    && an.1.index() < 64
-                {
-                    Ok(Self(value))
-                } else {
-                    Err(Error::QubitIndex {
-                        msg: "orbital index must be less than 64".to_string(),
-                    })
-                }
-            }
-        }
-    }
+        })
 }
-
-#[derive(Debug)]
-pub struct PauliIter<T> {
-    coeff: T,
-    code:  Fermions,
-    index: u8,
-}
-
-impl<T> PauliIter<T> {
-    pub fn new(
-        coeff: T,
-        code: Fermions,
-    ) -> Self {
-        Self {
-            coeff,
-            code,
-            index: 0,
-        }
-    }
-}
-
-impl<T> Iterator for PauliIter<T>
-where
-    T: Float,
-{
-    type Item = (T, Pauli);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.code {
-            Fermions::Offset => {
-                if self.index == 0 {
-                    self.index += 1;
-                    Some((self.coeff, Pauli::default()))
-                } else {
-                    None
-                }
-            }
-            Fermions::One {
-                cr: p,
-                an: q,
-            } => {
-                let p = u16::try_from(p.index())
-                    .expect("orbital index out of bounds for type u16");
-                let q = u16::try_from(q.index())
-                    .expect("orbital index out of bounds for type u16");
-                let item = if p == q {
-                    next_item_one_pp(self.index, self.coeff, p)
-                } else {
-                    next_item_one_pq(self.index, self.coeff, p, q)
-                };
-                self.index = (self.index + 1).min(2);
-                item
-            }
-            Fermions::Two {
-                cr: (p, q),
-                an: (r, s),
-            } => {
-                let p = u16::try_from(p.index())
-                    .expect("orbital index out of bounds for type u16");
-                let q = u16::try_from(q.index())
-                    .expect("orbital index out of bounds for type u16");
-                let r = u16::try_from(r.index())
-                    .expect("orbital index out of bounds for type u16");
-                let s = u16::try_from(s.index())
-                    .expect("orbital index out of bounds for type u16");
-
-                let item = if p == s && q == r {
-                    next_item_two_pq(self.index, self.coeff, p, q)
-                } else if q == r {
-                    next_item_two_pqs(self.index, self.coeff, p, q, s)
-                } else {
-                    next_item_two_pqrs(self.index, self.coeff, p, q, r, s)
-                };
-                self.index = (self.index + 1).min(8);
-                item
-            }
-        }
-    }
-}
-
-fn next_item_one_pp<T: Float>(
-    index: u8,
-    coeff: T,
-    p: u16,
-) -> Option<(T, Pauli)> {
-    let one_half = T::from(0.5).expect("cannot convert 0.5");
-
-    match index {
-        0 => Some((coeff * one_half, Pauli::identity())),
-        1 => {
-            let mut code = Pauli::default();
-            code.set(p, PauliOp::Z);
-            Some((-coeff * one_half, code))
-        }
-        _ => None,
-    }
-}
-
-fn next_item_one_pq<T: Float>(
-    index: u8,
-    coeff: T,
-    p: u16,
-    q: u16,
-) -> Option<(T, Pauli)> {
-    let one_half = T::from(0.5).expect("cannot convert 0.5");
-
-    let code = {
-        let mut code = Pauli::default();
-        for i in p + 1..q {
-            code.set(i, PauliOp::Z);
-        }
-        code
-    };
-
-    match index {
-        0 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::X);
-            Some((coeff * one_half, code))
-        }
-        1 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::Y);
-            Some((coeff * one_half, code))
-        }
-        _ => None,
-    }
-}
-
-fn next_item_two_pq<T: Float>(
-    index: u8,
-    coeff: T,
-    p: u16,
-    q: u16,
-) -> Option<(T, Pauli)> {
-    let term = coeff
-        * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
-
-    match index {
-        0 => {
-            let code = Pauli::default();
-            Some((term, code))
-        }
-        1 => {
-            let mut code = Pauli::default();
-            code.set(p, PauliOp::Z);
-            Some((-term, code))
-        }
-        2 => {
-            let mut code = Pauli::default();
-            code.set(q, PauliOp::Z);
-            Some((-term, code))
-        }
-        3 => {
-            let mut code = Pauli::default();
-            code.set(p, PauliOp::Z);
-            code.set(q, PauliOp::Z);
-            Some((term, code))
-        }
-        _ => None,
-    }
-}
-
-fn next_item_two_pqs<T: Float>(
-    index: u8,
-    coeff: T,
-    p: u16,
-    q: u16,
-    s: u16,
-) -> Option<(T, Pauli)> {
-    let term = coeff
-        * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
-
-    let code = {
-        let mut code = Pauli::default();
-        for i in p + 1..s {
-            code.set(i, PauliOp::Z);
-        }
-        code
-    };
-
-    match index {
-        0 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(s, PauliOp::X);
-            Some((term, code))
-        }
-        1 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::Z);
-            code.set(s, PauliOp::X);
-            Some((-term, code))
-        }
-        2 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(s, PauliOp::Y);
-            Some((term, code))
-        }
-        3 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::Z);
-            code.set(s, PauliOp::Y);
-            Some((-term, code))
-        }
-        _ => None,
-    }
-}
-
-fn next_item_two_pqrs<T: Float>(
-    index: u8,
-    coeff: T,
-    p: u16,
-    q: u16,
-    r: u16,
-    s: u16,
-) -> Option<(T, Pauli)> {
-    let term = coeff
-        * T::from(0.125).expect("cannot obtain floating point fraction: 0.125");
-
-    let code = {
-        let mut code = Pauli::default();
-        for i in p + 1..q {
-            code.set(i, PauliOp::Z);
-        }
-        for i in s + 1..r {
-            code.set(i, PauliOp::Z);
-        }
-        code
-    };
-
-    match index {
-        0 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::X);
-            code.set(r, PauliOp::X);
-            code.set(s, PauliOp::X);
-            Some((term, code))
-        }
-        1 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::X);
-            code.set(r, PauliOp::Y);
-            code.set(s, PauliOp::Y);
-            Some((-term, code))
-        }
-        2 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::Y);
-            code.set(r, PauliOp::X);
-            code.set(s, PauliOp::Y);
-            Some((term, code))
-        }
-        3 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::X);
-            code.set(r, PauliOp::X);
-            code.set(s, PauliOp::Y);
-            Some((term, code))
-        }
-        4 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::X);
-            code.set(r, PauliOp::Y);
-            code.set(s, PauliOp::X);
-            Some((term, code))
-        }
-        5 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::Y);
-            code.set(r, PauliOp::X);
-            code.set(s, PauliOp::X);
-            Some((-term, code))
-        }
-        6 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::Y);
-            code.set(r, PauliOp::Y);
-            code.set(s, PauliOp::X);
-            Some((term, code))
-        }
-        7 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::Y);
-            code.set(r, PauliOp::Y);
-            code.set(s, PauliOp::Y);
-            Some((term, code))
-        }
-        _ => None,
-    }
-}
-
 /// Jordan-Wigner mapping.
 ///
 /// This mapping is initialized with [`SumRepr<T,Fermions>`],
@@ -562,7 +229,30 @@ where
         repr: &mut impl Extend<(T, Pauli)>,
     ) -> Result<(), Error> {
         for (&coeff, &code) in self.repr.iter() {
-            repr.extend(Map::try_from(code)?.pauli_iter(coeff));
+            match code {
+                Fermions::Offset => {
+                    repr.extend(Some((coeff, Pauli::identity())))
+                }
+                Fermions::One {
+                    cr,
+                    an,
+                } => {
+                    let jw_cr = Map::try_from(cr)?;
+                    let jw_an = Map::try_from(an)?;
+                    repr.extend(jw_map_two_hemitian(&jw_cr, &jw_an, coeff));
+                }
+                Fermions::Two {
+                    cr,
+                    an,
+                } => {
+                    let jw_cr = (Map::try_from(cr.0)?, Map::try_from(cr.1)?);
+                    let jw_an = (Map::try_from(an.0)?, Map::try_from(an.1)?);
+
+                    repr.extend(jw_map_four_hemitian(
+                        &jw_cr.0, &jw_cr.1, &jw_an.0, &jw_an.1, coeff,
+                    ));
+                }
+            }
         }
 
         Ok(())
