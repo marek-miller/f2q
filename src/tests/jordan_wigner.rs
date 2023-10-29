@@ -1,4 +1,6 @@
-use f2q::{
+use num::Float;
+
+use crate::{
     code::{
         fermions::Fermions,
         qubits::{
@@ -12,7 +14,6 @@ use f2q::{
         Terms,
     },
 };
-use num::Float;
 
 fn jw_get_result<T: Float>(repr: &SumRepr<T, Fermions>) -> Vec<(T, Pauli)> {
     let mut jw_map = JordanWigner::new(repr);

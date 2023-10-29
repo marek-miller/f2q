@@ -1,4 +1,4 @@
-use f2q::{
+use crate::{
     code::qubits::Pauli,
     terms::{
         HeapRepr,
