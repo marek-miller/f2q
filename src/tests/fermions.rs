@@ -1,6 +1,6 @@
 use std::ops::RangeBounds;
 
-use f2q::code::fermions::{
+use crate::code::fermions::{
     An,
     Cr,
     Fermions,

@@ -1,4 +1,3 @@
-mod code;
 mod map;
 mod math;
 mod serialize;

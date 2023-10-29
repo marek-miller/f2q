@@ -10,8 +10,9 @@ use std::fmt::Display;
 
 pub mod code;
 pub mod map;
-pub mod math;
 pub mod terms;
+
+pub(crate) mod math;
 
 mod serialize;
 
@@ -44,3 +45,6 @@ pub mod prelude {
         terms::Terms,
     };
 }
+
+#[cfg(test)]
+mod tests;
