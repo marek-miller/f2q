@@ -332,10 +332,10 @@ fn jw_two_elec_06() {
     jw_check_mapping(
         &[(4.0, Fermions::try_from((0, 1, 2, 1)).unwrap())],
         &[
-            (-1.0, Pauli::with_ops([X, I, X])),
-            (1.0, Pauli::with_ops([X, Z, X])),
-            (-1.0, Pauli::with_ops([Y, I, Y])),
-            (1.0, Pauli::with_ops([Y, Z, Y])),
+            (1.0, Pauli::with_ops([X, I, X])),
+            (-1.0, Pauli::with_ops([X, Z, X])),
+            (1.0, Pauli::with_ops([Y, I, Y])),
+            (-1.0, Pauli::with_ops([Y, Z, Y])),
         ],
     );
 }

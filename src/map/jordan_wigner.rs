@@ -182,7 +182,7 @@ fn jw_map_four<'a, T: Float + 'a>(
 /// let mut pauli_repr = PauliSum::new();
 /// JordanWigner::new(&fermi_repr).add_to(&mut pauli_repr)?;
 ///
-/// // We should obtain the following two Pauli strings weights 0.5
+/// // We should obtain the following two Pauli strings with weights 1.0
 /// let code_i0 = Pauli::default();
 /// let code_z0 = {
 ///     let mut code = Pauli::default();
@@ -190,8 +190,8 @@ fn jw_map_four<'a, T: Float + 'a>(
 ///     code
 /// };
 ///
-/// assert_eq!(pauli_repr.coeff(code_i0), 0.5);
-/// assert_eq!(pauli_repr.coeff(code_z0), -0.5);
+/// assert_eq!(pauli_repr.coeff(code_i0), 1.0);
+/// assert_eq!(pauli_repr.coeff(code_z0), -1.0);
 /// #   Ok(())
 /// # }
 /// ```
@@ -436,6 +436,26 @@ mod tests {
                 (Re(1.0), Pauli::with_ops([X, X])),
                 (Re(1.0), Pauli::with_ops([Y, Y])),
                 (Im(1.0), Pauli::with_ops([X, Y])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_11() {
+        let jw_an = Map::try_from(An(Orbital::with_index(0))).unwrap();
+        let jw_cr = Map::try_from(Cr(Orbital::with_index(2))).unwrap();
+
+        let result: Vec<_> = jw_cr
+            .mul_iter(jw_an.mul_iter([(Re(4.0), Pauli::identity())]))
+            .collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Im(1.0), Pauli::with_ops([Y, Z, X])),
+                (Re(1.0), Pauli::with_ops([Y, Z, Y])),
+                (Re(1.0), Pauli::with_ops([X, Z, X])),
+                (Im(-1.0), Pauli::with_ops([X, Z, Y])),
             ]
         );
     }
