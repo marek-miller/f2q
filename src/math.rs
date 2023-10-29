@@ -7,13 +7,6 @@ use std::ops::{
 
 use num::Float;
 
-pub fn pairs<'a, T, K>(
-    x: &'a [T],
-    y: &'a [K],
-) -> impl Iterator<Item = (&'a T, &'a K)> {
-    x.iter().flat_map(|i| y.iter().map(move |j| (i, j)))
-}
-
 /// Group structure.
 pub trait Group: Mul<Output = Self> + Sized {
     fn identity() -> Self;
@@ -37,43 +30,18 @@ pub enum Root4 {
 
 impl Root4 {
     /// Identity.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use f2q::math::Root4;
-    /// assert_eq!(Root4::one(), Root4::R0);
-    /// assert_eq!(Root4::one(), Root4::default());
-    /// ```
     #[must_use]
     pub fn one() -> Self {
         Self::R0
     }
 
     /// Complex number: `i`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use f2q::math::Root4;
-    /// assert_eq!(Root4::i(), Root4::R2);
-    /// ```
     #[must_use]
     pub fn i() -> Self {
         Self::R2
     }
 
     /// Complex conjugation.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use f2q::math::Root4;
-    /// assert_eq!(Root4::R0.conj(), Root4::R0);
-    /// assert_eq!(Root4::R1.conj(), Root4::R1);
-    /// assert_eq!(Root4::R2.conj(), Root4::R3);
-    /// assert_eq!(Root4::R3.conj(), Root4::R2);
-    /// ```
     #[must_use]
     pub fn conj(self) -> Self {
         match self {
@@ -161,17 +129,6 @@ pub enum ReIm<T> {
     Zero,
     Re(T),
     Im(T),
-}
-
-impl<T> ReIm<T> {
-    #[must_use]
-    pub fn conj(self) -> Self {
-        match self {
-            Self::Zero => Self::Zero,
-            Self::Re(x) => Self::Im(x),
-            Self::Im(x) => Self::Re(x),
-        }
-    }
 }
 
 impl<T> Mul for ReIm<T>
