@@ -76,17 +76,11 @@ impl Root4 {
     /// ```
     #[must_use]
     pub fn conj(self) -> Self {
-        use Root4::{
-            R0,
-            R1,
-            R2,
-            R3,
-        };
         match self {
-            R0 => R0,
-            R1 => R1,
-            R2 => R3,
-            R3 => R2,
+            Root4::R0 => Root4::R0,
+            Root4::R1 => Root4::R1,
+            Root4::R2 => Root4::R3,
+            Root4::R3 => Root4::R2,
         }
     }
 }
@@ -137,17 +131,11 @@ impl Neg for Root4 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        use Root4::{
-            R0,
-            R1,
-            R2,
-            R3,
-        };
         match self {
-            R0 => R1,
-            R1 => R0,
-            R2 => R3,
-            R3 => R2,
+            Root4::R0 => Root4::R1,
+            Root4::R1 => Root4::R0,
+            Root4::R2 => Root4::R3,
+            Root4::R3 => Root4::R2,
         }
     }
 }
@@ -158,29 +146,11 @@ impl Group for Root4 {
     }
 
     fn inverse(self) -> Self {
-        use Root4::{
-            R0,
-            R1,
-            R2,
-            R3,
-        };
         match self {
-            R0 => R0,
-            R1 => R1,
-            R2 => R3,
-            R3 => R2,
-        }
-    }
-}
-
-impl<T: Float> From<Root4> for ReIm<T> {
-    fn from(value: Root4) -> Self {
-        use Root4::*;
-        match value {
-            R0 => ReIm::Re(T::one()),
-            R1 => ReIm::Re(-T::one()),
-            R2 => ReIm::Im(T::one()),
-            R3 => ReIm::Im(-T::one()),
+            Root4::R0 => Root4::R0,
+            Root4::R1 => Root4::R1,
+            Root4::R2 => Root4::R3,
+            Root4::R3 => Root4::R2,
         }
     }
 }
@@ -194,47 +164,12 @@ pub enum ReIm<T> {
 }
 
 impl<T> ReIm<T> {
-    pub fn re(re: T) -> Self {
-        Self::Re(re)
-    }
-
-    pub fn is_re(&self) -> bool {
-        if let Self::Re(_) = self {
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn im(im: T) -> Self {
-        Self::Im(im)
-    }
-
-    pub fn is_im(&self) -> bool {
-        if let Self::Im(_) = self {
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn zero() -> Self {
-        Self::Zero
-    }
-
-    pub fn is_zero(&self) -> bool {
-        if let Self::Zero = self {
-            true
-        } else {
-            false
-        }
-    }
-
+    #[must_use]
     pub fn conj(self) -> Self {
         match self {
+            Self::Zero => Self::Zero,
             Self::Re(x) => Self::Im(x),
             Self::Im(x) => Self::Re(x),
-            Self::Zero => Self::Zero,
         }
     }
 }
@@ -265,8 +200,19 @@ where
     }
 }
 
-impl<T: Float> From<T> for ReIm<T> {
-    fn from(value: T) -> Self {
-        Self::Re(value)
+impl<T: Float> From<Root4> for ReIm<T> {
+    fn from(value: Root4) -> Self {
+        use Root4::{
+            R0,
+            R1,
+            R2,
+            R3,
+        };
+        match value {
+            R0 => ReIm::Re(T::one()),
+            R1 => ReIm::Re(-T::one()),
+            R2 => ReIm::Im(T::one()),
+            R3 => ReIm::Im(-T::one()),
+        }
     }
 }

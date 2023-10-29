@@ -22,33 +22,29 @@ use crate::{
 };
 
 enum Map {
-    Cr(Orbital),
     An(Orbital),
+    Cr(Orbital),
 }
 
-impl TryFrom<Cr> for Map {
-    type Error = Error;
+macro_rules! impl_tryfrom_map {
+    ($($Typ:tt)* ) => {
+        $(
+            impl TryFrom<$Typ> for Map {
+                type Error = Error;
 
-    fn try_from(value: Cr) -> Result<Self, Self::Error> {
-        (value.index() < 64)
-            .then_some(Self::Cr(value.0))
-            .ok_or_else(|| Error::QubitIndex {
-                msg: "orbital index must be within 0..=63".to_string(),
-            })
-    }
+                fn try_from(value: $Typ) -> Result<Self, Self::Error> {
+                    (value.index() < 64)
+                        .then_some(Self::$Typ(value.0))
+                        .ok_or_else(|| Error::QubitIndex {
+                            msg: "orbital index must be within 0..=63".to_string(),
+                        })
+                }
+            }
+        )*
+    };
 }
 
-impl TryFrom<An> for Map {
-    type Error = Error;
-
-    fn try_from(value: An) -> Result<Self, Self::Error> {
-        (value.index() < 64)
-            .then_some(Self::An(value.0))
-            .ok_or_else(|| Error::QubitIndex {
-                msg: "orbital index must be within 0..=63".to_string(),
-            })
-    }
-}
+impl_tryfrom_map!(An Cr);
 
 fn pauli_codes_from_index(index: u16) -> (Pauli, Pauli) {
     let code = Pauli::parity_op(index);
@@ -82,7 +78,7 @@ impl Map {
     ) -> impl Iterator<Item = (ReIm<T>, Pauli)> + 'a
     where
         T: Float + 'a,
-        I: Iterator<Item = (ReIm<T>, Pauli)> + 'a,
+        I: IntoIterator<Item = (ReIm<T>, Pauli)> + 'a,
     {
         let one_half =
             T::from(0.5_f64).expect("floating point conversion from 0.5");
@@ -93,10 +89,11 @@ impl Map {
             Self::Cr(_) => ReIm::Im(-one_half),
         };
 
-        rhs.flat_map(move |(rhs_coeff, rhs_pauli)| {
+        rhs.into_iter().flat_map(move |(rhs_coeff, rhs_pauli)| {
             [(term_x, x), (term_y, y)].into_iter().map(
                 move |(lhs_coeff, lhs_pauli)| {
                     let (root, prod) = lhs_pauli * rhs_pauli;
+
                     (lhs_coeff * rhs_coeff * ReIm::from(root), prod)
                 },
             )
@@ -104,15 +101,13 @@ impl Map {
     }
 }
 
-fn jw_map_two_hemitian<'a, T: Float + 'a>(
-    op1: &'a Map,
-    op2: &'a Map,
-    coeff: T,
-) -> impl Iterator<Item = (T, Pauli)> + 'a {
+fn iter_hermitian<'a, T, I>(iter: I) -> impl Iterator<Item = (T, Pauli)> + 'a
+where
+    T: Float + 'a,
+    I: IntoIterator<Item = (ReIm<T>, Pauli)> + 'a,
+{
     let two = T::from(2.0_f64).expect("floating point conversion from 2.0");
-    let start = [(ReIm::Re(coeff), Pauli::identity())].into_iter();
-
-    op1.mul_iter(op2.mul_iter(start)).filter_map(move |(x, p)| {
+    iter.into_iter().filter_map(move |(x, p)| {
         if let ReIm::Re(xre) = x {
             Some((xre * two, p))
         } else {
@@ -121,24 +116,28 @@ fn jw_map_two_hemitian<'a, T: Float + 'a>(
     })
 }
 
-fn jw_map_four_hemitian<'a, T: Float + 'a>(
+#[inline]
+fn jw_map_two<'a, T: Float + 'a>(
+    op1: &'a Map,
+    op2: &'a Map,
+    coeff: T,
+) -> impl Iterator<Item = (T, Pauli)> + 'a {
+    iter_hermitian(
+        op1.mul_iter(op2.mul_iter([(ReIm::Re(coeff), Pauli::identity())])),
+    )
+}
+
+#[inline]
+fn jw_map_four<'a, T: Float + 'a>(
     op1: &'a Map,
     op2: &'a Map,
     op3: &'a Map,
     op4: &'a Map,
     coeff: T,
 ) -> impl Iterator<Item = (T, Pauli)> + 'a {
-    let two = T::from(2.0_f64).expect("floating point conversion from 2.0");
-    let start = [(ReIm::Re(coeff), Pauli::identity())].into_iter();
-
-    op1.mul_iter(op2.mul_iter(op3.mul_iter(op4.mul_iter(start))))
-        .filter_map(move |(x, p)| {
-            if let ReIm::Re(xre) = x {
-                Some((xre * two, p))
-            } else {
-                None
-            }
-        })
+    iter_hermitian(op1.mul_iter(op2.mul_iter(
+        op3.mul_iter(op4.mul_iter([(ReIm::Re(coeff), Pauli::identity())])),
+    )))
 }
 /// Jordan-Wigner mapping.
 ///
@@ -222,7 +221,7 @@ where
         for (&coeff, &code) in self.repr.iter() {
             match code {
                 Fermions::Offset => {
-                    repr.extend(Some((coeff, Pauli::identity())))
+                    repr.extend(Some((coeff, Pauli::identity())));
                 }
                 Fermions::One {
                     cr,
@@ -230,7 +229,7 @@ where
                 } => {
                     let jw_cr = Map::try_from(cr)?;
                     let jw_an = Map::try_from(an)?;
-                    repr.extend(jw_map_two_hemitian(&jw_cr, &jw_an, coeff));
+                    repr.extend(jw_map_two(&jw_cr, &jw_an, coeff));
                 }
                 Fermions::Two {
                     cr,
@@ -238,7 +237,7 @@ where
                 } => {
                     let jw_cr = (Map::try_from(cr.0)?, Map::try_from(cr.1)?);
                     let jw_an = (Map::try_from(an.0)?, Map::try_from(an.1)?);
-                    repr.extend(jw_map_four_hemitian(
+                    repr.extend(jw_map_four(
                         &jw_cr.0, &jw_cr.1, &jw_an.0, &jw_an.1, coeff,
                     ));
                 }
@@ -248,96 +247,3 @@ where
         Ok(())
     }
 }
-
-// #[test]
-// fn jwmap_mul_iter_01() {
-//     use PauliOp::*;
-//     let jw_cr = Map::try_from(Cr(Orbital::with_index(0))).unwrap();
-//     let jw_an = Map::try_from(An(Orbital::with_index(0))).unwrap();
-
-//     let start = [(ReIm::from(2.), Pauli::default())].into_iter();
-
-//     let result = jw_cr.mul_iter(start.clone()).collect::<Vec<_>>();
-//     assert_eq!(
-//         result,
-//         &[
-//             (ReIm::Re(1.), Pauli::with_ops([X])),
-//             (ReIm::Im(-1.), Pauli::with_ops([Y]))
-//         ]
-//     );
-
-//     let result = jw_an.mul_iter(start.clone()).collect::<Vec<_>>();
-//     assert_eq!(
-//         result,
-//         &[
-//             (ReIm::Re(1.), Pauli::with_ops([X])),
-//             (ReIm::Im(1.), Pauli::with_ops([Y]))
-//         ]
-//     );
-
-//     let result = jw_cr
-//         .mul_iter(jw_an.mul_iter(start.clone()))
-//         .collect::<Vec<_>>();
-//     assert_eq!(
-//         result,
-//         &[
-//             (ReIm::Re(0.5), Pauli::with_ops([])),
-//             (ReIm::Re(-0.5), Pauli::with_ops([Z])),
-//             (ReIm::Re(-0.5), Pauli::with_ops([Z])),
-//             (ReIm::Re(0.5), Pauli::with_ops([])),
-//         ]
-//     );
-
-//     let result = jw_an
-//         .mul_iter(jw_cr.mul_iter(start.clone()))
-//         .collect::<Vec<_>>();
-//     assert_eq!(
-//         result,
-//         &[
-//             (ReIm::Re(0.5), Pauli::with_ops([])),
-//             (ReIm::Re(0.5), Pauli::with_ops([Z])),
-//             (ReIm::Re(0.5), Pauli::with_ops([Z])),
-//             (ReIm::Re(0.5), Pauli::with_ops([])),
-//         ]
-//     );
-// }
-
-// #[test]
-// fn jwmap_mul_iter_02() {
-//     use PauliOp::*;
-//     let jw_cr = Map::try_from(Cr(Orbital::with_index(0))).unwrap();
-//     let jw_an = Map::try_from(An(Orbital::with_index(1))).unwrap();
-
-//     let start = [(ReIm::from(2.), Pauli::default())].into_iter();
-
-//     let result = jw_cr.mul_iter(start.clone()).collect::<Vec<_>>();
-//     assert_eq!(
-//         result,
-//         &[
-//             (ReIm::Re(1.), Pauli::with_ops([X])),
-//             (ReIm::Im(-1.), Pauli::with_ops([Y]))
-//         ]
-//     );
-
-//     let result = jw_an.mul_iter(start.clone()).collect::<Vec<_>>();
-//     assert_eq!(
-//         result,
-//         &[
-//             (ReIm::Re(1.), Pauli::with_ops([Z, X])),
-//             (ReIm::Im(1.), Pauli::with_ops([Z, Y]))
-//         ]
-//     );
-
-//     let result = jw_cr
-//         .mul_iter(jw_an.mul_iter(start.clone()))
-//         .collect::<Vec<_>>();
-//     assert_eq!(
-//         result,
-//         &[
-//             (ReIm::Im(0.5), Pauli::with_ops([Y, X])),
-//             (ReIm::Re(0.5), Pauli::with_ops([X, X])),
-//             (ReIm::Re(-0.5), Pauli::with_ops([Y, Y])),
-//             (ReIm::Im(0.5), Pauli::with_ops([X, Y])),
-//         ]
-//     );
-// }
