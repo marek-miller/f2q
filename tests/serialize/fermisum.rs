@@ -161,7 +161,7 @@ fn fermisum_deserialize_01() {
     let repr: FermiSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 1);
-    assert_eq!(repr.coeff(Fermions::Offset), 0.1);
+    assert_eq!(repr.coeff(Fermions::Offset).unwrap(), &0.1);
 }
 
 #[test]
@@ -187,7 +187,7 @@ fn fermisum_deserialize_02() {
     let repr: FermiSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 2);
-    assert_eq!(repr.coeff(Fermions::Offset), 0.1);
+    assert_eq!(repr.coeff(Fermions::Offset).unwrap(), &0.1);
     assert_eq!(
         repr.coeff(
             Fermions::one_electron(
@@ -195,8 +195,9 @@ fn fermisum_deserialize_02() {
                 An(Orbital::with_index(2))
             )
             .unwrap()
-        ),
-        0.2
+        )
+        .unwrap(),
+        &0.2
     );
 }
 
@@ -231,7 +232,7 @@ fn fermisum_deserialize_03() {
     let repr: FermiSum = serde_json::from_str(data).unwrap();
 
     assert_eq!(repr.len(), 3);
-    assert_eq!(repr.coeff(Fermions::Offset), 0.19);
+    assert_eq!(repr.coeff(Fermions::Offset).unwrap(), &0.19);
     assert_eq!(
         repr.coeff(
             Fermions::one_electron(
@@ -239,8 +240,9 @@ fn fermisum_deserialize_03() {
                 An(Orbital::with_index(2))
             )
             .unwrap()
-        ),
-        0.2
+        )
+        .unwrap(),
+        &0.2
     );
     assert_eq!(
         repr.coeff(
@@ -249,7 +251,8 @@ fn fermisum_deserialize_03() {
                 (An(Orbital::with_index(1)), An(Orbital::with_index(0))),
             )
             .unwrap(),
-        ),
-        0.3
+        )
+        .unwrap(),
+        &0.3
     );
 }

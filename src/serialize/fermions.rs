@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use num::Float;
+use num::Num;
 use serde::{
     de::Visitor,
     ser::SerializeSeq,
@@ -121,7 +121,7 @@ struct FermiSumSerSequence<'a, T>(&'a SumRepr<T, Fermions>);
 
 impl<'a, T> Serialize for FermiSumSerSequence<'a, T>
 where
-    T: Float + Serialize,
+    T: Num + Serialize,
 {
     fn serialize<S>(
         &self,
@@ -131,7 +131,7 @@ where
         S: serde::Serializer,
     {
         let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
-        for (&coeff, &code) in self.0.iter() {
+        for (coeff, &code) in self.0.iter() {
             seq.serialize_element(&FermiSumTerm {
                 code,
                 value: coeff,
@@ -145,7 +145,7 @@ where
 #[derive(Serialize)]
 struct FermiSumSer<'a, T>
 where
-    T: Float,
+    T: Num,
 {
     r#type:   &'a str,
     encoding: Encoding,
@@ -154,7 +154,7 @@ where
 
 impl<T> Serialize for SumRepr<T, Fermions>
 where
-    T: Float + Serialize,
+    T: Num + Serialize,
 {
     fn serialize<S>(
         &self,
@@ -188,7 +188,7 @@ impl<T> FermiSumVisitor<T> {
 
 impl<'de, T> Visitor<'de> for FermiSumVisitor<T>
 where
-    T: Float + Deserialize<'de>,
+    T: Num + Deserialize<'de>,
 {
     type Value = FermiSumDeSequence<T>;
 
@@ -223,7 +223,7 @@ where
 
 impl<'de, T> Deserialize<'de> for FermiSumDeSequence<T>
 where
-    T: Float + Deserialize<'de>,
+    T: Num + Deserialize<'de>,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -236,7 +236,7 @@ where
 #[derive(Deserialize)]
 struct FermiSumDe<T>
 where
-    T: Float,
+    T: Num,
 {
     r#type:   String,
     encoding: Encoding,
@@ -245,7 +245,7 @@ where
 
 impl<'de, T> Deserialize<'de> for SumRepr<T, Fermions>
 where
-    T: Float + Deserialize<'de>,
+    T: Num + Deserialize<'de>,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

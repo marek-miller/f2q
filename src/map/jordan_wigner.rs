@@ -190,8 +190,8 @@ fn jw_map_four<'a, T: Float + 'a>(
 ///     code
 /// };
 ///
-/// assert_eq!(pauli_repr.coeff(code_i0), 1.0);
-/// assert_eq!(pauli_repr.coeff(code_z0), -1.0);
+/// assert_eq!(pauli_repr.coeff(code_i0), Some(&1.0));
+/// assert_eq!(pauli_repr.coeff(code_z0), Some(&-1.0));
 /// #   Ok(())
 /// # }
 /// ```

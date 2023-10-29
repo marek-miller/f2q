@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use num::Float;
+use num::Num;
 
 use crate::{
     code::{
@@ -157,8 +157,8 @@ where
     ///     *coeff += 0.1;
     /// }
     ///
-    /// assert_eq!(repr.coeff(Pauli::default()), 0.6);
-    /// assert_eq!(repr.coeff(Pauli::new((1, 0))), 0.6);
+    /// assert_eq!(repr.coeff(Pauli::default()), Some(&0.6));
+    /// assert_eq!(repr.coeff(Pauli::new((1, 0))), Some(&0.6));
     /// ```
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (&mut T, &K)> {
         self.terms.iter_mut().map(|(code, coeff)| (coeff, code))
@@ -167,7 +167,7 @@ where
 
 impl<T, K> SumRepr<T, K>
 where
-    T: Float,
+    T: Num,
     K: Code,
 {
     /// Returns coefficient in the sum for a given code.
@@ -179,18 +179,15 @@ where
     /// let mut repr = SumRepr::new();
     /// repr.update(1, 0.5);
     ///
-    /// assert_eq!(repr.coeff(1), 0.5);
-    /// assert_eq!(repr.coeff(2), 0.0);
+    /// assert_eq!(repr.coeff(1), Some(&0.5));
+    /// assert_eq!(repr.coeff(2), None);
     /// ```
     #[must_use]
     pub fn coeff(
         &self,
         code: K,
-    ) -> T {
-        match self.terms.get(&code) {
-            Some(coeff) => *coeff,
-            None => T::zero(),
-        }
+    ) -> Option<&T> {
+        self.terms.get(&code)
     }
 
     /// Replace coefficient for the given code.
@@ -207,7 +204,7 @@ where
     ///
     /// let old_coeff = repr.update(1, 0.7);
     /// assert_eq!(old_coeff, Some(0.5));
-    /// assert_eq!(repr.coeff(1), 0.7);
+    /// assert_eq!(repr.coeff(1), Some(&0.7));
     /// ```
     pub fn update(
         &mut self,
@@ -224,25 +221,28 @@ where
     /// ```rust
     /// # use f2q::terms::SumRepr;
     /// let mut repr = SumRepr::new();
-    /// assert_eq!(repr.coeff(1), 0.0);
+    /// assert_eq!(repr.coeff(1), None);
     /// repr.add_term(1, 0.5);
-    /// assert_eq!(repr.coeff(1), 0.5);
+    /// assert_eq!(repr.coeff(1), Some(&0.5));
     /// repr.add_term(1, 0.5);
-    /// assert_eq!(repr.coeff(1), 1.0);
+    /// assert_eq!(repr.coeff(1), Some(&1.0));
     /// ```
     pub fn add_term(
         &mut self,
         code: K,
         coeff: T,
     ) {
-        let prev_coeff = self.coeff(code);
-        let _ = self.update(code, coeff + prev_coeff);
+        if let Some(prev_coeff) = self.terms.remove(&code) {
+            let _ = self.update(code, prev_coeff + coeff);
+        } else {
+            let _ = self.update(code, coeff);
+        }
     }
 }
 
 impl<T, K> FromIterator<(T, K)> for SumRepr<T, K>
 where
-    T: Float,
+    T: Num,
     K: Code,
 {
     fn from_iter<I: IntoIterator<Item = (T, K)>>(iter: I) -> Self {
@@ -252,21 +252,9 @@ where
     }
 }
 
-impl<'a, T, K> FromIterator<&'a (T, K)> for SumRepr<T, K>
-where
-    T: Float,
-    K: Code,
-{
-    fn from_iter<I: IntoIterator<Item = &'a (T, K)>>(iter: I) -> Self {
-        let mut repr = SumRepr::new();
-        repr.extend(iter.into_iter().map(|(t, k)| (*t, *k)));
-        repr
-    }
-}
-
 impl<T, K, const N: usize> From<[(T, K); N]> for SumRepr<T, K>
 where
-    T: Float,
+    T: Num,
     K: Code,
 {
     fn from(value: [(T, K); N]) -> Self {
@@ -276,7 +264,7 @@ where
 
 impl<T, K> Terms<(T, K)> for SumRepr<T, K>
 where
-    T: Float,
+    T: Num + Copy,
     K: Code,
 {
     type Error = Error;
@@ -294,8 +282,8 @@ where
 
 impl<T, K> Extend<(T, K)> for SumRepr<T, K>
 where
+    T: Num,
     K: Code,
-    T: Float,
 {
     fn extend<I>(
         &mut self,
@@ -330,7 +318,6 @@ where
 
 impl<T, K, OP> Terms<(T, K)> for StackRepr<T, K, OP>
 where
-    T: Float,
     K: Code,
     OP: FnMut() -> Option<(T, K)>,
 {
@@ -366,7 +353,6 @@ impl<'a, T, K> HeapRepr<'a, T, K> {
 
 impl<'a, T, K> Terms<(T, K)> for HeapRepr<'a, T, K>
 where
-    T: Float,
     K: Code,
 {
     type Error = Error;

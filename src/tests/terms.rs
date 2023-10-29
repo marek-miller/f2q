@@ -14,7 +14,7 @@ fn sumrepr_init_01() {
     let mut hamil = SumRepr::new();
 
     hamil.update(code, 4321.);
-    let coeff = hamil.coeff(code);
+    let coeff = hamil.coeff(code).unwrap();
     assert!(f64::abs(coeff - 4321.) < f64::EPSILON);
 }
 

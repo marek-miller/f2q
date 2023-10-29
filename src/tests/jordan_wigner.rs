@@ -29,7 +29,8 @@ fn jw_check_mapping<T: Float + std::fmt::Debug>(
     list: &[(T, Fermions)],
     expected: &[(T, Pauli)],
 ) {
-    let repr = SumRepr::from_iter(list);
+    let repr: SumRepr<T, Fermions> =
+        list.iter().map(|(x, f)| (*x, *f)).collect();
     assert_eq!(jw_get_result(&repr), expected);
 }
 

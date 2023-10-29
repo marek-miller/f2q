@@ -5,7 +5,7 @@ use std::ops::{
     Neg,
 };
 
-use num::Float;
+use num::One;
 
 /// Group structure.
 pub trait Group: Mul<Output = Self> + Sized {
@@ -133,7 +133,7 @@ pub enum ReIm<T> {
 
 impl<T> Mul for ReIm<T>
 where
-    T: Float,
+    T: Mul<Output = T> + Neg<Output = T>,
 {
     type Output = Self;
 
@@ -157,7 +157,10 @@ where
     }
 }
 
-impl<T: Float> From<Root4> for ReIm<T> {
+impl<T> From<Root4> for ReIm<T>
+where
+    T: Neg<Output = T> + One,
+{
     fn from(value: Root4) -> Self {
         use Root4::{
             R0,

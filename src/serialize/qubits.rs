@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use num::Float;
+use num::Num;
 use serde::{
     de::Visitor,
     ser::SerializeSeq,
@@ -160,7 +160,7 @@ struct PauliSumSerSequence<'a, T>(&'a SumRepr<T, Pauli>);
 
 impl<'a, T> Serialize for PauliSumSerSequence<'a, T>
 where
-    T: Float + Serialize,
+    T: Num + Copy + Serialize,
 {
     fn serialize<S>(
         &self,
@@ -184,7 +184,7 @@ where
 #[derive(Serialize)]
 struct PauliSumSer<'a, T>
 where
-    T: Float,
+    T: Num + Copy,
 {
     r#type:   &'a str,
     encoding: Encoding,
@@ -193,7 +193,7 @@ where
 
 impl<T> Serialize for SumRepr<T, Pauli>
 where
-    T: Float + Serialize,
+    T: Num + Copy + Serialize,
 {
     fn serialize<S>(
         &self,
@@ -227,7 +227,7 @@ impl<T> PauliSumVisitor<T> {
 
 impl<'de, T> Visitor<'de> for PauliSumVisitor<T>
 where
-    T: Float + Deserialize<'de>,
+    T: Num + Copy + Deserialize<'de>,
 {
     type Value = PauliSumDeSequence<T>;
 
@@ -262,7 +262,7 @@ where
 
 impl<'de, T> Deserialize<'de> for PauliSumDeSequence<T>
 where
-    T: Float + Deserialize<'de>,
+    T: Num + Copy + Deserialize<'de>,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -275,7 +275,7 @@ where
 #[derive(Deserialize)]
 struct PauliSumDe<T>
 where
-    T: Float,
+    T: Num + Copy,
 {
     r#type:   String,
     encoding: Encoding,
@@ -284,7 +284,7 @@ where
 
 impl<'de, T> Deserialize<'de> for SumRepr<T, Pauli>
 where
-    T: Float + Deserialize<'de>,
+    T: Num + Copy + Deserialize<'de>,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
