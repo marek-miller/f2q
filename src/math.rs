@@ -5,41 +5,13 @@ use std::ops::{
     Neg,
 };
 
-/// Iterate over all pairs in a slice.
-#[derive(Debug)]
-pub struct Pairs<'a, T> {
-    data: &'a [T],
-    i:    usize,
-    j:    usize,
-}
+use num::Float;
 
-impl<'a, T> Pairs<'a, T> {
-    pub fn new(data: &'a [T]) -> Self {
-        Self {
-            data,
-            i: 0,
-            j: 0,
-        }
-    }
-}
-
-impl<'a, T> Iterator for Pairs<'a, T> {
-    type Item = (&'a T, &'a T);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.i >= self.data.len() {
-            return None;
-        }
-
-        let out = (&self.data[self.i], &self.data[self.j]);
-        self.j += 1;
-        if self.j >= self.data.len() {
-            self.j = 0;
-            self.i += 1;
-        }
-
-        Some(out)
-    }
+pub fn pairs<'a, T, K>(
+    x: &'a [T],
+    y: &'a [K],
+) -> impl Iterator<Item = (&'a T, &'a K)> {
+    x.iter().flat_map(|i| y.iter().map(move |j| (i, j)))
 }
 
 /// Group structure.
@@ -104,17 +76,11 @@ impl Root4 {
     /// ```
     #[must_use]
     pub fn conj(self) -> Self {
-        use Root4::{
-            R0,
-            R1,
-            R2,
-            R3,
-        };
         match self {
-            R0 => R0,
-            R1 => R1,
-            R2 => R3,
-            R3 => R2,
+            Root4::R0 => Root4::R0,
+            Root4::R1 => Root4::R1,
+            Root4::R2 => Root4::R3,
+            Root4::R3 => Root4::R2,
         }
     }
 }
@@ -165,17 +131,11 @@ impl Neg for Root4 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        use Root4::{
-            R0,
-            R1,
-            R2,
-            R3,
-        };
         match self {
-            R0 => R1,
-            R1 => R0,
-            R2 => R3,
-            R3 => R2,
+            Root4::R0 => Root4::R1,
+            Root4::R1 => Root4::R0,
+            Root4::R2 => Root4::R3,
+            Root4::R3 => Root4::R2,
         }
     }
 }
@@ -186,17 +146,73 @@ impl Group for Root4 {
     }
 
     fn inverse(self) -> Self {
+        match self {
+            Root4::R0 => Root4::R0,
+            Root4::R1 => Root4::R1,
+            Root4::R2 => Root4::R3,
+            Root4::R3 => Root4::R2,
+        }
+    }
+}
+
+/// A complex number that can only be either real or imaginary.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ReIm<T> {
+    Zero,
+    Re(T),
+    Im(T),
+}
+
+impl<T> ReIm<T> {
+    #[must_use]
+    pub fn conj(self) -> Self {
+        match self {
+            Self::Zero => Self::Zero,
+            Self::Re(x) => Self::Im(x),
+            Self::Im(x) => Self::Re(x),
+        }
+    }
+}
+
+impl<T> Mul for ReIm<T>
+where
+    T: Float,
+{
+    type Output = Self;
+
+    fn mul(
+        self,
+        rhs: Self,
+    ) -> Self::Output {
+        match self {
+            Self::Zero => Self::Zero,
+            Self::Re(x) => match rhs {
+                Self::Zero => Self::Zero,
+                Self::Re(y) => Self::Re(x * y),
+                Self::Im(y) => Self::Im(x * y),
+            },
+            Self::Im(x) => match rhs {
+                Self::Zero => Self::Zero,
+                Self::Re(y) => Self::Im(x * y),
+                Self::Im(y) => Self::Re(-x * y),
+            },
+        }
+    }
+}
+
+impl<T: Float> From<Root4> for ReIm<T> {
+    fn from(value: Root4) -> Self {
         use Root4::{
             R0,
             R1,
             R2,
             R3,
         };
-        match self {
-            R0 => R0,
-            R1 => R1,
-            R2 => R3,
-            R3 => R2,
+        match value {
+            R0 => ReIm::Re(T::one()),
+            R1 => ReIm::Re(-T::one()),
+            R2 => ReIm::Im(T::one()),
+            R3 => ReIm::Im(-T::one()),
         }
     }
 }

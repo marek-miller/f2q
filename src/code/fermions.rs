@@ -10,6 +10,8 @@ use std::{
     },
 };
 
+use crate::Error;
+
 /// Spin one-half
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum Spin {
@@ -168,12 +170,12 @@ impl Orbital {
     /// ```rust
     /// # use f2q::code::fermions::{Orbital, Spin};
     ///
-    /// let orbital = Orbital::from_index(3);
+    /// let orbital = Orbital::with_index(3);
     ///
     /// assert_eq!(orbital, Orbital::new(1, Spin::Up));
     /// ```
     #[must_use]
-    pub fn from_index(index: u32) -> Self {
+    pub fn with_index(index: u32) -> Self {
         Self::new(index / 2, Spin::from(index & 1 != 0))
     }
 
@@ -248,7 +250,7 @@ impl Iterator for OrbitalRange {
                     if *i > end {
                         None
                     } else {
-                        let orbital = Orbital::from_index(*i);
+                        let orbital = Orbital::with_index(*i);
                         if *i < end {
                             *i += 1;
                         } else {
@@ -261,6 +263,52 @@ impl Iterator for OrbitalRange {
             },
             None => None,
         }
+    }
+}
+
+/// Creation operator
+///
+/// A newtype struct representing a creation operator.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Cr(pub Orbital);
+
+impl Cr {
+    /// Orbital index.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use f2q::code::fermions::{Orbital, Cr};
+    /// let cr = Cr(Orbital::with_index(1));
+    ///
+    /// assert_eq!(cr.index(), 1);
+    /// ```
+    #[must_use]
+    pub fn index(&self) -> u32 {
+        self.0.index()
+    }
+}
+
+/// Annihilation operator
+///
+/// A newtype struct representing an annihilation operator.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct An(pub Orbital);
+
+impl An {
+    /// Orbital index.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use f2q::code::fermions::{Orbital, An};
+    /// let an = An(Orbital::with_index(1));
+    ///
+    /// assert_eq!(an.index(), 1);
+    /// ```
+    #[must_use]
+    pub fn index(&self) -> u32 {
+        self.0.index()
     }
 }
 
@@ -394,6 +442,46 @@ impl Fermions {
     }
 }
 
+impl From<()> for Fermions {
+    fn from((): ()) -> Self {
+        Fermions::Offset
+    }
+}
+
+impl TryFrom<(u32, u32)> for Fermions {
+    type Error = Error;
+
+    fn try_from(value: (u32, u32)) -> Result<Self, Self::Error> {
+        Fermions::one_electron(
+            Cr(Orbital::with_index(value.0)),
+            An(Orbital::with_index(value.1)),
+        )
+        .ok_or(Self::Error::QubitIndex {
+            msg: "one-electron term orbital ordering".to_string(),
+        })
+    }
+}
+
+impl TryFrom<(u32, u32, u32, u32)> for Fermions {
+    type Error = Error;
+
+    fn try_from(value: (u32, u32, u32, u32)) -> Result<Self, Self::Error> {
+        Fermions::two_electron(
+            (
+                Cr(Orbital::with_index(value.0)),
+                Cr(Orbital::with_index(value.1)),
+            ),
+            (
+                An(Orbital::with_index(value.2)),
+                An(Orbital::with_index(value.3)),
+            ),
+        )
+        .ok_or(Self::Error::QubitIndex {
+            msg: "two-electron term orbital ordering".to_string(),
+        })
+    }
+}
+
 impl Display for Fermions {
     fn fmt(
         &self,
@@ -417,27 +505,5 @@ impl Display for Fermions {
                 an.1.index()
             ),
         }
-    }
-}
-
-/// Creation operator
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Cr(pub Orbital);
-
-impl Cr {
-    #[must_use]
-    pub fn index(&self) -> u32 {
-        self.0.index()
-    }
-}
-
-/// Annihilation operator
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct An(pub Orbital);
-
-impl An {
-    #[must_use]
-    pub fn index(&self) -> u32 {
-        self.0.index()
     }
 }

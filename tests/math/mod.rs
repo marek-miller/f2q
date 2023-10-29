@@ -1,8 +1,76 @@
 use f2q::math::{
+    pairs,
     Group,
-    Pairs,
+    ReIm,
     Root4,
 };
+
+#[test]
+fn pairs_01a() {
+    let data = [0, 1, 2];
+    let result = pairs(&data, &data).collect::<Vec<_>>();
+
+    assert_eq!(
+        result,
+        &[
+            (&0, &0),
+            (&0, &1),
+            (&0, &2),
+            (&1, &0),
+            (&1, &1),
+            (&1, &2),
+            (&2, &0),
+            (&2, &1),
+            (&2, &2),
+        ]
+    );
+}
+
+#[test]
+fn pairs_01b() {
+    let data_x = [0, 1];
+    let data_y = [0, 1, 2];
+    let result = pairs(&data_x, &data_y).collect::<Vec<_>>();
+
+    assert_eq!(
+        result,
+        &[(&0, &0), (&0, &1), (&0, &2), (&1, &0), (&1, &1), (&1, &2),]
+    );
+}
+
+#[test]
+fn pairs_01c() {
+    let data_x = [0, 1, 2];
+    let data_y = [0, 1];
+    let result = pairs(&data_x, &data_y).collect::<Vec<_>>();
+
+    assert_eq!(
+        result,
+        &[(&0, &0), (&0, &1), (&1, &0), (&1, &1), (&2, &0), (&2, &1),]
+    );
+}
+
+#[test]
+fn pairs_02() {
+    let data = vec![0; 17];
+    let result = pairs(&data, &data).collect::<Vec<_>>();
+    assert_eq!(result.len(), 17 * 17);
+}
+
+#[test]
+fn pairs_empty() {
+    let data = [1];
+    let data_empty: [usize; 0] = [];
+
+    let result = pairs(&data, &data_empty).collect::<Vec<_>>();
+    assert_eq!(result, &[]);
+
+    let result = pairs(&data_empty, &data).collect::<Vec<_>>();
+    assert_eq!(result, &[]);
+
+    let result = pairs(&data_empty, &data_empty).collect::<Vec<_>>();
+    assert_eq!(result, &[]);
+}
 
 #[test]
 fn root4_identity() {
@@ -59,37 +127,16 @@ fn root4_conj() {
 }
 
 #[test]
-fn pairs_01() {
-    let data = [0, 1, 2];
-    let result = Pairs::new(&data).collect::<Vec<_>>();
-
-    assert_eq!(
-        result,
-        &[
-            (&0, &0),
-            (&0, &1),
-            (&0, &2),
-            (&1, &0),
-            (&1, &1),
-            (&1, &2),
-            (&2, &0),
-            (&2, &1),
-            (&2, &2),
-        ]
-    );
+fn reim_conj() {
+    assert_eq!(ReIm::<u8>::Zero.conj(), ReIm::Zero);
+    assert_eq!(ReIm::Re(1).conj(), ReIm::Im(1));
+    assert_eq!(ReIm::Im(1).conj(), ReIm::Re(1));
 }
 
 #[test]
-fn pairs_02() {
-    let data = vec![0; 17];
-    let result = Pairs::new(&data).collect::<Vec<_>>();
-    assert_eq!(result.len(), 17 * 17);
-}
-
-#[test]
-fn pairs_empty() {
-    let data: [usize; 0] = [];
-    let result = Pairs::new(&data).collect::<Vec<_>>();
-
-    assert_eq!(result, &[]);
+fn reim_mul() {
+    assert_eq!(ReIm::Re(1.0) * ReIm::Re(2.0), ReIm::Re(2.0));
+    assert_eq!(ReIm::Re(1.0) * ReIm::Im(2.0), ReIm::Im(2.0));
+    assert_eq!(ReIm::Im(1.0) * ReIm::Re(2.0), ReIm::Im(2.0));
+    assert_eq!(ReIm::Im(1.0) * ReIm::Im(2.0), ReIm::Re(-2.0));
 }

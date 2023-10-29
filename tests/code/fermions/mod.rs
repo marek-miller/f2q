@@ -1,6 +1,9 @@
 use std::ops::RangeBounds;
 
 use f2q::code::fermions::{
+    An,
+    Cr,
+    Fermions,
     Orbital,
     Spin,
 };
@@ -37,9 +40,9 @@ fn test_orbital_enumerate_02() {
 
 #[test]
 fn orbital_from_index_01() {
-    assert_eq!(Orbital::from_index(1).index(), 1);
-    assert_eq!(Orbital::from_index(2).index(), 2);
-    assert_eq!(Orbital::from_index(19).index(), 19);
+    assert_eq!(Orbital::with_index(1).index(), 1);
+    assert_eq!(Orbital::with_index(2).index(), 2);
+    assert_eq!(Orbital::with_index(19).index(), 19);
 }
 
 #[test]
@@ -98,4 +101,114 @@ fn orbital_gen_range_04() {
 
     assert_eq!(orbital_gen_range_idxs(11..15), &[11, 12, 13, 14]);
     assert_eq!(orbital_gen_range_idxs(11..=15), &[11, 12, 13, 14, 15]);
+}
+
+#[test]
+fn fermions_one_elec_init_01() {
+    let _ = Fermions::one_electron(
+        Cr(Orbital::with_index(0)),
+        An(Orbital::with_index(0)),
+    )
+    .unwrap();
+
+    let _ = Fermions::one_electron(
+        Cr(Orbital::with_index(0)),
+        An(Orbital::with_index(1)),
+    )
+    .unwrap();
+
+    let _ = Fermions::one_electron(
+        Cr(Orbital::with_index(1)),
+        An(Orbital::with_index(1)),
+    )
+    .unwrap();
+
+    let _ = Fermions::one_electron(
+        Cr(Orbital::with_index(1)),
+        An(Orbital::with_index(2)),
+    )
+    .unwrap();
+
+    assert!(Fermions::one_electron(
+        Cr(Orbital::with_index(1)),
+        An(Orbital::with_index(0)),
+    )
+    .is_none());
+
+    assert!(Fermions::one_electron(
+        Cr(Orbital::with_index(32)),
+        An(Orbital::with_index(2)),
+    )
+    .is_none());
+}
+
+#[test]
+fn fermions_one_elec_from_01() {
+    assert_eq!(Fermions::from(()), Fermions::Offset);
+
+    Fermions::try_from((0, 0)).unwrap();
+    Fermions::try_from((0, 1)).unwrap();
+    Fermions::try_from((1, 1)).unwrap();
+    Fermions::try_from((1, 2)).unwrap();
+
+    Fermions::try_from((1, 0)).unwrap_err();
+    Fermions::try_from((2, 0)).unwrap_err();
+    Fermions::try_from((32, 2)).unwrap_err();
+}
+
+#[test]
+fn fermions_two_elec_init_01() {
+    let _ = Fermions::two_electron(
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+        (An(Orbital::with_index(1)), An(Orbital::with_index(0))),
+    )
+    .unwrap();
+
+    let _ = Fermions::two_electron(
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(2))),
+        (An(Orbital::with_index(1)), An(Orbital::with_index(0))),
+    )
+    .unwrap();
+
+    let _ = Fermions::two_electron(
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+        (An(Orbital::with_index(2)), An(Orbital::with_index(1))),
+    )
+    .unwrap();
+
+    assert!(Fermions::two_electron(
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(0))),
+        (An(Orbital::with_index(0)), An(Orbital::with_index(0))),
+    )
+    .is_none());
+
+    assert!(Fermions::two_electron(
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+        (An(Orbital::with_index(0)), An(Orbital::with_index(0))),
+    )
+    .is_none());
+
+    assert!(Fermions::two_electron(
+        (Cr(Orbital::with_index(0)), Cr(Orbital::with_index(1))),
+        (An(Orbital::with_index(1)), An(Orbital::with_index(1))),
+    )
+    .is_none());
+
+    assert!(Fermions::two_electron(
+        (Cr(Orbital::with_index(1)), Cr(Orbital::with_index(2))),
+        (An(Orbital::with_index(1)), An(Orbital::with_index(0))),
+    )
+    .is_none());
+}
+
+#[test]
+fn fermions_two_from_01() {
+    Fermions::try_from((0, 1, 1, 0)).unwrap();
+    Fermions::try_from((0, 2, 1, 0)).unwrap();
+    Fermions::try_from((0, 1, 2, 1)).unwrap();
+
+    Fermions::try_from((0, 0, 0, 0)).unwrap_err();
+    Fermions::try_from((0, 1, 0, 0)).unwrap_err();
+    Fermions::try_from((0, 1, 1, 1)).unwrap_err();
+    Fermions::try_from((1, 2, 1, 0)).unwrap_err();
 }

@@ -42,7 +42,7 @@ fn serialize_01() {
     assert_eq!(json, "\"I\"");
 
     let code =
-        Pauli::from_paulis([PauliOp::I, PauliOp::X, PauliOp::Y, PauliOp::Z]);
+        Pauli::with_ops([PauliOp::I, PauliOp::X, PauliOp::Y, PauliOp::Z]);
     let json = serde_json::to_string(&code).unwrap();
 
     assert_eq!(json, "\"IXYZ\"");
@@ -62,7 +62,7 @@ fn deserialize_01() {
     let code: Pauli = serde_json::from_str(data).unwrap();
     assert_eq!(
         code,
-        Pauli::from_paulis([PauliOp::I, PauliOp::X, PauliOp::Y, PauliOp::Z])
+        Pauli::with_ops([PauliOp::I, PauliOp::X, PauliOp::Y, PauliOp::Z])
     );
 }
 
@@ -100,9 +100,9 @@ fn serde_01() {
         Z,
     };
     check_serde(Pauli::default());
-    check_serde(Pauli::from_paulis([I, X, Y, Z]));
-    check_serde(Pauli::from_paulis([X, X, X]));
-    check_serde(Pauli::from_paulis([
+    check_serde(Pauli::with_ops([I, X, Y, Z]));
+    check_serde(Pauli::with_ops([X, X, X]));
+    check_serde(Pauli::with_ops([
         I, X, X, X, I, Y, Y, Y, I, X, X, X, I, Y, Y, Y, I, X, X, X, I, Y, Y, Y,
         I, X, X, X, I, Y, Y, Y, I, X, X, X, I, Y, Y, Y, I, X, X, X, I, Y, Y, Y,
         I, X, X, X, I, Y, Y, Y, I, X, X, X, I, Y, Y, Y,
@@ -114,21 +114,21 @@ const PAULI_CODES: &str = "./tests/serialize/paulicodes.json";
 fn paulis_compare() -> [Pauli; 8] {
     use PauliOp::*;
     [
-        Pauli::from_paulis([]),
-        Pauli::from_paulis([X, X]),
-        Pauli::from_paulis([I, Y]),
-        Pauli::from_paulis([I, X, Y, Z]),
-        Pauli::from_paulis([X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]),
-        Pauli::from_paulis([
+        Pauli::with_ops([]),
+        Pauli::with_ops([X, X]),
+        Pauli::with_ops([I, Y]),
+        Pauli::with_ops([I, X, Y, Z]),
+        Pauli::with_ops([X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]),
+        Pauli::with_ops([
             X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
             X, X, X, X, X, X, X, X, X, X,
         ]),
-        Pauli::from_paulis([
+        Pauli::with_ops([
             X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
             X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
             X, X, X, X,
         ]),
-        Pauli::from_paulis([
+        Pauli::with_ops([
             X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
             X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
             X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,

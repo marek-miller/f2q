@@ -1,8 +1,16 @@
 //! Qubit representation
 
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    ops::Mul,
+};
 
-use crate::Error;
+pub use pauli_group::PauliGroup;
+
+use crate::{
+    math::Root4,
+    Error,
+};
 
 const PAULI_MASK: u64 = 0b11;
 
@@ -178,7 +186,7 @@ impl Pauli {
     ///
     /// assert_eq!(code, Pauli::new((0, 0)));
     /// assert_eq!(code, Pauli::default());
-    /// assert_eq!(code, Pauli::from_paulis([PauliOp::I]));
+    /// assert_eq!(code, Pauli::with_ops([PauliOp::I]));
     /// ```
     #[must_use]
     pub fn identity() -> Self {
@@ -426,14 +434,14 @@ impl Pauli {
     ///     Z,
     /// };
     ///
-    /// let code = Pauli::from_paulis([X, Y, Z]);
+    /// let code = Pauli::with_ops([X, Y, Z]);
     ///
     /// assert_eq!(code.pauli(0), Some(X));
     /// assert_eq!(code.pauli(1), Some(Y));
     /// assert_eq!(code.pauli(2), Some(Z));
     /// ```
     #[allow(clippy::missing_panics_doc)]
-    pub fn from_paulis<I>(iter: I) -> Self
+    pub fn with_ops<I>(iter: I) -> Self
     where
         I: IntoIterator<Item = PauliOp>,
     {
@@ -471,13 +479,13 @@ impl Pauli {
     /// assert_eq!(par_op.pauli(1), Some(PauliOp::Z));
     /// assert_eq!(par_op.pauli(2), Some(PauliOp::I));
     ///
-    /// assert_eq!(Pauli::parity_op(0), Pauli::default());
+    /// assert_eq!(Pauli::parity_op(0), Pauli::identity());
     /// ```
     #[must_use]
     pub fn parity_op(num_qubits: u16) -> Self {
         assert!(num_qubits <= 64, "number of qubits must be within 1..=64");
 
-        Pauli::from_paulis((0..num_qubits).map(|_| PauliOp::Z))
+        Pauli::with_ops((0..num_qubits).map(|_| PauliOp::Z))
     }
 
     /// Return the number of non-trivial Pauli operators.
@@ -518,7 +526,7 @@ impl Pauli {
     ///
     /// assert_eq!(Pauli::identity().min_register_size(), 0);
     ///
-    /// let code = Pauli::from_paulis([X, I, Y, I, Z, I, I]);
+    /// let code = Pauli::with_ops([X, I, Y, I, Z, I, I]);
     /// assert_eq!(code.min_register_size(), 5);
     /// ```
     #[must_use]
@@ -609,6 +617,35 @@ impl From<u128> for Pauli {
     }
 }
 
+impl PartialOrd for Pauli {
+    fn partial_cmp(
+        &self,
+        other: &Self,
+    ) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Pauli {
+    fn cmp(
+        &self,
+        other: &Self,
+    ) -> std::cmp::Ordering {
+        u128::from(*self).cmp(&u128::from(*other))
+    }
+}
+
+impl Mul for Pauli {
+    type Output = (Root4, Pauli);
+
+    fn mul(
+        self,
+        rhs: Self,
+    ) -> Self::Output {
+        (PauliGroup::from(self) * PauliGroup::from(rhs)).into()
+    }
+}
+
 mod pauli_group {
     use std::ops::Mul;
 
@@ -643,7 +680,7 @@ mod pauli_group {
                     PauliOp::I => (R0, PauliOp::X),
                     PauliOp::X => (R0, PauliOp::I),
                     PauliOp::Y => (R2, PauliOp::Z),
-                    PauliOp::Z => (R2, PauliOp::Y),
+                    PauliOp::Z => (R3, PauliOp::Y),
                 },
                 PauliOp::Y => match rhs.1 {
                     PauliOp::I => (R0, PauliOp::Y),
@@ -653,7 +690,7 @@ mod pauli_group {
                 },
                 PauliOp::Z => match rhs.1 {
                     PauliOp::I => (R0, PauliOp::Z),
-                    PauliOp::X => (R3, PauliOp::Y),
+                    PauliOp::X => (R2, PauliOp::Y),
                     PauliOp::Y => (R3, PauliOp::X),
                     PauliOp::Z => (R0, PauliOp::I),
                 },
@@ -700,7 +737,7 @@ mod pauli_group {
 
     impl From<Root4> for PauliGroup {
         fn from(value: Root4) -> Self {
-            Self::new(value, Pauli::default())
+            Self::new(value, Pauli::identity())
         }
     }
 
@@ -717,28 +754,20 @@ mod pauli_group {
             self,
             rhs: Self,
         ) -> Self::Output {
-            self.1.into_iter().enumerate().fold(
-                PauliGroup::identity(),
-                |acc, (i, pauli_lhs)| {
-                    let mut code = acc.1;
-                    let lhs = PGrp(Root4::R0, pauli_lhs);
-                    let i = u16::try_from(i).expect(
-                        "index out of bounds for type u16. This is a bug",
-                    );
-                    // SAFETY: index i is within bound
-                    // since it enumerates a valid Pauli
-                    let rhs =
-                        PGrp(Root4::R0, unsafe { rhs.1.pauli_unchecked(i) });
-
-                    let prod = lhs * rhs;
-                    // SAFETY: index i is within bound
-                    // since it enumerates a valid Pauli
-                    unsafe {
-                        code.set_unchecked(i, prod.1);
-                    }
-                    PauliGroup(acc.0 * prod.0, code)
+            let phase = self.1.into_iter().zip(rhs.1).fold(
+                self.0 * rhs.0,
+                |acc, (pauli_l, pauli_r)| {
+                    let PGrp(omega, _) =
+                        PGrp(Root4::R0, pauli_l) * PGrp(Root4::R0, pauli_r);
+                    acc * omega
                 },
-            )
+            );
+
+            let code = Pauli::new((
+                self.1.pack.0 ^ rhs.1.pack.0,
+                self.1.pack.1 ^ rhs.1.pack.1,
+            ));
+            PauliGroup::new(phase, code)
         }
     }
 
@@ -752,5 +781,3 @@ mod pauli_group {
         }
     }
 }
-
-pub use pauli_group::PauliGroup;

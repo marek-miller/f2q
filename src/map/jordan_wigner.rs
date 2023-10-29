@@ -2,12 +2,18 @@ use num::Float;
 
 use crate::{
     code::{
-        fermions::Fermions,
+        fermions::{
+            An,
+            Cr,
+            Fermions,
+            Orbital,
+        },
         qubits::{
             Pauli,
             PauliOp,
         },
     },
+    math::ReIm,
     terms::{
         SumRepr,
         Terms,
@@ -15,362 +21,124 @@ use crate::{
     Error,
 };
 
-pub struct Map(Fermions);
+enum Map {
+    An(Orbital),
+    Cr(Orbital),
+}
+
+macro_rules! impl_tryfrom_map {
+    ($($Typ:tt)* ) => {
+        $(
+            impl TryFrom<$Typ> for Map {
+                type Error = Error;
+
+                fn try_from(value: $Typ) -> Result<Self, Self::Error> {
+                    (value.index() < 64)
+                        .then_some(Self::$Typ(value.0))
+                        .ok_or_else(|| Error::QubitIndex {
+                            msg: "orbital index must be within 0..=63".to_string(),
+                        })
+                }
+            }
+        )*
+    };
+}
+
+impl_tryfrom_map!(An Cr);
+
+fn pauli_codes_from_index(index: u16) -> (Pauli, Pauli) {
+    let code = Pauli::parity_op(index);
+
+    let x = {
+        let mut code = code;
+        code.set(index, PauliOp::X);
+        code
+    };
+    let y = {
+        let mut code = code;
+        code.set(index, PauliOp::Y);
+        code
+    };
+
+    (x, y)
+}
 
 impl Map {
-    pub fn pauli_iter<T>(
-        &self,
-        coeff: T,
-    ) -> impl Iterator<Item = (T, Pauli)>
+    fn index(&self) -> u16 {
+        u16::try_from(match self {
+            Self::An(an) => an.index(),
+            Self::Cr(cr) => cr.index(),
+        })
+        .expect("index within 0..=63")
+    }
+
+    fn mul_iter<'a, T, I>(
+        &'a self,
+        rhs: I,
+    ) -> impl Iterator<Item = (ReIm<T>, Pauli)> + 'a
     where
-        T: Float,
+        T: Float + 'a,
+        I: IntoIterator<Item = (ReIm<T>, Pauli)> + 'a,
     {
-        PauliIter::new(coeff, self.0)
+        let one_half =
+            T::from(0.5_f64).expect("floating point conversion from 0.5");
+        let (x, y) = pauli_codes_from_index(self.index());
+        let term_x = ReIm::Re(one_half);
+        let term_y = match self {
+            Self::An(_) => ReIm::Im(one_half),
+            Self::Cr(_) => ReIm::Im(-one_half),
+        };
+
+        rhs.into_iter().flat_map(move |(rhs_coeff, rhs_pauli)| {
+            [(term_x, x), (term_y, y)].into_iter().map(
+                move |(lhs_coeff, lhs_pauli)| {
+                    let (root, prod) = lhs_pauli * rhs_pauli;
+
+                    (lhs_coeff * rhs_coeff * ReIm::from(root), prod)
+                },
+            )
+        })
     }
 }
 
-impl TryFrom<Fermions> for Map {
-    type Error = Error;
-
-    fn try_from(value: Fermions) -> Result<Self, Self::Error> {
-        match value {
-            Fermions::Offset => Ok(Self(value)),
-            Fermions::One {
-                cr,
-                an,
-            } => {
-                if cr.index() < 64 && an.index() < 64 {
-                    Ok(Self(value))
-                } else {
-                    Err(Error::QubitIndex {
-                        msg: "orbital index must be less than 64".to_string(),
-                    })
-                }
-            }
-            Fermions::Two {
-                cr,
-                an,
-            } => {
-                if cr.0.index() < 64
-                    && cr.1.index() < 64
-                    && an.0.index() < 64
-                    && an.1.index() < 64
-                {
-                    Ok(Self(value))
-                } else {
-                    Err(Error::QubitIndex {
-                        msg: "orbital index must be less than 64".to_string(),
-                    })
-                }
-            }
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct PauliIter<T> {
-    coeff: T,
-    code:  Fermions,
-    index: u8,
-}
-
-impl<T> PauliIter<T> {
-    pub fn new(
-        coeff: T,
-        code: Fermions,
-    ) -> Self {
-        Self {
-            coeff,
-            code,
-            index: 0,
-        }
-    }
-}
-
-impl<T> Iterator for PauliIter<T>
+fn iter_hermitian<'a, T, I>(iter: I) -> impl Iterator<Item = (T, Pauli)> + 'a
 where
-    T: Float,
+    T: Float + 'a,
+    I: IntoIterator<Item = (ReIm<T>, Pauli)> + 'a,
 {
-    type Item = (T, Pauli);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.code {
-            Fermions::Offset => {
-                if self.index == 0 {
-                    self.index += 1;
-                    Some((self.coeff, Pauli::default()))
-                } else {
-                    None
-                }
-            }
-            Fermions::One {
-                cr: p,
-                an: q,
-            } => {
-                let p = u16::try_from(p.index())
-                    .expect("orbital index out of bounds for type u16");
-                let q = u16::try_from(q.index())
-                    .expect("orbital index out of bounds for type u16");
-                let item = if p == q {
-                    next_item_one_pp(self.index, self.coeff, p)
-                } else {
-                    next_item_one_pq(self.index, self.coeff, p, q)
-                };
-                self.index = (self.index + 1).min(2);
-                item
-            }
-            Fermions::Two {
-                cr: (p, q),
-                an: (r, s),
-            } => {
-                let p = u16::try_from(p.index())
-                    .expect("orbital index out of bounds for type u16");
-                let q = u16::try_from(q.index())
-                    .expect("orbital index out of bounds for type u16");
-                let r = u16::try_from(r.index())
-                    .expect("orbital index out of bounds for type u16");
-                let s = u16::try_from(s.index())
-                    .expect("orbital index out of bounds for type u16");
-
-                let item = if p == s && q == r {
-                    next_item_two_pq(self.index, self.coeff, p, q)
-                } else if q == r {
-                    next_item_two_pqs(self.index, self.coeff, p, q, s)
-                } else {
-                    next_item_two_pqrs(self.index, self.coeff, p, q, r, s)
-                };
-                self.index = (self.index + 1).min(8);
-                item
-            }
+    let two = T::from(2.0_f64).expect("floating point conversion from 2.0");
+    iter.into_iter().filter_map(move |(x, p)| {
+        if let ReIm::Re(xre) = x {
+            Some((xre * two, p))
+        } else {
+            None
         }
-    }
+    })
 }
 
-fn next_item_one_pp<T: Float>(
-    index: u8,
+#[inline]
+fn jw_map_two<'a, T: Float + 'a>(
+    op1: &'a Map,
+    op2: &'a Map,
     coeff: T,
-    p: u16,
-) -> Option<(T, Pauli)> {
-    let one_half = T::from(0.5).expect("cannot convert 0.5");
-
-    match index {
-        0 => Some((coeff * one_half, Pauli::identity())),
-        1 => {
-            let mut code = Pauli::default();
-            code.set(p, PauliOp::Z);
-            Some((-coeff * one_half, code))
-        }
-        _ => None,
-    }
+) -> impl Iterator<Item = (T, Pauli)> + 'a {
+    iter_hermitian(
+        op1.mul_iter(op2.mul_iter([(ReIm::Re(coeff), Pauli::identity())])),
+    )
 }
 
-fn next_item_one_pq<T: Float>(
-    index: u8,
+#[inline]
+fn jw_map_four<'a, T: Float + 'a>(
+    op1: &'a Map,
+    op2: &'a Map,
+    op3: &'a Map,
+    op4: &'a Map,
     coeff: T,
-    p: u16,
-    q: u16,
-) -> Option<(T, Pauli)> {
-    let one_half = T::from(0.5).expect("cannot convert 0.5");
-
-    let code = {
-        let mut code = Pauli::default();
-        for i in p + 1..q {
-            code.set(i, PauliOp::Z);
-        }
-        code
-    };
-
-    match index {
-        0 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::X);
-            Some((coeff * one_half, code))
-        }
-        1 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::Y);
-            Some((coeff * one_half, code))
-        }
-        _ => None,
-    }
+) -> impl Iterator<Item = (T, Pauli)> + 'a {
+    iter_hermitian(op1.mul_iter(op2.mul_iter(
+        op3.mul_iter(op4.mul_iter([(ReIm::Re(coeff), Pauli::identity())])),
+    )))
 }
-
-fn next_item_two_pq<T: Float>(
-    index: u8,
-    coeff: T,
-    p: u16,
-    q: u16,
-) -> Option<(T, Pauli)> {
-    let term = coeff
-        * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
-
-    match index {
-        0 => {
-            let code = Pauli::default();
-            Some((term, code))
-        }
-        1 => {
-            let mut code = Pauli::default();
-            code.set(p, PauliOp::Z);
-            Some((-term, code))
-        }
-        2 => {
-            let mut code = Pauli::default();
-            code.set(q, PauliOp::Z);
-            Some((-term, code))
-        }
-        3 => {
-            let mut code = Pauli::default();
-            code.set(p, PauliOp::Z);
-            code.set(q, PauliOp::Z);
-            Some((term, code))
-        }
-        _ => None,
-    }
-}
-
-fn next_item_two_pqs<T: Float>(
-    index: u8,
-    coeff: T,
-    p: u16,
-    q: u16,
-    s: u16,
-) -> Option<(T, Pauli)> {
-    let term = coeff
-        * T::from(0.25).expect("cannot obtain floating point fraction: 0.25");
-
-    let code = {
-        let mut code = Pauli::default();
-        for i in p + 1..s {
-            code.set(i, PauliOp::Z);
-        }
-        code
-    };
-
-    match index {
-        0 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(s, PauliOp::X);
-            Some((term, code))
-        }
-        1 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::Z);
-            code.set(s, PauliOp::X);
-            Some((-term, code))
-        }
-        2 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(s, PauliOp::Y);
-            Some((term, code))
-        }
-        3 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::Z);
-            code.set(s, PauliOp::Y);
-            Some((-term, code))
-        }
-        _ => None,
-    }
-}
-
-fn next_item_two_pqrs<T: Float>(
-    index: u8,
-    coeff: T,
-    p: u16,
-    q: u16,
-    r: u16,
-    s: u16,
-) -> Option<(T, Pauli)> {
-    let term = coeff
-        * T::from(0.125).expect("cannot obtain floating point fraction: 0.125");
-
-    let code = {
-        let mut code = Pauli::default();
-        for i in p + 1..q {
-            code.set(i, PauliOp::Z);
-        }
-        for i in s + 1..r {
-            code.set(i, PauliOp::Z);
-        }
-        code
-    };
-
-    match index {
-        0 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::X);
-            code.set(r, PauliOp::X);
-            code.set(s, PauliOp::X);
-            Some((term, code))
-        }
-        1 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::X);
-            code.set(r, PauliOp::Y);
-            code.set(s, PauliOp::Y);
-            Some((-term, code))
-        }
-        2 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::Y);
-            code.set(r, PauliOp::X);
-            code.set(s, PauliOp::Y);
-            Some((term, code))
-        }
-        3 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::X);
-            code.set(r, PauliOp::X);
-            code.set(s, PauliOp::Y);
-            Some((term, code))
-        }
-        4 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::X);
-            code.set(r, PauliOp::Y);
-            code.set(s, PauliOp::X);
-            Some((term, code))
-        }
-        5 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::Y);
-            code.set(r, PauliOp::X);
-            code.set(s, PauliOp::X);
-            Some((-term, code))
-        }
-        6 => {
-            let mut code = code;
-            code.set(p, PauliOp::X);
-            code.set(q, PauliOp::Y);
-            code.set(r, PauliOp::Y);
-            code.set(s, PauliOp::X);
-            Some((term, code))
-        }
-        7 => {
-            let mut code = code;
-            code.set(p, PauliOp::Y);
-            code.set(q, PauliOp::Y);
-            code.set(r, PauliOp::Y);
-            code.set(s, PauliOp::Y);
-            Some((term, code))
-        }
-        _ => None,
-    }
-}
-
 /// Jordan-Wigner mapping.
 ///
 /// This mapping is initialized with [`SumRepr<T,Fermions>`],
@@ -405,7 +173,7 @@ fn next_item_two_pqrs<T: Float>(
 /// let mut fermi_repr = SumRepr::new();
 ///
 /// // Create orbital with qubit index 11
-/// let p = Orbital::from_index(idx);
+/// let p = Orbital::with_index(idx);
 ///
 /// // Add it as one-electron interaction term to the sum with coefficient: 1.0
 /// fermi_repr.add_term(Fermions::one_electron(Cr(p), An(p)).unwrap(), 1.0);
@@ -414,7 +182,7 @@ fn next_item_two_pqrs<T: Float>(
 /// let mut pauli_repr = PauliSum::new();
 /// JordanWigner::new(&fermi_repr).add_to(&mut pauli_repr)?;
 ///
-/// // We should obtain the following two Pauli strings weights 0.5
+/// // We should obtain the following two Pauli strings with weights 1.0
 /// let code_i0 = Pauli::default();
 /// let code_z0 = {
 ///     let mut code = Pauli::default();
@@ -422,8 +190,8 @@ fn next_item_two_pqrs<T: Float>(
 ///     code
 /// };
 ///
-/// assert_eq!(pauli_repr.coeff(code_i0), 0.5);
-/// assert_eq!(pauli_repr.coeff(code_z0), -0.5);
+/// assert_eq!(pauli_repr.coeff(code_i0), 1.0);
+/// assert_eq!(pauli_repr.coeff(code_z0), -1.0);
 /// #   Ok(())
 /// # }
 /// ```
@@ -451,9 +219,244 @@ where
         repr: &mut impl Extend<(T, Pauli)>,
     ) -> Result<(), Error> {
         for (&coeff, &code) in self.repr.iter() {
-            repr.extend(Map::try_from(code)?.pauli_iter(coeff));
+            match code {
+                Fermions::Offset => {
+                    repr.extend(Some((coeff, Pauli::identity())));
+                }
+                Fermions::One {
+                    cr,
+                    an,
+                } => {
+                    let jw_cr = Map::try_from(cr)?;
+                    let jw_an = Map::try_from(an)?;
+                    repr.extend(jw_map_two(&jw_cr, &jw_an, coeff));
+                }
+                Fermions::Two {
+                    cr,
+                    an,
+                } => {
+                    let jw_cr = (Map::try_from(cr.0)?, Map::try_from(cr.1)?);
+                    let jw_an = (Map::try_from(an.0)?, Map::try_from(an.1)?);
+                    repr.extend(jw_map_four(
+                        &jw_cr.0, &jw_cr.1, &jw_an.0, &jw_an.1, coeff,
+                    ));
+                }
+            }
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use PauliOp::*;
+    use ReIm::*;
+
+    use super::*;
+
+    #[test]
+    fn mul_iter_01() {
+        let jw_an = Map::try_from(An(Orbital::with_index(0))).unwrap();
+
+        let result: Vec<_> =
+            jw_an.mul_iter([(Re(2.0), Pauli::identity())]).collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Re(1.0), Pauli::with_ops([X])),
+                (Im(1.0), Pauli::with_ops([Y])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_02() {
+        let jw_cr = Map::try_from(Cr(Orbital::with_index(0))).unwrap();
+
+        let result: Vec<_> =
+            jw_cr.mul_iter([(Re(2.0), Pauli::identity())]).collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Re(1.0), Pauli::with_ops([X])),
+                (Im(-1.0), Pauli::with_ops([Y])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_03() {
+        let jw_an = Map::try_from(An(Orbital::with_index(3))).unwrap();
+
+        let result: Vec<_> =
+            jw_an.mul_iter([(Re(2.0), Pauli::identity())]).collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Re(1.0), Pauli::with_ops([Z, Z, Z, X])),
+                (Im(1.0), Pauli::with_ops([Z, Z, Z, Y])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_04() {
+        let jw_cr = Map::try_from(Cr(Orbital::with_index(3))).unwrap();
+
+        let result: Vec<_> =
+            jw_cr.mul_iter([(Re(2.0), Pauli::identity())]).collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Re(1.0), Pauli::with_ops([Z, Z, Z, X])),
+                (Im(-1.0), Pauli::with_ops([Z, Z, Z, Y])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_05() {
+        let jw_an_1 = Map::try_from(An(Orbital::with_index(0))).unwrap();
+        let jw_an_2 = Map::try_from(An(Orbital::with_index(0))).unwrap();
+
+        let result: Vec<_> = jw_an_1
+            .mul_iter(jw_an_2.mul_iter([(Re(4.0), Pauli::identity())]))
+            .collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Re(1.0), Pauli::with_ops([I])),
+                (Re(1.0), Pauli::with_ops([Z])),
+                (Re(-1.0), Pauli::with_ops([Z])),
+                (Re(-1.0), Pauli::with_ops([I])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_06() {
+        let jw_cr_1 = Map::try_from(Cr(Orbital::with_index(0))).unwrap();
+        let jw_cr_2 = Map::try_from(Cr(Orbital::with_index(0))).unwrap();
+
+        let result: Vec<_> = jw_cr_1
+            .mul_iter(jw_cr_2.mul_iter([(Re(4.0), Pauli::identity())]))
+            .collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Re(1.0), Pauli::with_ops([I])),
+                (Re(-1.0), Pauli::with_ops([Z])),
+                (Re(1.0), Pauli::with_ops([Z])),
+                (Re(-1.0), Pauli::with_ops([I])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_07() {
+        let jw_an = Map::try_from(An(Orbital::with_index(0))).unwrap();
+        let jw_cr = Map::try_from(Cr(Orbital::with_index(0))).unwrap();
+
+        let result: Vec<_> = jw_cr
+            .mul_iter(jw_an.mul_iter([(Re(4.0), Pauli::identity())]))
+            .collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Re(1.0), Pauli::with_ops([I])),
+                (Re(-1.0), Pauli::with_ops([Z])),
+                (Re(-1.0), Pauli::with_ops([Z])),
+                (Re(1.0), Pauli::with_ops([I])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_08() {
+        let jw_an = Map::try_from(An(Orbital::with_index(2))).unwrap();
+        let jw_cr = Map::try_from(Cr(Orbital::with_index(2))).unwrap();
+
+        let result: Vec<_> = jw_cr
+            .mul_iter(jw_an.mul_iter([(Re(4.0), Pauli::identity())]))
+            .collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Re(1.0), Pauli::with_ops([I])),
+                (Re(-1.0), Pauli::with_ops([I, I, Z])),
+                (Re(-1.0), Pauli::with_ops([I, I, Z])),
+                (Re(1.0), Pauli::with_ops([I])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_09() {
+        let jw_an = Map::try_from(An(Orbital::with_index(0))).unwrap();
+        let jw_cr = Map::try_from(Cr(Orbital::with_index(1))).unwrap();
+
+        let result: Vec<_> = jw_cr
+            .mul_iter(jw_an.mul_iter([(Re(4.0), Pauli::identity())]))
+            .collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Im(1.0), Pauli::with_ops([Y, X])),
+                (Re(1.0), Pauli::with_ops([Y, Y])),
+                (Re(1.0), Pauli::with_ops([X, X])),
+                (Im(-1.0), Pauli::with_ops([X, Y])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_10() {
+        let jw_an = Map::try_from(An(Orbital::with_index(1))).unwrap();
+        let jw_cr = Map::try_from(Cr(Orbital::with_index(0))).unwrap();
+
+        let result: Vec<_> = jw_cr
+            .mul_iter(jw_an.mul_iter([(Re(4.0), Pauli::identity())]))
+            .collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Im(-1.0), Pauli::with_ops([Y, X])),
+                (Re(1.0), Pauli::with_ops([X, X])),
+                (Re(1.0), Pauli::with_ops([Y, Y])),
+                (Im(1.0), Pauli::with_ops([X, Y])),
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_iter_11() {
+        let jw_an = Map::try_from(An(Orbital::with_index(0))).unwrap();
+        let jw_cr = Map::try_from(Cr(Orbital::with_index(2))).unwrap();
+
+        let result: Vec<_> = jw_cr
+            .mul_iter(jw_an.mul_iter([(Re(4.0), Pauli::identity())]))
+            .collect();
+
+        assert_eq!(
+            result,
+            &[
+                (Im(1.0), Pauli::with_ops([Y, Z, X])),
+                (Re(1.0), Pauli::with_ops([Y, Z, Y])),
+                (Re(1.0), Pauli::with_ops([X, Z, X])),
+                (Im(-1.0), Pauli::with_ops([X, Z, Y])),
+            ]
+        );
     }
 }

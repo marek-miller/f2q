@@ -132,7 +132,7 @@ fn from_paulis_01() {
     use PauliOp::*;
 
     assert_eq!(
-        Pauli::from_paulis([I, X, Y, Z]),
+        Pauli::with_ops([I, X, Y, Z]),
         Pauli::new((0b1110_0100, 0b00))
     );
 }
@@ -142,7 +142,7 @@ fn from_paulis_02() {
     use PauliOp::*;
 
     assert_eq!(
-        Pauli::from_paulis([
+        Pauli::with_ops([
             I, I, X, X, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I,
             I, I, I, I, I, I, I, I, I, I, Y, Y, Z, Z
         ]),
@@ -169,27 +169,26 @@ fn from_u128() {
 fn pauli_num_nontrivial() {
     use PauliOp::*;
 
-    assert_eq!(Pauli::from_paulis([]).num_nontrivial(), 0);
-    assert_eq!(Pauli::from_paulis([X]).num_nontrivial(), 1);
-    assert_eq!(Pauli::from_paulis([Y, X]).num_nontrivial(), 2);
-    assert_eq!(Pauli::from_paulis([Z, Y, X]).num_nontrivial(), 3);
+    assert_eq!(Pauli::with_ops([]).num_nontrivial(), 0);
+    assert_eq!(Pauli::with_ops([X]).num_nontrivial(), 1);
+    assert_eq!(Pauli::with_ops([Y, X]).num_nontrivial(), 2);
+    assert_eq!(Pauli::with_ops([Z, Y, X]).num_nontrivial(), 3);
 
-    assert_eq!(Pauli::from_paulis([Y, I, X]).num_nontrivial(), 2);
-    assert_eq!(Pauli::from_paulis([Z, I, Y, I, X]).num_nontrivial(), 3);
-    assert_eq!(Pauli::from_paulis([Z, I, I, X]).num_nontrivial(), 2);
-    assert_eq!(Pauli::from_paulis([Z, I, I, I, I, Z]).num_nontrivial(), 2);
+    assert_eq!(Pauli::with_ops([Y, I, X]).num_nontrivial(), 2);
+    assert_eq!(Pauli::with_ops([Z, I, Y, I, X]).num_nontrivial(), 3);
+    assert_eq!(Pauli::with_ops([Z, I, I, X]).num_nontrivial(), 2);
+    assert_eq!(Pauli::with_ops([Z, I, I, I, I, Z]).num_nontrivial(), 2);
 
     assert_eq!(Pauli::new((u64::MAX, 0)).num_nontrivial(), 32);
     assert_eq!(Pauli::new((0, u64::MAX)).num_nontrivial(), 32);
     assert_eq!(Pauli::new((u64::MAX, u64::MAX)).num_nontrivial(), 64);
 
     assert_eq!(
-        Pauli::from_paulis([Y, I, X, Y, I, X, Y, I, X, Y, I, X])
-            .num_nontrivial(),
+        Pauli::with_ops([Y, I, X, Y, I, X, Y, I, X, Y, I, X]).num_nontrivial(),
         8
     );
     assert_eq!(
-        Pauli::from_paulis([
+        Pauli::with_ops([
             Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
             I, X
         ])
@@ -197,7 +196,7 @@ fn pauli_num_nontrivial() {
         16
     );
     assert_eq!(
-        Pauli::from_paulis([
+        Pauli::with_ops([
             Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
             I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I,
             X, Y, I, X
@@ -206,7 +205,7 @@ fn pauli_num_nontrivial() {
         32
     );
     assert_eq!(
-        Pauli::from_paulis([
+        Pauli::with_ops([
             Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
             I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I,
             X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
@@ -225,24 +224,21 @@ fn pauli_min_register_size_01() {
         Z,
     };
 
-    assert_eq!(Pauli::from_paulis([]).min_register_size(), 0);
+    assert_eq!(Pauli::with_ops([]).min_register_size(), 0);
 
-    assert_eq!(Pauli::from_paulis([X]).min_register_size(), 1);
-    assert_eq!(Pauli::from_paulis([Y]).min_register_size(), 1);
-    assert_eq!(Pauli::from_paulis([Z]).min_register_size(), 1);
+    assert_eq!(Pauli::with_ops([X]).min_register_size(), 1);
+    assert_eq!(Pauli::with_ops([Y]).min_register_size(), 1);
+    assert_eq!(Pauli::with_ops([Z]).min_register_size(), 1);
 
-    assert_eq!(Pauli::from_paulis([X, Y]).min_register_size(), 2);
-    assert_eq!(Pauli::from_paulis([Y, Z]).min_register_size(), 2);
+    assert_eq!(Pauli::with_ops([X, Y]).min_register_size(), 2);
+    assert_eq!(Pauli::with_ops([Y, Z]).min_register_size(), 2);
 
-    assert_eq!(Pauli::from_paulis([X, Y, Z]).min_register_size(), 3);
-    assert_eq!(Pauli::from_paulis([I, X, Y, Z]).min_register_size(), 4);
-    assert_eq!(Pauli::from_paulis([I, X, I, Y, Z]).min_register_size(), 5);
+    assert_eq!(Pauli::with_ops([X, Y, Z]).min_register_size(), 3);
+    assert_eq!(Pauli::with_ops([I, X, Y, Z]).min_register_size(), 4);
+    assert_eq!(Pauli::with_ops([I, X, I, Y, Z]).min_register_size(), 5);
+    assert_eq!(Pauli::with_ops([I, X, I, Y, I, Z]).min_register_size(), 6);
     assert_eq!(
-        Pauli::from_paulis([I, X, I, Y, I, Z]).min_register_size(),
-        6
-    );
-    assert_eq!(
-        Pauli::from_paulis([I, X, I, Y, I, Z, I]).min_register_size(),
+        Pauli::with_ops([I, X, I, Y, I, Z, I]).min_register_size(),
         6
     );
 }
@@ -261,12 +257,12 @@ fn pauli_min_register_size_02() {
     assert_eq!(Pauli::new((u64::MAX, u64::MAX)).min_register_size(), 64);
 
     assert_eq!(
-        Pauli::from_paulis([Y, I, X, Y, I, X, Y, I, X, Y, I, X])
+        Pauli::with_ops([Y, I, X, Y, I, X, Y, I, X, Y, I, X])
             .min_register_size(),
         12
     );
     assert_eq!(
-        Pauli::from_paulis([
+        Pauli::with_ops([
             Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
             I, X
         ])
@@ -274,7 +270,7 @@ fn pauli_min_register_size_02() {
         24
     );
     assert_eq!(
-        Pauli::from_paulis([
+        Pauli::with_ops([
             Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
             I, X, Y, I, X, Y, I, X, Z, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I,
             X, Y, I, X
@@ -283,7 +279,7 @@ fn pauli_min_register_size_02() {
         48
     );
     assert_eq!(
-        Pauli::from_paulis([
+        Pauli::with_ops([
             Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y,
             I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I,
             X, Y, I, X, Y, I, X, Y, I, X, Y, I, X, Y, I, X,
@@ -291,4 +287,31 @@ fn pauli_min_register_size_02() {
         .min_register_size(),
         60
     );
+}
+
+#[test]
+fn pauli_ord() {
+    assert!(Pauli::new((0, 0)) == Pauli::new((0, 0)));
+    assert!(Pauli::new((0, 0)) >= Pauli::new((0, 0)));
+    assert!(Pauli::new((0, 0)) <= Pauli::new((0, 0)));
+
+    assert!(Pauli::new((1, 0)) > Pauli::new((0, 0)));
+    assert!(Pauli::new((2, 0)) > Pauli::new((1, 0)));
+    assert!(Pauli::new((2, 0)) > Pauli::new((0, 0)));
+
+    assert!(Pauli::new((0, 1)) > Pauli::new((0, 0)));
+    assert!(Pauli::new((0, 2)) > Pauli::new((0, 1)));
+    assert!(Pauli::new((0, 2)) > Pauli::new((0, 0)));
+
+    assert!(Pauli::new((0, 0)) < Pauli::new((1, 0)));
+    assert!(Pauli::new((1, 0)) < Pauli::new((2, 0)));
+    assert!(Pauli::new((0, 0)) < Pauli::new((2, 0)));
+
+    assert!(Pauli::new((0, 0)) < Pauli::new((0, 1)));
+    assert!(Pauli::new((0, 1)) < Pauli::new((0, 2)));
+    assert!(Pauli::new((0, 0)) < Pauli::new((0, 2)));
+
+    assert!(Pauli::new((0, 1)) > Pauli::new((u64::MAX, 0)));
+    assert!(Pauli::new((0, 2)) > Pauli::new((u64::MAX, 0)));
+    assert!(Pauli::new((u64::MAX, u64::MAX)) > Pauli::new((u64::MAX, 0)));
 }
