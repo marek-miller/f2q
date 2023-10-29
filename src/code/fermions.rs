@@ -4,10 +4,7 @@
 
 use std::{
     fmt::Display,
-    ops::{
-        Bound,
-        RangeBounds,
-    },
+    ops::Range,
 };
 
 use crate::Error;
@@ -190,7 +187,7 @@ impl Orbital {
     /// ```rust
     /// # use f2q::code::fermions::{Orbital, Spin};
     ///
-    /// let orbitals: Vec<_> = Orbital::gen_range((1..=3)).collect();
+    /// let orbitals: Vec<_> = Orbital::gen_range((1..4)).collect();
     ///
     /// assert_eq!(
     ///     orbitals,
@@ -201,68 +198,9 @@ impl Orbital {
     ///     ]
     /// )
     /// ```
-    pub fn gen_range<R>(range: R) -> impl Iterator<Item = Orbital>
-    where
-        R: RangeBounds<u32>,
-    {
-        OrbitalRange::new(range)
-    }
-}
-
-struct OrbitalRange {
-    end:   Option<u32>,
-    index: Option<u32>,
-}
-
-impl OrbitalRange {
-    fn new<R>(range: R) -> Self
-    where
-        R: RangeBounds<u32>,
-    {
-        let index = match range.start_bound() {
-            Bound::Included(&x) => Some(x),
-            Bound::Excluded(&x) if x < u32::MAX => Some(x + 1),
-            Bound::Excluded(_) => None,
-            Bound::Unbounded => Some(0),
-        };
-
-        let end = match range.end_bound() {
-            Bound::Included(&y) => Some(y),
-            Bound::Excluded(&y) if y > 0 => Some(y - 1),
-            Bound::Excluded(_) => None,
-            Bound::Unbounded => Some(u32::MAX),
-        };
-
-        Self {
-            end,
-            index,
-        }
-    }
-}
-
-impl Iterator for OrbitalRange {
-    type Item = Orbital;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.end {
-            Some(end) => match &mut self.index {
-                Some(i) => {
-                    if *i > end {
-                        None
-                    } else {
-                        let orbital = Orbital::with_index(*i);
-                        if *i < end {
-                            *i += 1;
-                        } else {
-                            self.end = None;
-                        }
-                        Some(orbital)
-                    }
-                }
-                None => None,
-            },
-            None => None,
-        }
+    pub fn gen_range(range: Range<u32>) -> impl Iterator<Item = Orbital> {
+        // OrbitalRange::new(range)
+        range.into_iter().map(Orbital::with_index)
     }
 }
 

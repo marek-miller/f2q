@@ -1,4 +1,4 @@
-use std::ops::RangeBounds;
+use std::ops::Range;
 
 use crate::code::fermions::{
     An,
@@ -50,27 +50,9 @@ fn orbital_gen_range_01() {
     let orbitals: Vec<_> = Orbital::gen_range(0..0).collect();
     assert!(orbitals.is_empty());
 
-    let orbitals: Vec<_> = Orbital::gen_range(..0).collect();
-    assert!(orbitals.is_empty());
-
-    let orbitals: Vec<_> = Orbital::gen_range(0..=0).collect();
-    assert_eq!(orbitals.len(), 1);
-
-    let orbitals: Vec<_> = Orbital::gen_range(..=0).collect();
-    assert_eq!(orbitals.len(), 1);
-}
-
-#[test]
-fn orbital_gen_range_02() {
     let um = u32::MAX;
     let orbitals: Vec<_> = Orbital::gen_range(um..um).collect();
     assert!(orbitals.is_empty());
-
-    let orbitals: Vec<_> = Orbital::gen_range(um..).collect();
-    assert_eq!(orbitals.len(), 1);
-
-    let orbitals: Vec<_> = Orbital::gen_range(um..=um).collect();
-    assert_eq!(orbitals.len(), 1);
 }
 
 #[allow(clippy::reversed_empty_ranges)]
@@ -83,24 +65,17 @@ fn orbital_gen_range_03() {
     assert!(orbitals.is_empty());
 }
 
-fn orbital_gen_range_idxs<R>(range: R) -> Vec<u32>
-where
-    R: RangeBounds<u32>,
-{
+fn orbital_gen_range_idxs(range: Range<u32>) -> Vec<u32> {
     Orbital::gen_range(range).map(|orb| orb.index()).collect()
 }
 
 #[test]
 fn orbital_gen_range_04() {
     assert_eq!(orbital_gen_range_idxs(0..1), &[0]);
-    assert_eq!(orbital_gen_range_idxs(0..=1), &[0, 1]);
     assert_eq!(orbital_gen_range_idxs(0..2), &[0, 1]);
-    assert_eq!(orbital_gen_range_idxs(0..=2), &[0, 1, 2]);
     assert_eq!(orbital_gen_range_idxs(0..3), &[0, 1, 2]);
-    assert_eq!(orbital_gen_range_idxs(0..=3), &[0, 1, 2, 3]);
 
     assert_eq!(orbital_gen_range_idxs(11..15), &[11, 12, 13, 14]);
-    assert_eq!(orbital_gen_range_idxs(11..=15), &[11, 12, 13, 14, 15]);
 }
 
 #[test]
