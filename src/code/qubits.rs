@@ -680,7 +680,7 @@ mod pauli_group {
                     PauliOp::I => (R0, PauliOp::X),
                     PauliOp::X => (R0, PauliOp::I),
                     PauliOp::Y => (R2, PauliOp::Z),
-                    PauliOp::Z => (R2, PauliOp::Y),
+                    PauliOp::Z => (R3, PauliOp::Y),
                 },
                 PauliOp::Y => match rhs.1 {
                     PauliOp::I => (R0, PauliOp::Y),
@@ -690,7 +690,7 @@ mod pauli_group {
                 },
                 PauliOp::Z => match rhs.1 {
                     PauliOp::I => (R0, PauliOp::Z),
-                    PauliOp::X => (R3, PauliOp::Y),
+                    PauliOp::X => (R2, PauliOp::Y),
                     PauliOp::Y => (R3, PauliOp::X),
                     PauliOp::Z => (R0, PauliOp::I),
                 },

@@ -88,7 +88,7 @@ fn jw_one_elec_02() {
         &[(2.0, Fermions::try_from((0, 1)).unwrap())],
         &[
             (1.0, Pauli::with_ops([X, X])),
-            (-1.0, Pauli::with_ops([Y, Y])),
+            (1.0, Pauli::with_ops([Y, Y])),
         ],
     );
 
@@ -96,7 +96,7 @@ fn jw_one_elec_02() {
         &[(2.0, Fermions::try_from((0, 2)).unwrap())],
         &[
             (1.0, Pauli::with_ops([X, Z, X])),
-            (-1.0, Pauli::with_ops([Y, Z, Y])),
+            (1.0, Pauli::with_ops([Y, Z, Y])),
         ],
     );
 
@@ -104,7 +104,7 @@ fn jw_one_elec_02() {
         &[(2.0, Fermions::try_from((1, 4)).unwrap())],
         &[
             (1.0, Pauli::with_ops([I, X, Z, Z, X])),
-            (-1.0, Pauli::with_ops([I, Y, Z, Z, Y])),
+            (1.0, Pauli::with_ops([I, Y, Z, Z, Y])),
         ],
     );
 
@@ -112,7 +112,7 @@ fn jw_one_elec_02() {
         &[(2.0, Fermions::try_from((2, 5)).unwrap())],
         &[
             (1.0, Pauli::with_ops([I, I, X, Z, Z, X])),
-            (-1.0, Pauli::with_ops([I, I, Y, Z, Z, Y])),
+            (1.0, Pauli::with_ops([I, I, Y, Z, Z, Y])),
         ],
     );
 }
@@ -123,7 +123,7 @@ fn jw_one_elec_03() {
         &[(2.0, Fermions::try_from((0, 32)).unwrap())],
         &[
             (1.0, Pauli::new((0xffff_ffff_ffff_fffd, 0x1))),
-            (-1.0, Pauli::new((0xffff_ffff_ffff_fffe, 0x2))),
+            (1.0, Pauli::new((0xffff_ffff_ffff_fffe, 0x2))),
         ],
     );
 
@@ -135,7 +135,7 @@ fn jw_one_elec_03() {
                 Pauli::new((0xffff_ffff_ffff_fffd, 0x7fff_ffff_ffff_ffff)),
             ),
             (
-                -1.0,
+                1.0,
                 Pauli::new((0xffff_ffff_ffff_fffe, 0xbfff_ffff_ffff_ffff)),
             ),
         ],
@@ -218,9 +218,9 @@ fn jw_two_elec_03() {
         &[(4.0, Fermions::try_from((0, 2, 2, 1)).unwrap())],
         &[
             (1.0, Pauli::with_ops([X, X, I])),
-            (-1.0, Pauli::with_ops([Y, Y, I])),
+            (1.0, Pauli::with_ops([Y, Y, I])),
             (-1.0, Pauli::with_ops([X, X, Z])),
-            (1.0, Pauli::with_ops([Y, Y, Z])),
+            (-1.0, Pauli::with_ops([Y, Y, Z])),
         ],
     );
 
@@ -228,9 +228,9 @@ fn jw_two_elec_03() {
         &[(4.0, Fermions::try_from((1, 3, 3, 2)).unwrap())],
         &[
             (1.0, Pauli::with_ops([I, X, X, I])),
-            (-1.0, Pauli::with_ops([I, Y, Y, I])),
+            (1.0, Pauli::with_ops([I, Y, Y, I])),
             (-1.0, Pauli::with_ops([I, X, X, Z])),
-            (1.0, Pauli::with_ops([I, Y, Y, Z])),
+            (-1.0, Pauli::with_ops([I, Y, Y, Z])),
         ],
     );
 
@@ -238,9 +238,9 @@ fn jw_two_elec_03() {
         &[(4.0, Fermions::try_from((1, 4, 4, 2)).unwrap())],
         &[
             (1.0, Pauli::with_ops([I, X, X, I, I])),
-            (-1.0, Pauli::with_ops([I, Y, Y, I, I])),
+            (1.0, Pauli::with_ops([I, Y, Y, I, I])),
             (-1.0, Pauli::with_ops([I, X, X, I, Z])),
-            (1.0, Pauli::with_ops([I, Y, Y, I, Z])),
+            (-1.0, Pauli::with_ops([I, Y, Y, I, Z])),
         ],
     );
 }
@@ -253,9 +253,9 @@ fn jw_two_elec_04() {
         &[(4.0, Fermions::try_from((0, 3, 3, 2)).unwrap())],
         &[
             (1.0, Pauli::with_ops([X, Z, X, I])),
-            (-1.0, Pauli::with_ops([Y, Z, Y, I])),
+            (1.0, Pauli::with_ops([Y, Z, Y, I])),
             (-1.0, Pauli::with_ops([X, Z, X, Z])),
-            (1.0, Pauli::with_ops([Y, Z, Y, Z])),
+            (-1.0, Pauli::with_ops([Y, Z, Y, Z])),
         ],
     );
 
@@ -263,9 +263,9 @@ fn jw_two_elec_04() {
         &[(4.0, Fermions::try_from((1, 4, 4, 3)).unwrap())],
         &[
             (1.0, Pauli::with_ops([I, X, Z, X, I])),
-            (-1.0, Pauli::with_ops([I, Y, Z, Y, I])),
+            (1.0, Pauli::with_ops([I, Y, Z, Y, I])),
             (-1.0, Pauli::with_ops([I, X, Z, X, Z])),
-            (1.0, Pauli::with_ops([I, Y, Z, Y, Z])),
+            (-1.0, Pauli::with_ops([I, Y, Z, Y, Z])),
         ],
     );
 }
@@ -276,9 +276,9 @@ fn jw_two_elec_05() {
         &[(4.0, Fermions::try_from((0, 32, 32, 1)).unwrap())],
         &[
             (1.0, Pauli::new((0b0101, 0))),
-            (-1.0, Pauli::new((0b1010, 0))),
+            (1.0, Pauli::new((0b1010, 0))),
             (-1.0, Pauli::new((0b0101, 0b11))),
-            (1.0, Pauli::new((0b1010, 0b11))),
+            (-1.0, Pauli::new((0b1010, 0b11))),
         ],
     );
 
@@ -286,9 +286,9 @@ fn jw_two_elec_05() {
         &[(4.0, Fermions::try_from((0, 63, 63, 2)).unwrap())],
         &[
             (1.0, Pauli::new((0b01_1101, 0))),
-            (-1.0, Pauli::new((0b10_1110, 0))),
+            (1.0, Pauli::new((0b10_1110, 0))),
             (-1.0, Pauli::new((0b01_1101, 0b11 << 62))),
-            (1.0, Pauli::new((0b10_1110, 0b11 << 62))),
+            (-1.0, Pauli::new((0b10_1110, 0b11 << 62))),
         ],
     );
 
@@ -296,7 +296,7 @@ fn jw_two_elec_05() {
         &[(4.0, Fermions::try_from((0, 63, 63, 32)).unwrap())],
         &[
             (1.0, Pauli::new((0b01 + (u64::MAX >> 2 << 2), 0b01))),
-            (-1.0, Pauli::new((0b10 + (u64::MAX >> 2 << 2), 0b10))),
+            (1.0, Pauli::new((0b10 + (u64::MAX >> 2 << 2), 0b10))),
             (
                 -1.0,
                 Pauli::new((
@@ -305,7 +305,7 @@ fn jw_two_elec_05() {
                 )),
             ),
             (
-                1.0,
+                -1.0,
                 Pauli::new((
                     0b10 + (u64::MAX >> 2 << 2),
                     0b10 + (u64::MAX >> 2 << 62),
@@ -318,9 +318,9 @@ fn jw_two_elec_05() {
         &[(4.0, Fermions::try_from((32, 63, 63, 34)).unwrap())],
         &[
             (1.0, Pauli::new((0, 0b01_1101))),
-            (-1.0, Pauli::new((0, 0b10_1110))),
+            (1.0, Pauli::new((0, 0b10_1110))),
             (-1.0, Pauli::new((0, 0b01_1101 + (0b11 << 62)))),
-            (1.0, Pauli::new((0, 0b10_1110 + (0b11 << 62)))),
+            (-1.0, Pauli::new((0, 0b10_1110 + (0b11 << 62)))),
         ],
     );
 }
@@ -332,8 +332,8 @@ fn jw_two_elec_06() {
     jw_check_mapping(
         &[(4.0, Fermions::try_from((0, 1, 2, 1)).unwrap())],
         &[
-            (1.0, Pauli::with_ops([X, I, X])),
-            (-1.0, Pauli::with_ops([X, Z, X])),
+            (-1.0, Pauli::with_ops([X, I, X])),
+            (1.0, Pauli::with_ops([X, Z, X])),
             (-1.0, Pauli::with_ops([Y, I, Y])),
             (1.0, Pauli::with_ops([Y, Z, Y])),
         ],

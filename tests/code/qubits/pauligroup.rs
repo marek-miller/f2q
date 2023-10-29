@@ -107,10 +107,10 @@ fn paui_group_06() {
     let h = PauliGroup::new(Root4::R1, Pauli::with_ops([I, Z, X]));
     assert_eq!(
         g * h,
-        PauliGroup::new(Root4::R1, Pauli::with_ops([X, X, Y]))
+        PauliGroup::new(Root4::R0, Pauli::with_ops([X, X, Y]))
     );
     assert_eq!(
         h * g,
-        PauliGroup::new(Root4::R1, Pauli::with_ops([X, X, Y]))
+        PauliGroup::new(Root4::R0, Pauli::with_ops([X, X, Y]))
     );
 }
